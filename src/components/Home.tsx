@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Shield, Brain, DollarSign, Clock, Stethoscope } from 'lucide-react';
+import { ArrowRight, CheckCircle, Brain, DollarSign, Clock, Stethoscope } from 'lucide-react';
+import TransformSection from './TransformSection';
 
 const Home = () => {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -129,28 +130,7 @@ const Home = () => {
       </section>
 
       {/* Trust indicators - Full Width */}
-      <section className="bg-white py-16 border-b border-gray-100 w-full">
-        <div className="w-full px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center max-w-7xl mx-auto">
-            <div>
-              <div className="text-3xl font-bold text-blue-600">85%+</div>
-              <div className="text-gray-600">Cut your vet bills</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">15k+</div>
-              <div className="text-gray-600">Hours saved</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">100+</div>
-              <div className="text-gray-600">Practice Partners</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">24/7</div>
-              <div className="text-gray-600">AI availability</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TransformSection />
 
       {/* Clean Hims-Style Boxes */}
       <section className="w-full bg-gray-50 py-16">
