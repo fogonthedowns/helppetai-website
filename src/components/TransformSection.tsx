@@ -2,7 +2,7 @@ import React from 'react';
 
 const TransformSection = () => {
   return (
-    <section className="bg-white py-24 w-full overflow-hidden">
+    <section className="bg-white py-16 w-full overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         {/* Title */}
         <div className="text-center mb-16">
@@ -56,7 +56,7 @@ const TransformSection = () => {
           </div>
 
           {/* Animated Dog - Bottom Right Center */}
-          <div className="flex justify-center items-end h-96 lg:h-[500px] relative z-0">
+          <div className="flex justify-center items-end h-64 lg:h-80 relative z-0">
             <div className="absolute bottom-8 right-1/3 transform translate-x-1/3">
               <img 
                 src="/dachshund-dog.gif" 
