@@ -55,6 +55,7 @@ app = FastAPI(
     redoc_url=settings.redoc_url,
     openapi_url="/openapi.json" if settings.environment != "production" else None,
     default_response_class=CustomJSONResponse,
+    redirect_slashes=False,  # Prevent automatic trailing slash redirects
 )
 
 # Add CORS middleware

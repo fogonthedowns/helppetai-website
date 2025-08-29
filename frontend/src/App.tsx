@@ -13,6 +13,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import PracticesList from './components/practices/PracticesList';
 import PracticeDetail from './components/practices/PracticeDetail';
 import PracticeForm from './components/practices/PracticeForm';
+import PetOwnersList from './components/pet-owners/PetOwnersList';
+import PetOwnerDetail from './components/pet-owners/PetOwnerDetail';
+import PetOwnerForm from './components/pet-owners/PetOwnerForm';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -46,6 +49,23 @@ const App = () => {
             <Route path="/practices/:id/edit" element={
               <ProtectedRoute>
                 <PracticeForm mode="edit" />
+              </ProtectedRoute>
+            } />
+            
+            {/* Pet Owner Routes */}
+            <Route path="/pet_owners" element={
+              <ProtectedRoute>
+                <PetOwnersList />
+              </ProtectedRoute>
+            } />
+            <Route path="/pet_owners/:uuid" element={
+              <ProtectedRoute>
+                <PetOwnerDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/pet_owners/:uuid/edit" element={
+              <ProtectedRoute>
+                <PetOwnerForm mode="edit" />
               </ProtectedRoute>
             } />
             

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
-  const { isAuthenticated, username, logout } = useAuth();
+  const { isAuthenticated, username, logout, user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
 
   return (
     <header className="bg-white border-b border-gray-100">
@@ -34,9 +35,17 @@ const Header = () => {
           </div>
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Home</Link>
-            <Link to="/vets" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Vets</Link>
+            {!isAuthenticated && (
+              <Link to="/vets" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Vets</Link>
+            )}
             <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
-            <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
+            {isAdmin && (
+              <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
+            )}
+
+            {!isAuthenticated && (
+              <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
+            )}
             
             {isAuthenticated ? (
               <>

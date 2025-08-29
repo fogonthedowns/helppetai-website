@@ -6,16 +6,25 @@ from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+import uuid
 
 
 class PetOwner(Document):
     """
-    Pet owner document for MongoDB storage - extends user information for pet owners
+    Pet owner document for MongoDB storage - standalone entity with optional user reference
     """
-    user_id: PydanticObjectId  # Reference to User document
-    emergency_contact: Optional[str] = Field(None, max_length=20)
+    uuid: str = Field(default_factory=lambda: str(uuid.uuid4()), unique=True)
+    
+    # Optional user reference for future extensibility
+    user_id: Optional[PydanticObjectId] = Field(None, description="Optional reference to User document")
+    
+    # Owner personal information
+    full_name: str = Field(..., min_length=1, max_length=100)
+    email: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
     
     # Additional contact information
+    emergency_contact: Optional[str] = Field(None, max_length=20)
     secondary_phone: Optional[str] = Field(None, max_length=20)
     address: Optional[str] = Field(None, max_length=500)
     
@@ -30,14 +39,20 @@ class PetOwner(Document):
     class Settings:
         name = "petOwners"
         indexes = [
-            "user_id",
-            "emergency_contact"
+            "uuid",
+            "user_id",  # Optional but indexed for future queries
+            "full_name",
+            "email",
+            "phone"
         ]
 
 
 class PetOwnerCreate(BaseModel):
     """Schema for creating new pet owners"""
-    user_id: str  # String representation of ObjectId
+    user_id: Optional[str] = Field(None, description="Optional user ID to link to account")
+    full_name: str = Field(..., min_length=1, max_length=100)
+    email: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
     emergency_contact: Optional[str] = Field(None, max_length=20)
     secondary_phone: Optional[str] = Field(None, max_length=20)
     address: Optional[str] = Field(None, max_length=500)
@@ -47,6 +62,10 @@ class PetOwnerCreate(BaseModel):
 
 class PetOwnerUpdate(BaseModel):
     """Schema for updating pet owners"""
+    user_id: Optional[str] = Field(None, description="Optional user ID to link to account")
+    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    email: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
     emergency_contact: Optional[str] = Field(None, max_length=20)
     secondary_phone: Optional[str] = Field(None, max_length=20)
     address: Optional[str] = Field(None, max_length=500)
@@ -56,8 +75,11 @@ class PetOwnerUpdate(BaseModel):
 
 class PetOwnerResponse(BaseModel):
     """Schema for pet owner responses"""
-    id: str
-    user_id: str
+    uuid: str
+    user_id: Optional[str] = None  # Optional user reference
+    full_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
     emergency_contact: Optional[str] = None
     secondary_phone: Optional[str] = None
     address: Optional[str] = None

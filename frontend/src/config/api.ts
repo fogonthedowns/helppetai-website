@@ -25,10 +25,17 @@ export const API_ENDPOINTS = {
     QUERY: `${API_BASE_URL}/api/v1/rag/query`,
   },
   PRACTICES: {
-    LIST: `${API_BASE_URL}/api/v1/practices`,
-    CREATE: `${API_BASE_URL}/api/v1/practices`,
+    LIST: `${API_BASE_URL}/api/v1/practices/`,
+    CREATE: `${API_BASE_URL}/api/v1/practices/`,
     GET: (id: string) => `${API_BASE_URL}/api/v1/practices/${id}`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/v1/practices/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/v1/practices/${id}`,
+  },
+  PET_OWNERS: {
+    LIST: `${API_BASE_URL}/api/v1/pet_owners/`,
+    CREATE: `${API_BASE_URL}/api/v1/pet_owners/`,
+    GET: (uuid: string) => `${API_BASE_URL}/api/v1/pet_owners/${uuid}`,
+    UPDATE: (uuid: string) => `${API_BASE_URL}/api/v1/pet_owners/${uuid}`,
+    DELETE: (uuid: string) => `${API_BASE_URL}/api/v1/pet_owners/${uuid}`,
   }
 } as const;
