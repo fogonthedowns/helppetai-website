@@ -1,0 +1,29 @@
+# FastAPI and Core Dependencies
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# HTTP and Networking
+httpx
+requests
+
+# Environment and Configuration
+python-dotenv
+python-multipart
+
+# Security
+python-jose[cryptography]
+passlib[bcrypt]
+
+# MongoDB
+motor==3.6.0
+beanie==1.26.0
+
+
+# Vector Database and AI/ML
+pinecone
+openai>=1.0.0
+
+#aws
+boto3
