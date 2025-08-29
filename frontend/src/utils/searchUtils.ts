@@ -1,7 +1,5 @@
 import { RAGRequest, RAGResponse, APIError, Citation, SourceReference } from '../types/rag';
-
-// API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import { API_ENDPOINTS } from '../config/api';
 
 /**
  * Search the RAG knowledge base
@@ -11,7 +9,7 @@ export const searchRAG = async (request: RAGRequest): Promise<RAGResponse> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/rag/query`, {
+    const response = await fetch(API_ENDPOINTS.RAG.QUERY, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

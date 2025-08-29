@@ -6,6 +6,13 @@ import logging
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from .models.mongodb import Item
+from .models.user import User
+from .models.practice import VeterinaryPractice
+from .models.pet_owner import PetOwner
+from .models.pet import Pet
+from .models.associations import PetPracticeAssociation
+from .models.medical_record import MedicalRecord
+from .models.visit import Visit
 from .config import settings
 
 
@@ -23,10 +30,19 @@ class Database:
         try:
             cls.client = AsyncIOMotorClient(settings.mongodb_url)
             
-            # Initialize Beanie with the Item model
+            # Initialize Beanie with all document models
             await init_beanie(
                 database=cls.client[settings.database_name],
-                document_models=[Item]
+                document_models=[
+                    Item,
+                    User,
+                    VeterinaryPractice,
+                    PetOwner,
+                    Pet,
+                    PetPracticeAssociation,
+                    MedicalRecord,
+                    Visit
+                ]
             )
             
             logger.info(f"Connected to MongoDB at {settings.mongodb_url}")

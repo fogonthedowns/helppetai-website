@@ -1,0 +1,46 @@
+@startuml RAG Search System Overview
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+
+title RAG Search System - High Level Flow
+
+actor User as user
+participant "React Frontend" as frontend
+participant "FastAPI Backend" as backend
+participant "OpenAI Embeddings" as embeddings
+participant "Pinecone Vector DB" as pinecone
+participant "DynamoDB" as dynamodb
+participant "OpenAI GPT-4o-mini" as gpt
+
+== Search Query Processing ==
+user -> frontend : Types veterinary question
+frontend -> frontend : Apply filters\n(species, symptoms, audience)
+frontend -> backend : POST /api/v1/rag/query\n{question, filters}
+
+== Vector Search ==
+backend -> embeddings : Generate embedding\nfor user question
+embeddings -> backend : Return vector\n(1536 dimensions)
+backend -> pinecone : Query similar vectors\nwith metadata filters
+pinecone -> backend : Return top 5 matches\n(source IDs + scores)
+
+== Content Retrieval ==
+backend -> dynamodb : Fetch content chunks\nusing source IDs
+dynamodb -> backend : Return full text content\nand metadata
+
+== AI Response Generation ==
+backend -> gpt : Generate answer using:\n• User question\n• Retrieved content\n• Context prompt
+gpt -> backend : Return structured response\nwith citations
+
+== Source Processing ==
+backend -> backend : Combine duplicate sources\nby title + URL
+backend -> backend : Format source references\nwith scores & metadata
+
+== Frontend Display ==
+backend -> frontend : Return RAG response:\n• Answer text\n• Source list\n• Metadata
+frontend -> frontend : Remap citation numbers\nto combined sources
+frontend -> frontend : Render markdown answer\nwith clickable citations
+frontend -> user : Display answer + sources\nwith professional UI
+
+@enduml

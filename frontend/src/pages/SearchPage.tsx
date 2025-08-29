@@ -188,36 +188,6 @@ export const SearchPage: React.FC = () => {
           />
         </div>
 
-        {/* Welcome Section - shown when no results */}
-        {!hasResults && !isLoading && !error && (
-          <div className="max-w-4xl mx-auto text-center py-16">
-            <div className="text-6xl mb-6">🔬</div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              AI-Powered Veterinary Search
-            </h2>
-            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              Get instant, evidence-based answers to veterinary questions. 
-              Search across thousands of expert resources with advanced filtering.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <div className="p-4">
-                <div className="text-3xl mb-2">⚡</div>
-                <h3 className="font-medium text-gray-900 mb-2">Instant Results</h3>
-                <p className="text-sm text-gray-600">Get immediate answers from our comprehensive veterinary knowledge base</p>
-              </div>
-              <div className="p-4">
-                <div className="text-3xl mb-2">🎯</div>
-                <h3 className="font-medium text-gray-900 mb-2">Smart Filtering</h3>
-                <p className="text-sm text-gray-600">Filter by species, conditions, audience, and document type for precise results</p>
-              </div>
-              <div className="p-4">
-                <div className="text-3xl mb-2">📚</div>
-                <h3 className="font-medium text-gray-900 mb-2">Expert Sources</h3>
-                <p className="text-sm text-gray-600">All answers cite authoritative veterinary literature and guidelines</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Error Message */}
         {error && (
@@ -265,7 +235,7 @@ export const SearchPage: React.FC = () => {
                   return (
                     <>
                       <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                        📚 Sources ({combinedSources.length})
+                        Sources ({combinedSources.length})
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {combinedSources.slice(0, 6).map((combinedSource, index) => {
@@ -313,7 +283,7 @@ export const SearchPage: React.FC = () => {
                                       {(combinedSource.maxRelevanceScore * 100).toFixed(0)}%
                                     </span>
                                     {combinedSource.url && (
-                                      <span className="ml-auto text-blue-500">🔗</span>
+                                      <span className="ml-auto text-blue-500"></span>
                                     )}
                                   </div>
                                   
@@ -419,32 +389,6 @@ export const SearchPage: React.FC = () => {
         onSearchSelect={handleHistorySearch}
       />
 
-              {/* Welcome Message for New Users */}
-        {!hasResults && !isLoading && !hasSearches && !query && (
-          <div className="max-w-4xl mx-auto text-center py-12">
-            <div className="text-6xl mb-6">🔍</div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              RAG-Powered Veterinary Search
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Get expert veterinary answers backed by trusted sources using 
-              Retrieval-Augmented Generation (RAG) technology.
-            </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
-              <h3 className="font-semibold text-blue-900 mb-3">
-                Try asking about:
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-800">
-                <div>• Dog bloat symptoms</div>
-                <div>• Cat kidney disease signs</div>
-                <div>• Horse colic treatment</div>
-                <div>• Pet vaccination schedules</div>
-                <div>• Emergency first aid</div>
-                <div>• Dietary recommendations</div>
-              </div>
-            </div>
-          </div>
-        )}
     </div>
   );
 };

@@ -1,8 +1,9 @@
 # FastAPI and Core Dependencies
 fastapi
 uvicorn[standard]
-pydantic
+pydantic[email]
 pydantic-settings
+email-validator
 
 # HTTP and Networking
 httpx

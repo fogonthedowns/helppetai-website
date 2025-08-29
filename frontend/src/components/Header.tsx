@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
+  const { isAuthenticated, username, logout } = useAuth();
+
   return (
     <header className="bg-white border-b border-gray-100">
       <div className="w-full px-6 py-4">
@@ -29,13 +32,32 @@ const Header = () => {
               HelpPetAI
             </Link>
           </div>
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             <Link to="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Home</Link>
             <Link to="/vets" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Vets</Link>
             <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
-            <Link to="/vets" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-              Get started
-            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link to="/rag" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">RAG Search</Link>
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">Welcome, {username}</span>
+                  <button 
+                    onClick={logout}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Login</Link>
+                <Link to="/signup" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

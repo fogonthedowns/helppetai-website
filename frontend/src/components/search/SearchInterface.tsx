@@ -467,12 +467,6 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
         </div>
       )}
 
-      {/* Keyboard Shortcuts Hint */}
-      {isFocused && !showFilters && (
-        <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-400 text-center">
-          Press <kbd className="px-1 py-0.5 bg-gray-100 rounded">Enter</kbd> to search, <kbd className="px-1 py-0.5 bg-gray-100 rounded">Shift+Enter</kbd> for new line
-        </div>
-      )}
     </div>
   );
 };
