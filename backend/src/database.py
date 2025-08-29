@@ -13,6 +13,7 @@ from .models.pet import Pet
 from .models.associations import PetPracticeAssociation
 from .models.medical_record import MedicalRecord
 from .models.visit import Visit
+from .models.pet_owner_practice_association import PetOwnerPracticeAssociation
 from .config import settings
 
 
@@ -33,16 +34,17 @@ class Database:
             # Initialize Beanie with all document models
             await init_beanie(
                 database=cls.client[settings.database_name],
-                document_models=[
-                    Item,
-                    User,
-                    VeterinaryPractice,
-                    PetOwner,
-                    Pet,
-                    PetPracticeAssociation,
-                    MedicalRecord,
-                    Visit
-                ]
+                        document_models=[
+            Item,
+            User,
+            VeterinaryPractice,
+            PetOwner,
+            Pet,
+            PetPracticeAssociation,
+            MedicalRecord,
+            Visit,
+            PetOwnerPracticeAssociation
+        ]
             )
             
             logger.info(f"Connected to MongoDB at {settings.mongodb_url}")

@@ -15,6 +15,7 @@ from ..models.pet_owner import (
 )
 from ..models.user import User as UserDocument, UserRole
 from ..repository.pet_owner_repository import PetOwnerRepository
+from ..repository.pet_owner_practice_association_repository import PetOwnerPracticeAssociationRepository
 from ..auth.jwt_auth import get_current_user
 from beanie import PydanticObjectId
 
@@ -25,6 +26,11 @@ security = HTTPBearer()
 def get_pet_owner_repository() -> PetOwnerRepository:
     """Dependency to get pet owner repository instance."""
     return PetOwnerRepository()
+
+
+def get_association_repository() -> PetOwnerPracticeAssociationRepository:
+    """Dependency to get association repository instance."""
+    return PetOwnerPracticeAssociationRepository()
 
 
 
@@ -38,6 +44,33 @@ def require_admin(current_user: UserDocument = Depends(get_current_user)) -> Use
             detail="Admin access required"
         )
     return current_user
+
+
+async def get_accessible_pet_owner_uuids(
+    current_user: UserDocument,
+    association_repo: PetOwnerPracticeAssociationRepository
+) -> List[str]:
+    """
+    Get pet owner UUIDs that the current user can access based on their role and practice.
+    
+    - Admin: Can access all pet owners
+    - Vet Staff: Can only access pet owners associated with their practice
+    """
+    if current_user.role == UserRole.ADMIN:
+        # Admin can access all pet owners - return None to indicate no filtering needed
+        return None
+    
+    # For vet staff, get practice association
+    # Note: For MVP, we'll need to link users to practices somehow
+    # For now, assume practice_id is stored in user model
+    if hasattr(current_user, 'practice_id') and current_user.practice_id:
+        # Get pet owners associated with this practice
+        practice_uuid = str(current_user.practice_id)  # Convert ObjectId to string if needed
+        accessible_uuids = await association_repo.get_user_accessible_pet_owner_uuids(practice_uuid)
+        return accessible_uuids
+    
+    # If no practice association, user can't access any pet owners
+    return []
 
 
 def require_admin_or_self(
@@ -59,15 +92,32 @@ def require_admin_or_self(
     "/",
     response_model=List[PetOwnerResponse],
     status_code=status.HTTP_200_OK,
-    summary="List all pet owners",
-    description="Get list of all pet owners (Admin only)"
+    summary="List pet owners",
+    description="Get list of pet owners (Admin: all, Vet: only their practice's patients)"
 )
 async def get_pet_owners(
     repository: PetOwnerRepository = Depends(get_pet_owner_repository),
-    current_user: UserDocument = Depends(require_admin)
+    association_repo: PetOwnerPracticeAssociationRepository = Depends(get_association_repository),
+    current_user: UserDocument = Depends(get_current_user)
 ) -> List[PetOwnerResponse]:
-    """List all pet owners (Admin only)."""
-    pet_owners = await repository.get_all()
+    """List pet owners based on user permissions."""
+    
+    # Get accessible pet owner UUIDs based on user role
+    accessible_uuids = await get_accessible_pet_owner_uuids(current_user, association_repo)
+    
+    if accessible_uuids is None:
+        # Admin - get all pet owners
+        pet_owners = await repository.get_all()
+    elif len(accessible_uuids) == 0:
+        # No accessible pet owners
+        pet_owners = []
+    else:
+        # Filter by accessible UUIDs
+        pet_owners = []
+        for uuid in accessible_uuids:
+            pet_owner = await repository.get_by_uuid(uuid)
+            if pet_owner:
+                pet_owners.append(pet_owner)
     
     return [
         PetOwnerResponse(
@@ -93,27 +143,30 @@ async def get_pet_owners(
     response_model=PetOwnerResponse,
     status_code=status.HTTP_200_OK,
     summary="View single pet owner",
-    description="Get details of a specific pet owner (Admin | Current User logged in must be that uuid)"
+    description="Get details of a specific pet owner (Admin | Vet with practice association)"
 )
 async def get_pet_owner(
     pet_owner_uuid: UUID = Path(..., description="Pet Owner UUID"),
     repository: PetOwnerRepository = Depends(get_pet_owner_repository),
+    association_repo: PetOwnerPracticeAssociationRepository = Depends(get_association_repository),
     current_user: UserDocument = Depends(get_current_user)
 ) -> PetOwnerResponse:
     """Get a specific pet owner by UUID."""
     pet_owner = await repository.get_by_uuid(str(pet_owner_uuid))
-    
+
     if not pet_owner:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Pet owner with UUID {pet_owner_uuid} not found"
         )
+
+    # Check access permissions
+    accessible_uuids = await get_accessible_pet_owner_uuids(current_user, association_repo)
     
-    # For now, only admins can view pet owners (can be relaxed later)
-    if current_user.role != UserRole.ADMIN:
+    if accessible_uuids is not None and str(pet_owner_uuid) not in accessible_uuids:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            detail="You do not have permission to view this pet owner"
         )
     
     return PetOwnerResponse(
