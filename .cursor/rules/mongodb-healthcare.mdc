@@ -1,0 +1,31 @@
+---
+description: MongoDB Schema Design for Healthcare Data
+globs:
+alwaysApply: false
+---
+
+# MongoDB Schema Design for Healthcare Data
+
+## Schema Design Rules
+- Use UUIDs for all patient/medical record IDs (never auto-increment)
+- Embed audit trails: `created_at`, `updated_at`, `created_by`, `updated_by`
+- Separate PII into dedicated collections with references
+- Use subdocuments for nested medical data (vitals, medications)
+- Include soft delete: `is_deleted: bool = False`
+- Add data classification fields: `sensitivity_level`, `retention_period`
+
+## Field Patterns
+```python
+class BaseHealthcareDocument(Document):
+    id: UUID4 = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    is_deleted: bool = False
+    sensitivity_level: str = "confidential"
+```
+
+## Validation
+- Always validate dates
+- Use regex for medical IDs, phone numbers
+- Implement field-level encryption for SSN, DOB

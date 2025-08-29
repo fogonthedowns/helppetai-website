@@ -1,0 +1,207 @@
+---
+description: Generate a focused Python implementation of the Repository design pattern with SQLAlchemy and in-memory storage for user management.
+globs:
+alwaysApply: false
+---
+
+# Repository Design Pattern - Python
+
+## Rule Configuration
+
+```json
+{
+  "name": "repository-pattern-python",
+  "description": "Implement the Repository design pattern in Python with CRUD operations and multiple backends",
+  "trigger": "manual",
+  "files": ["**/*.py"],
+  "output": {
+    "repository": "src/repository/base.py",
+    "sql_repository": "src/repository/sql_repository.py",
+    "memory_repository": "src/repository/memory_repository.py",
+    "models": "src/models/entities.py",
+    "example": "examples/usage_example.py",
+    "tests": "tests/test_repository.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer implementing the Repository design pattern. Create a complete, working implementation for **User Management** with SQL and in-memory storage backends.
+
+### Primary Tasks
+
+#### 1. Generate Repository Base Class (`src/repository/base.py`)
+```python
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, List, Optional
+from uuid import UUID
+
+T = TypeVar('T')
+
+class Repository(ABC, Generic[T]):
+    """Abstract base class for repositories."""
+    
+    @abstractmethod
+    def create(self, entity: T) -> T:
+        """Create a new entity. All methods are synchronous."""
+    
+    @abstractmethod
+    def get_by_id(self, entity_id: UUID) -> Optional[T]:
+        """Get entity by ID."""
+    
+    @abstractmethod
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[T]:
+        """Get all entities with pagination."""
+    
+    @abstractmethod
+    def update(self, entity: T) -> T:
+        """Update an existing entity."""
+    
+    @abstractmethod
+    def delete(self, entity_id: UUID) -> bool:
+        """Delete entity by ID."""
+    
+    @abstractmethod
+    def find_by_email(self, email: str) -> Optional[T]:
+        """Find user by email address."""
+```
+
+#### 2. Create Data Models (`src/models/entities.py`)
+```python
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
+from uuid import UUID, uuid4
+
+@dataclass
+class User:
+    """User domain model."""
+    id: UUID
+    email: str
+    name: str
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    @classmethod
+    def create(cls, email: str, name: str) -> 'User':
+        """Create a new user with generated ID and timestamp."""
+        return cls(
+            id=uuid4(),
+            email=email,
+            name=name,
+            is_active=True,
+            created_at=datetime.utcnow()
+        )
+```
+
+#### 3. Create SQL Repository (`src/repository/sql_repository.py`)
+- SQLAlchemy-based implementation using synchronous operations
+- User table creation and mapping
+- All CRUD operations implemented
+- Proper error handling with try/catch
+- Connection management with session handling
+
+Example structure:
+```python
+class SQLUserRepository(Repository[User]):
+    def __init__(self, session):
+        self._session = session
+        self._logger = logging.getLogger(__name__)
+    
+    def create(self, user: User) -> User:
+        # Convert User to SQLAlchemy model and save
+    
+    def get_by_id(self, user_id: UUID) -> Optional[User]:
+        # Query by ID and convert back to User model
+```
+
+#### 4. Create Memory Repository (`src/repository/memory_repository.py`)
+- In-memory dictionary-based implementation
+- Thread-safe operations (no complex threading, just basic safety)
+- All CRUD operations implemented
+- Useful for testing and development
+
+Example structure:
+```python
+class MemoryUserRepository(Repository[User]):
+    def __init__(self):
+        self._users: Dict[UUID, User] = {}
+        self._logger = logging.getLogger(__name__)
+    
+    def create(self, user: User) -> User:
+        self._users[user.id] = user
+        return user
+```
+
+#### 5. Usage Example (`examples/usage_example.py`)
+Demonstrate:
+- Creating users with both repository implementations
+- CRUD operations (create, read, update, delete)
+- Switching between SQL and memory repositories
+- Error handling scenarios
+- Finding users by email
+
+#### 6. Tests (`tests/test_repository.py`)
+- Test both repository implementations
+- Test all CRUD operations
+- Test error conditions (not found, duplicate email, etc.)
+- Test repository interface compliance
+- Use pytest with simple assertions
+
+### Implementation Requirements
+
+**Code Quality:**
+- Type hints on all methods and variables
+- Docstrings on classes and public methods
+- Simple error handling with ValueError/RuntimeError
+- Use `logging.getLogger(__name__)` for logging
+
+**Keep It Simple:**
+- All methods are synchronous (no async)
+- Use SQLAlchemy Core or simple ORM (not 2.0 async)
+- No unit of work pattern or specifications
+- No external configuration files
+- No migration support needed
+
+**User Management Logic:**
+- Users must have unique email addresses
+- Auto-generate UUID for new users
+- Track creation and update timestamps
+- Simple active/inactive user status
+
+**Repository Behavior:**
+- create() should raise ValueError if email already exists
+- update() should set updated_at timestamp
+- delete() should return True if deleted, False if not found
+- find_by_email() should be case-insensitive
+
+### Generated File Structure
+```
+├── src/
+│   ├── repository/
+│   │   ├── __init__.py
+│   │   ├── base.py              # Repository ABC
+│   │   ├── sql_repository.py    # SQLAlchemy implementation
+│   │   └── memory_repository.py # In-memory implementation
+│   └── models/
+│       ├── __init__.py
+│       └── entities.py         # User domain model
+├── examples/
+│   └── usage_example.py        # Working demonstration
+└── tests/
+    └── test_repository.py      # Pytest test suite
+```
+
+### Quality Checks
+- Both repositories implement the Repository interface correctly
+- All CRUD operations work with both implementations
+- User email uniqueness is enforced
+- Error handling works correctly
+- Example code runs without errors
+- Tests pass with pytest
+
+---
+
+Generate the complete Repository pattern implementation now.

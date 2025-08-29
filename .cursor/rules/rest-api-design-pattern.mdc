@@ -1,0 +1,50 @@
+---
+description: API Design Patterns
+globs:
+alwaysApply: false
+---
+
+# API Design Patterns
+
+## RESTful Resource Design
+```python
+# Consistent resource naming
+@app.get("/patients")              # Get all patients
+@app.post("/patients")             # Create patient  
+@app.get("/patients/{patient_id}") # Get specific patient
+@app.put("/patients/{patient_id}") # Update patient
+@app.delete("/patients/{patient_id}") # Soft delete patient
+```
+
+## Response Standards
+```python
+# Always return consistent structure
+{
+  "data": [...],
+  "meta": {
+    "total": 100,
+    "page": 1,
+    "per_page": 20
+  },
+  "links": {
+    "next": "/patients?page=2",
+    "prev": null
+  }
+}
+```
+
+## Query Parameters
+- Use `?page=1&limit=20` for pagination
+- Use `?include=appointments,medications` for related data
+- Use `?filter[status]=active` for filtering
+- Use `?sort=-created_at` for sorting
+
+## HTTP Status Codes
+- 200: Success with data
+- 201: Created successfully  
+- 204: Success, no content
+- 400: Bad request
+- 401: Unauthorized
+- 403: Forbidden
+- 404: Not found
+- 422: Validation error

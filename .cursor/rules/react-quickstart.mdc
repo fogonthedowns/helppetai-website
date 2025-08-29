@@ -1,0 +1,204 @@
+---
+description: Generate a focused React TypeScript application from scratch with modern tooling and clean project structure.
+globs:
+alwaysApply: false
+---
+
+# React TypeScript Quickstart
+
+## Rule Configuration
+
+```json
+{
+  "name": "react-typescript-quickstart",
+  "description": "Create a new React TypeScript app with Vite, clean structure, and essential components",
+  "trigger": "manual",
+  "files": ["**/*.tsx", "**/*.ts", "**/*.json", "**/*.html", "**/*.css"],
+  "output": {
+    "package": "package.json",
+    "vite_config": "vite.config.ts",
+    "tsconfig": "tsconfig.json",
+    "index_html": "index.html",
+    "main": "src/main.tsx",
+    "app": "src/App.tsx",
+    "layout": "src/components/Layout.tsx",
+    "header": "src/components/Header.tsx",
+    "example_page": "src/pages/Home.tsx",
+    "types": "src/types/index.ts",
+    "styles": "src/index.css"
+  }
+}
+```
+
+## Instructions
+
+You are a senior React developer creating a new TypeScript application from scratch. Generate a clean, modern React app using Vite with essential components and best practices.
+
+### Primary Tasks
+
+#### 1. Generate Package Configuration (`package.json`)
+```json
+{
+  "name": "react-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}
+```
+
+#### 2. Create Vite Configuration (`vite.config.ts`)
+```typescript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000,
+  },
+})
+```
+
+#### 3. TypeScript Configuration (`tsconfig.json`)
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+#### 4. Main Entry Point (`src/main.tsx`)
+```tsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+```
+
+#### 5. Core App Component (`src/App.tsx`)
+Create main App component with:
+- Clean component structure
+- Basic routing logic (without external router)
+- State management example
+- TypeScript interfaces
+
+#### 6. Essential Components (`src/components/`)
+- **Layout.tsx**: Main layout wrapper with header and content area
+- **Header.tsx**: Navigation header with app title and basic nav
+
+#### 7. Example Page (`src/pages/Home.tsx`)
+- Sample home page component
+- Demonstrates props and state usage
+- Includes basic interactivity
+
+#### 8. Type Definitions (`src/types/index.ts`)
+- Common TypeScript interfaces
+- Props types for components
+- Application-specific types
+
+#### 9. Basic Styling (`src/index.css`)
+- Clean, modern CSS reset
+- Basic responsive layout styles
+- CSS custom properties for theming
+
+### Implementation Requirements
+
+**Project Structure:**
+```
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── src/
+    ├── main.tsx
+    ├── App.tsx
+    ├── index.css
+    ├── types/
+    │   └── index.ts
+    ├── components/
+    │   ├── Header.tsx
+    │   └── Layout.tsx
+    └── pages/
+        └── Home.tsx
+```
+
+**Code Quality:**
+- TypeScript strict mode enabled
+- Proper component typing with interfaces
+- Functional components with hooks
+- Clean import/export patterns
+
+**Keep It Simple:**
+- No external routing library (basic conditional rendering)
+- No state management library (useState/useContext only)
+- No UI component library dependencies
+- Clean, semantic HTML structure
+
+**React Best Practices:**
+- Functional components throughout
+- Proper TypeScript prop types
+- Consistent file naming (PascalCase for components)
+- Logical component composition
+
+**Modern Features:**
+- Vite for fast development and building
+- ES modules throughout
+- React 18 features
+- TypeScript strict configuration
+
+### Quality Checks
+- App starts with `npm run dev` without errors
+- TypeScript compilation passes without errors
+- Components render correctly
+- Basic interactivity works
+- Responsive design functions properly
+- Clean console with no warnings
+
+---
+
+Generate the complete React TypeScript quickstart application now.

@@ -1,0 +1,219 @@
+---
+description: Generate a focused Python implementation of the Iterator design pattern with custom iterators and iterable collections.
+globs:
+alwaysApply: false
+---
+
+# Iterator Design Pattern - Python
+
+## Rule Configuration
+
+```json
+{
+  "name": "iterator-pattern-python",
+  "description": "Implement the Iterator design pattern in Python with custom iterators for collections",
+  "trigger": "manual",
+  "files": ["**/*.py"],
+  "output": {
+    "iterator": "src/iterators/base.py",
+    "collection": "src/iterators/collection.py",
+    "concrete_iterators": "src/iterators/implementations.py",
+    "example": "examples/usage_example.py",
+    "tests": "tests/test_iterators.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer implementing the Iterator design pattern. Create a complete, working implementation for **Book Collection** with multiple iteration strategies.
+
+### Primary Tasks
+
+#### 1. Generate Iterator Base Classes (`src/iterators/base.py`)
+```python
+from abc import ABC, abstractmethod
+from typing import Iterator, Generic, TypeVar, Protocol
+
+T = TypeVar('T')
+
+class IteratorProtocol(Protocol[T]):
+    """Protocol for iterator objects."""
+    
+    def __iter__(self) -> Iterator[T]:
+        return self
+    
+    def __next__(self) -> T:
+        ...
+
+class CustomIterator(ABC, Generic[T]):
+    """Abstract base class for custom iterators."""
+    
+    @abstractmethod
+    def __iter__(self) -> Iterator[T]:
+        """Return iterator object. All methods are synchronous."""
+        return self
+    
+    @abstractmethod
+    def __next__(self) -> T:
+        """Return next item or raise StopIteration."""
+    
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset iterator to beginning."""
+
+class IterableCollection(ABC, Generic[T]):
+    """Abstract base class for iterable collections."""
+    
+    @abstractmethod
+    def __iter__(self) -> CustomIterator[T]:
+        """Return default iterator."""
+    
+    @abstractmethod
+    def create_iterator(self, strategy: str) -> CustomIterator[T]:
+        """Create iterator with specific strategy."""
+```
+
+#### 2. Create Book Model and Collection (`src/iterators/collection.py`)
+```python
+from dataclasses import dataclass
+from typing import List, Optional
+from .base import IterableCollection, CustomIterator
+
+@dataclass
+class Book:
+    """Book model."""
+    title: str
+    author: str
+    year: int
+    genre: str
+    pages: int
+
+class BookCollection(IterableCollection[Book]):
+    """Collection of books with multiple iteration strategies."""
+    
+    def __init__(self):
+        self._books: List[Book] = []
+    
+    def add_book(self, book: Book) -> None:
+        """Add a book to the collection."""
+        self._books.append(book)
+    
+    def remove_book(self, title: str) -> bool:
+        """Remove book by title."""
+        # Implementation here
+    
+    def get_books(self) -> List[Book]:
+        """Get all books."""
+        return self._books.copy()
+    
+    def __iter__(self) -> CustomIterator[Book]:
+        """Return default iterator (by title)."""
+        return self.create_iterator("title")
+    
+    def create_iterator(self, strategy: str) -> CustomIterator[Book]:
+        """Create iterator with specific strategy."""
+        # Implementation here - return appropriate iterator
+```
+
+#### 3. Create 3 Concrete Iterators (`src/iterators/implementations.py`)
+- **TitleIterator**: Iterate books sorted by title alphabetically
+- **YearIterator**: Iterate books sorted by publication year
+- **GenreIterator**: Iterate books grouped by genre, then by title
+
+Each iterator must:
+- Implement CustomIterator interface
+- Handle empty collections gracefully
+- Support reset() functionality
+- Include proper StopIteration handling
+
+Example structure:
+```python
+class TitleIterator(CustomIterator[Book]):
+    def __init__(self, books: List[Book]):
+        self._books = sorted(books, key=lambda b: b.title.lower())
+        self._index = 0
+    
+    def __iter__(self) -> Iterator[Book]:
+        return self
+    
+    def __next__(self) -> Book:
+        if self._index >= len(self._books):
+            raise StopIteration
+        book = self._books[self._index]
+        self._index += 1
+        return book
+    
+    def reset(self) -> None:
+        self._index = 0
+```
+
+#### 4. Usage Example (`examples/usage_example.py`)
+Demonstrate:
+- Creating book collection and adding books
+- Default iteration (for loop)
+- Multiple iteration strategies
+- Iterator reset functionality
+- Manual iteration with next()
+- Error handling with StopIteration
+
+#### 5. Tests (`tests/test_iterators.py`)
+- Test each iterator with various book collections
+- Test empty collection handling
+- Test iterator reset functionality
+- Test StopIteration is raised correctly
+- Use pytest with simple assertions
+
+### Implementation Requirements
+
+**Code Quality:**
+- Type hints on all methods and variables
+- Docstrings on classes and public methods
+- Simple error handling with StopIteration
+- Use `logging.getLogger(__name__)` for logging
+
+**Keep It Simple:**
+- All methods are synchronous (no async)
+- No external dependencies beyond standard library
+- No complex sorting algorithms (use built-in sorted())
+- No generator functions - implement __next__ manually
+
+**Book Collection Logic:**
+- Books sorted by title should be case-insensitive
+- Year sorting should be chronological (oldest first)
+- Genre iteration should group books by genre, then sort within genre by title
+- Empty collections should iterate without errors
+
+**Iterator Behavior:**
+- Must support Python's for loop protocol
+- reset() should allow restarting iteration
+- StopIteration should be raised when no more items
+- Iterators should not modify the original collection
+
+### Generated File Structure
+```
+├── src/
+│   └── iterators/
+│       ├── __init__.py
+│       ├── base.py              # Iterator ABC and protocols
+│       ├── collection.py        # BookCollection and Book model
+│       └── implementations.py   # 3 concrete iterators
+├── examples/
+│   └── usage_example.py        # Working demonstration
+└── tests/
+    └── test_iterators.py       # Pytest test suite
+```
+
+### Quality Checks
+- All iterators implement the CustomIterator interface correctly
+- Collection supports multiple iteration strategies
+- Iterators work correctly with Python's for loop
+- Iterator reset functionality works properly
+- Empty collections are handled gracefully
+- StopIteration is raised at the correct time
+- Example code runs without errors
+- Tests pass with pytest
+
+---
+
+Generate the complete Iterator pattern implementation now.

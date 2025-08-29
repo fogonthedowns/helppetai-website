@@ -1,0 +1,35 @@
+---
+description: Add MongoDB connectivity to FastAPI with async Beanie ODM
+globs:
+alwaysApply: true
+---
+
+## MongoDB FastAPI Integration
+
+Add async MongoDB support to existing FastAPI app using Beanie ODM.
+
+### Generate Files:
+- `src/database.py` - MongoDB connection with Motor/Beanie
+- `src/models/mongodb.py` - Beanie Document models  
+- `src/routes/database.py` - CRUD endpoints
+- Update `src/config.py` - Add MongoDB settings
+
+### Requirements:
+```
+motor==3.6.0
+beanie==1.26.0
+```
+
+### Key Features:
+- Async MongoDB operations with Beanie
+- Document models with ObjectId/timestamps
+- CRUD endpoints (GET, POST, PUT, DELETE)
+- Connection lifecycle management
+- Environment config (MONGODB_URL, DATABASE_NAME)
+
+### Integration:
+- Add database init to startup events
+- Register database routes
+- Use existing FastAPI structure
+
+Keep it simple, async throughout, proper error handling.

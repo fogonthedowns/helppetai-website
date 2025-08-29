@@ -1,0 +1,45 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+# Error Handling and Logging Patterns
+
+## Custom Exceptions
+```python
+class PatientNotFoundError(Exception):
+    def __init__(self, patient_id: str):
+        self.patient_id = patient_id
+        super().__init__(f"Patient {patient_id} not found")
+
+class UnauthorizedAccessError(Exception):
+    pass
+```
+
+## Exception Handlers
+```python
+@app.exception_handler(PatientNotFoundError)
+async def patient_not_found_handler(request, exc):
+    logger.warning(f"Patient not found: {exc.patient_id}")
+    return JSONResponse(
+        status_code=404,
+        content={"error": "Patient not found", "patient_id": exc.patient_id}
+    )
+```
+
+## Logging Structure
+```python
+import structlog
+
+logger = structlog.get_logger()
+
+# In repository methods
+logger.info("patient_created", patient_id=patient.id, user_id=user.id)
+logger.error("db_error", error=str(e), query=query_info)
+```
+
+## Never Log
+- Passwords, tokens, SSNs
+- Full patient objects
+- Credit card numbers

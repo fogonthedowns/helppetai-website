@@ -1,0 +1,251 @@
+---
+description: Generate a complete FastAPI application with modern Python development setup and best practices.
+globs:
+alwaysApply: false
+---
+
+## Rule Configuration
+
+```json
+{
+  "name": "fastapi-quickstart",
+  "description": "Quick start a FastAPI application with modern development setup",
+  "trigger": "manual",
+  "files": ["**/"],
+  "output": {
+    "main": "main.py",
+    "requirements": "requirements.txt",
+    "config": "pyproject.toml",
+    "gitignore": ".gitignore",
+    "readme": "README.md",
+    "src_init": "src/__init__.py",
+    "src_main": "src/main.py",
+    "routes": "src/routes/__init__.py",
+    "routes_health": "src/routes/health.py",
+    "routes_api": "src/routes/api.py",
+    "models": "src/models/__init__.py",
+    "models_base": "src/models/base.py",
+    "config": "src/config.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer tasked with creating a production-ready FastAPI application from scratch. Generate a complete project structure with modern development practices.
+
+### Primary Tasks
+
+#### 1. Generate core application files
+
+**main.py**
+- FastAPI app entry point that imports from src/
+- Simple server startup configuration
+
+**src/main.py**
+- FastAPI app instance with proper configuration
+- Route registration from routes modules
+- Middleware setup (CORS, exception handling)
+- App configuration and startup events
+
+**src/routes/health.py**
+- Basic health check endpoint
+- API versioning example
+
+**src/routes/api.py**
+- Example CRUD endpoints with proper HTTP methods
+- Request/response models using Pydantic
+- Error handling for API endpoints
+
+**src/models/base.py**
+- Pydantic base models
+- Common response models
+- Request validation models
+
+**src/config.py**
+- Environment configuration
+- App settings using Pydantic Settings
+- Database and external service configuration
+
+**requirements.txt**
+- FastAPI with uvicorn server
+- Essential dependencies for production
+- Development dependencies clearly marked
+- Version pinning for stability
+
+**pyproject.toml**
+- Modern Python project configuration
+- Build system configuration
+- Development tool configuration (black, pytest, etc.)
+- Project metadata
+
+#### 2. Generate development infrastructure
+
+**.gitignore**
+- Python-specific ignore patterns
+- IDE and editor files
+- Environment and secret files
+- Build artifacts
+
+**README.md**
+- Project overview and features
+- Quick start instructions
+- API documentation links
+- Development setup guide
+
+### Application Architecture
+
+**Core Structure:**
+```
+├── main.py                 # Application entry point
+├── requirements.txt        # Python dependencies
+├── pyproject.toml         # Project configuration
+├── .gitignore            # Git ignore patterns
+├── README.md             # Project documentation
+└── src/                  # Source code directory
+    ├── __init__.py      # Package initialization
+    ├── main.py          # FastAPI application instance
+    ├── config.py        # Configuration settings
+    ├── models/          # Pydantic models
+    │   ├── __init__.py
+    │   └── base.py      # Base models and schemas
+    └── routes/          # API endpoints
+        ├── __init__.py
+        ├── health.py    # Health check endpoints
+        └── api.py       # Main API endpoints
+```
+
+**FastAPI Features to Include:**
+- Async/await support throughout
+- Automatic API documentation (Swagger/OpenAPI)
+- Request validation with Pydantic models in src/models/
+- Response models for type safety
+- Exception handling middleware
+- CORS middleware
+- Health check endpoints in src/routes/health.py
+- CRUD example endpoints in src/routes/api.py
+- Configuration management in src/config.py
+- Modular route organization
+
+### Code Quality Standards
+
+**Python Best Practices:**
+- Type hints throughout all modules
+- Async/await for I/O operations
+- Proper exception handling in routes
+- Clean separation of concerns (routes, models, config)
+- Environment variable configuration via src/config.py
+- Logging setup with structured logging
+- Module-based architecture for scalability
+
+**Security Considerations:**
+- CORS configuration
+- Input validation
+- Environment variable usage for secrets
+- Security headers
+
+**Performance Optimization:**
+- Uvicorn ASGI server configuration
+- Connection pooling setup
+- Caching strategies
+- Async database operations (if applicable)
+
+### Development Experience
+
+**Local Development:**
+- Clear setup instructions
+- Environment variable configuration
+- Development server configuration
+- Hot reload enabled
+
+**API Documentation:**
+- Automatic Swagger UI generation
+- Clear endpoint descriptions
+- Request/response examples
+- Proper HTTP status codes
+
+**Testing Setup:**
+- Basic test structure
+- Example API tests
+- Test configuration
+
+### Generated File Requirements
+
+**main.py must include:**
+- Simple entry point that imports and runs the app from src/
+- Uvicorn server configuration
+
+**src/main.py must include:**
+- FastAPI app instance with metadata
+- Route registration from routes modules
+- Middleware setup (CORS, exception handling)
+- Startup and shutdown events
+
+**src/routes/health.py must include:**
+- Health check endpoint (GET /health)
+- System status endpoint
+- API version information
+
+**src/routes/api.py must include:**
+- At least 3 CRUD endpoints (GET, POST, DELETE)
+- Proper HTTP status codes
+- Request/response validation
+
+**src/models/base.py must include:**
+- Pydantic base models for requests/responses
+- Common response schemas
+- Validation examples
+
+**src/config.py must include:**
+- Pydantic Settings configuration
+- Environment variable handling
+- App configuration constants
+
+**requirements.txt must include:**
+- fastapi
+- uvicorn[standard]
+- pydantic
+- python-dotenv
+- Other essential production dependencies
+
+**README.md must contain:**
+- Project description
+- Quick start commands
+- API endpoints documentation
+- Environment setup
+- Local development instructions
+
+### Quick Start Commands
+
+The generated project should support these commands:
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run development server (from project root)
+uvicorn main:app --reload
+
+# Or run directly from src
+uvicorn src.main:app --reload
+
+# Access API documentation
+# http://localhost:8000/docs
+
+# Access health check
+# http://localhost:8000/health
+```
+
+### Quality Checks
+
+- Verify FastAPI app runs without errors from both main.py and src/main.py
+- Confirm automatic API documentation is accessible
+- Test all generated endpoints in routes modules
+- Ensure proper error handling throughout
+- Check CORS configuration
+- Verify environment variable support via config
+- Test health check endpoint
+- Validate modular structure and imports
+
+---
+
+Generate a complete FastAPI quickstart project now.

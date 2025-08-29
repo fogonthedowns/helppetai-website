@@ -1,0 +1,151 @@
+---
+description: Generate a focused Python implementation of the Strategy design pattern with ABC, type hints, and 3 concrete strategies.
+globs:
+alwaysApply: false
+---
+
+# Strategy Design Pattern - Python
+
+## Rule Configuration
+
+```json
+{
+  "name": "strategy-pattern-python",
+  "description": "Implement the Strategy design pattern in Python with ABC and concrete strategies",
+  "trigger": "manual",
+  "files": ["**/*.py"],
+  "output": {
+    "interface": "src/strategies/base.py",
+    "strategies": "src/strategies/implementations.py",
+    "context": "src/strategies/context.py",
+    "example": "examples/usage_example.py",
+    "tests": "tests/test_strategies.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer implementing the Strategy design pattern. Create a complete, working implementation for **Payment Processing** with 3 payment strategies.
+
+### Primary Tasks
+
+#### 1. Generate Strategy Base Class (`src/strategies/base.py`)
+```python
+from abc import ABC, abstractmethod
+from typing import Dict, Any
+from dataclasses import dataclass
+
+@dataclass
+class PaymentResult:
+    success: bool
+    transaction_id: str
+    message: str
+    amount: float
+
+class PaymentStrategy(ABC):
+    """Abstract base class for payment strategies."""
+    
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Strategy name for identification."""
+    
+    @abstractmethod
+    def process_payment(self, amount: float, **kwargs) -> PaymentResult:
+        """Process payment with given amount. All methods are synchronous."""
+    
+    @abstractmethod
+    def validate_payment_data(self, **kwargs) -> bool:
+        """Validate payment data before processing."""
+```
+
+#### 2. Create 3 Concrete Strategies (`src/strategies/implementations.py`)
+- **CreditCardStrategy**: Requires card_number, cvv, expiry_date
+- **PayPalStrategy**: Requires email, password
+- **BankTransferStrategy**: Requires account_number, routing_number
+
+Each strategy must:
+- Implement all abstract methods
+- Include input validation with clear error messages
+- Return PaymentResult with realistic success/failure scenarios
+- Use simple logging with `logging.getLogger(__name__)`
+
+#### 3. Build Strategy Context (`src/strategies/context.py`)
+```python
+from typing import Optional
+from .base import PaymentStrategy, PaymentResult
+
+class PaymentProcessor:
+    """Context class for managing payment strategies."""
+    
+    def __init__(self, strategy: Optional[PaymentStrategy] = None):
+        self._strategy = strategy
+    
+    def set_strategy(self, strategy: PaymentStrategy) -> None:
+        """Change the current payment strategy."""
+        self._strategy = strategy
+    
+    def process_payment(self, amount: float, **kwargs) -> PaymentResult:
+        """Process payment using current strategy."""
+        if not self._strategy:
+            raise ValueError("No payment strategy set")
+        return self._strategy.process_payment(amount, **kwargs)
+```
+
+#### 4. Usage Example (`examples/usage_example.py`)
+Demonstrate:
+- Creating strategies and context
+- Runtime strategy switching
+- Error handling for invalid data
+- All 3 payment methods with realistic test data
+
+#### 5. Tests (`tests/test_strategies.py`)
+- Unit test each strategy with valid/invalid inputs
+- Test context strategy switching
+- Test error conditions
+- Use pytest with simple assertions
+
+### Implementation Requirements
+
+**Code Quality:**
+- Type hints on all methods and variables
+- Docstrings on classes and public methods
+- Simple error handling with ValueError/RuntimeError
+- Use `logging.getLogger(__name__)` for logging
+
+**Keep It Simple:**
+- All methods are synchronous (no async)
+- No external dependencies beyond standard library
+- No factory pattern or configuration files
+- No performance optimization features
+
+**Payment Processing Logic:**
+- CreditCard: Simulate success if card_number has even length
+- PayPal: Simulate success if email contains "@"
+- BankTransfer: Simulate success if account_number is numeric
+
+### Generated File Structure
+```
+├── src/
+│   └── strategies/
+│       ├── __init__.py
+│       ├── base.py              # Strategy ABC and PaymentResult
+│       ├── implementations.py   # 3 concrete strategies
+│       └── context.py          # PaymentProcessor context
+├── examples/
+│   └── usage_example.py        # Working demonstration
+└── tests/
+    └── test_strategies.py      # Pytest test suite
+```
+
+### Quality Checks
+- All strategies implement the PaymentStrategy interface correctly
+- Context can switch between strategies at runtime
+- Example code runs without errors
+- Tests pass with pytest
+- Type hints are valid (no mypy errors)
+
+---
+
+Generate the complete Strategy pattern implementation now.

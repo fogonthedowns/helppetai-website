@@ -1,0 +1,231 @@
+---
+description: Generate a focused Python implementation of the Command design pattern with undo/redo functionality for text editing operations.
+
+globs:
+alwaysApply: false
+---
+
+# Command Design Pattern - Python
+
+
+## Rule Configuration
+
+```json
+{
+  "name": "command-pattern-python",
+  "description": "Implement the Command design pattern in Python with undo/redo for text operations",
+  "trigger": "manual",
+  "files": ["**/*.py"],
+  "output": {
+    "command": "src/commands/base.py",
+    "concrete_commands": "src/commands/implementations.py",
+    "invoker": "src/commands/invoker.py",
+    "receiver": "src/commands/receiver.py",
+    "example": "examples/usage_example.py",
+    "tests": "tests/test_commands.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer implementing the Command design pattern. Create a complete, working implementation for **Text Editor Operations** with undo/redo functionality.
+
+### Primary Tasks
+
+#### 1. Generate Command Base Class (`src/commands/base.py`)
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Dict
+
+@dataclass
+class CommandResult:
+    success: bool
+    message: str
+    undo_data: Dict[str, Any]
+
+class Command(ABC):
+    """Abstract base class for all commands."""
+    
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Command name for identification."""
+    
+    @abstractmethod
+    def execute(self) -> CommandResult:
+        """Execute the command. All methods are synchronous."""
+    
+    @abstractmethod
+    def undo(self, undo_data: Dict[str, Any]) -> bool:
+        """Undo the command using the provided undo data."""
+```
+
+#### 2. Create Text Editor Receiver (`src/commands/receiver.py`)
+```python
+class TextEditor:
+    """Receiver that performs actual text operations."""
+    
+    def __init__(self):
+        self._content = ""
+        self._cursor_position = 0
+    
+    def insert_text(self, text: str, position: int) -> Dict[str, Any]:
+        """Insert text at position. Return undo data."""
+        # Implementation here
+    
+    def delete_text(self, start: int, end: int) -> Dict[str, Any]:
+        """Delete text from start to end. Return undo data."""
+        # Implementation here
+    
+    def replace_text(self, start: int, end: int, new_text: str) -> Dict[str, Any]:
+        """Replace text in range with new text. Return undo data."""
+        # Implementation here
+    
+    @property
+    def content(self) -> str:
+        return self._content
+    
+    @property
+    def cursor_position(self) -> int:
+        return self._cursor_position
+    
+    def set_cursor_position(self, position: int) -> None:
+        self._cursor_position = max(0, min(position, len(self._content)))
+```
+
+#### 3. Create 3 Concrete Commands (`src/commands/implementations.py`)
+- **InsertTextCommand**: Insert text at current cursor position
+- **DeleteTextCommand**: Delete selected text range
+- **ReplaceTextCommand**: Replace text in range with new text
+
+Each command must:
+- Take a TextEditor receiver in constructor
+- Store necessary parameters for execution
+- Return CommandResult with undo data
+- Implement perfect undo that reverses the operation
+
+Example structure:
+```python
+class InsertTextCommand(Command):
+    def __init__(self, editor: TextEditor, text: str):
+        self._editor = editor
+        self._text = text
+    
+    @property
+    def name(self) -> str:
+        return f"Insert '{self._text}'"
+    
+    def execute(self) -> CommandResult:
+        # Insert text and return undo data
+    
+    def undo(self, undo_data: Dict[str, Any]) -> bool:
+        # Reverse the insert operation
+```
+
+#### 4. Build Command Invoker (`src/commands/invoker.py`)
+```python
+from typing import List, Optional
+from .base import Command, CommandResult
+
+class CommandInvoker:
+    """Invoker that executes commands and manages undo/redo history."""
+    
+    def __init__(self, max_history: int = 50):
+        self._history: List[tuple[Command, Dict[str, Any]]] = []
+        self._current_index = -1
+        self._max_history = max_history
+    
+    def execute_command(self, command: Command) -> CommandResult:
+        """Execute a command and add to history."""
+        # Implementation here
+    
+    def undo(self) -> bool:
+        """Undo the last command."""
+        # Implementation here
+    
+    def redo(self) -> bool:
+        """Redo the next command."""
+        # Implementation here
+    
+    def can_undo(self) -> bool:
+        """Check if undo is possible."""
+        return self._current_index >= 0
+    
+    def can_redo(self) -> bool:
+        """Check if redo is possible."""
+        return self._current_index < len(self._history) - 1
+    
+    def get_history(self) -> List[str]:
+        """Get list of command names in history."""
+        return [cmd.name for cmd, _ in self._history]
+```
+
+#### 5. Usage Example (`examples/usage_example.py`)
+Demonstrate:
+- Creating text editor and invoker
+- Executing text commands (insert, delete, replace)
+- Undo and redo operations
+- Command history display
+- Edge cases (undo when no history, etc.)
+
+#### 6. Tests (`tests/test_commands.py`)
+- Test each command executes and undoes correctly
+- Test invoker history management
+- Test undo/redo functionality
+- Test edge cases and error conditions
+- Use pytest with simple assertions
+
+### Implementation Requirements
+
+**Code Quality:**
+- Type hints on all methods and variables
+- Docstrings on classes and public methods
+- Simple error handling with ValueError/RuntimeError
+- Use `logging.getLogger(__name__)` for logging
+
+**Keep It Simple:**
+- All methods are synchronous (no async)
+- No external dependencies beyond standard library
+- No command serialization or persistence
+- No macro commands or complex composition
+
+**Text Editor Logic:**
+- Maintain text content as a string
+- Track cursor position for insertions
+- Store minimal undo data (what was changed, where, original content)
+- Perfect undo: executing command then undo should restore exact previous state
+
+**Command History Management:**
+- Store commands with their undo data
+- Limit history size to prevent memory growth
+- Clear "future" commands when new command executed after undo
+- Track current position in history for undo/redo
+
+### Generated File Structure
+```
+├── src/
+│   └── commands/
+│       ├── __init__.py
+│       ├── base.py              # Command ABC and CommandResult
+│       ├── receiver.py          # TextEditor receiver
+│       ├── implementations.py   # 3 concrete commands
+│       └── invoker.py          # CommandInvoker with history
+├── examples/
+│   └── usage_example.py        # Working demonstration
+└── tests/
+    └── test_commands.py        # Pytest test suite
+```
+
+### Quality Checks
+- All commands implement perfect undo (execute then undo restores original state)
+- Invoker correctly manages command history and undo/redo stack
+- Text editor operations work correctly with cursor positioning
+- Example demonstrates complete workflow with multiple operations
+- Tests verify undo/redo functionality works correctly
+- Type hints are valid (no mypy errors)
+
+---
+
+Generate the complete Command pattern implementation now.

@@ -1,0 +1,271 @@
+---
+description: Generate a focused Python implementation of the Singleton design pattern with thread safety and multiple implementation approaches.
+globs:
+alwaysApply: false
+---
+
+# Singleton Design Pattern - Python
+
+## Rule Configuration
+
+```json
+{
+  "name": "singleton-pattern-python",
+  "description": "Implement the Singleton design pattern in Python with thread-safe implementations",
+  "trigger": "manual",
+  "files": ["**/*.py"],
+  "output": {
+    "base": "src/singletons/base.py",
+    "implementations": "src/singletons/implementations.py",
+    "application": "src/singletons/application.py",
+    "example": "examples/usage_example.py",
+    "tests": "tests/test_singletons.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer implementing the Singleton design pattern. Create a complete, working implementation for **Application Configuration Manager** with multiple singleton approaches.
+
+### Primary Tasks
+
+#### 1. Generate Base Singleton Class (`src/singletons/base.py`)
+```python
+import threading
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
+
+class SingletonMeta(type):
+    """Thread-safe singleton metaclass."""
+    _instances: Dict[type, Any] = {}
+    _lock: threading.Lock = threading.Lock()
+    
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            with cls._lock:
+                if cls not in cls._instances:
+                    instance = super().__call__(*args, **kwargs)
+                    cls._instances[cls] = instance
+        return cls._instances[cls]
+
+class SingletonBase(ABC, metaclass=SingletonMeta):
+    """Abstract base class for singletons."""
+    
+    def __init__(self):
+        if hasattr(self, '_initialized'):
+            return
+        self._initialized = True
+        self._setup()
+    
+    @abstractmethod
+    def _setup(self) -> None:
+        """Initialize singleton instance. All methods are synchronous."""
+    
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset singleton instance for testing."""
+        if cls in cls.__class__._instances:
+            del cls.__class__._instances[cls]
+```
+
+#### 2. Create Application Singletons (`src/singletons/application.py`)
+```python
+from typing import Any, Dict, Optional
+import json
+import os
+from .base import SingletonBase
+
+class ConfigManager(SingletonBase):
+    """Configuration manager singleton."""
+    
+    def _setup(self) -> None:
+        self._config: Dict[str, Any] = {}
+        self._config_file: Optional[str] = None
+        self._load_default_config()
+    
+    def _load_default_config(self) -> None:
+        """Load default configuration."""
+        self._config = {
+            "app_name": "MyApplication",
+            "version": "1.0.0",
+            "debug": False,
+            "database_url": "sqlite:///app.db",
+            "api_timeout": 30,
+            "max_connections": 100
+        }
+    
+    def load_from_file(self, config_file: str) -> bool:
+        """Load configuration from JSON file."""
+        # Implementation here
+    
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get configuration value."""
+        return self._config.get(key, default)
+    
+    def set(self, key: str, value: Any) -> None:
+        """Set configuration value."""
+        self._config[key] = value
+    
+    def get_all(self) -> Dict[str, Any]:
+        """Get all configuration values."""
+        return self._config.copy()
+
+class Logger(SingletonBase):
+    """Application logger singleton."""
+    
+    def _setup(self) -> None:
+        self._log_level = "INFO"
+        self._logs: list[str] = []
+        self._max_logs = 1000
+    
+    def set_level(self, level: str) -> None:
+        """Set logging level."""
+        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        if level.upper() in valid_levels:
+            self._log_level = level.upper()
+    
+    def log(self, level: str, message: str) -> None:
+        """Log a message."""
+        # Implementation here
+    
+    def debug(self, message: str) -> None:
+        self.log("DEBUG", message)
+    
+    def info(self, message: str) -> None:
+        self.log("INFO", message)
+    
+    def warning(self, message: str) -> None:
+        self.log("WARNING", message)
+    
+    def error(self, message: str) -> None:
+        self.log("ERROR", message)
+    
+    def get_logs(self, limit: Optional[int] = None) -> list[str]:
+        """Get recent log entries."""
+        if limit:
+            return self._logs[-limit:]
+        return self._logs.copy()
+```
+
+#### 3. Alternative Implementations (`src/singletons/implementations.py`)
+Show 3 different singleton implementation approaches:
+- **DecoratorSingleton**: Using function decorator
+- **NewMethodSingleton**: Overriding __new__ method  
+- **ModuleLevelSingleton**: Module-level instance
+
+Example structure:
+```python
+import threading
+from typing import Any, Dict
+
+# Decorator approach
+def singleton(cls):
+    """Singleton decorator."""
+    instances = {}
+    lock = threading.Lock()
+    
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            with lock:
+                if cls not in instances:
+                    instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    return get_instance
+
+@singleton
+class DecoratorSingleton:
+    def __init__(self):
+        self.value = 0
+
+# __new__ method approach
+class NewMethodSingleton:
+    _instance = None
+    _lock = threading.Lock()
+    
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+# Module level approach
+class _ModuleSingleton:
+    def __init__(self):
+        self.data = {}
+
+module_singleton = _ModuleSingleton()
+```
+
+#### 4. Usage Example (`examples/usage_example.py`)
+Demonstrate:
+- Creating multiple instances of ConfigManager and Logger
+- Verifying same instance is returned
+- Configuration loading and retrieval
+- Logging with different levels
+- Thread safety demonstration
+- Different singleton implementation approaches
+
+#### 5. Tests (`tests/test_singletons.py`)
+- Test singleton behavior (same instance returned)
+- Test thread safety with concurrent access
+- Test configuration manager functionality
+- Test logger functionality
+- Test singleton reset for testing
+- Use pytest with simple assertions
+
+### Implementation Requirements
+
+**Code Quality:**
+- Type hints on all methods and variables
+- Docstrings on classes and public methods
+- Simple error handling with try/except
+- Use proper threading locks for safety
+
+**Keep It Simple:**
+- All methods are synchronous (no async)
+- No external dependencies beyond standard library
+- No complex configuration formats (JSON only)
+- No file watching or auto-reload features
+
+**Singleton Behavior:**
+- Multiple calls to constructor return same instance
+- Thread-safe instance creation
+- Initialization code runs only once
+- Support reset for testing scenarios
+
+**Application Logic:**
+- ConfigManager loads default config and supports JSON files
+- Logger maintains in-memory log buffer with level filtering
+- Both singletons should be independently testable
+- Configuration changes should persist across instance calls
+
+### Generated File Structure
+```
+├── src/
+│   └── singletons/
+│       ├── __init__.py
+│       ├── base.py              # Singleton metaclass and base
+│       ├── application.py       # ConfigManager and Logger singletons
+│       └── implementations.py   # Alternative singleton approaches
+├── examples/
+│   └── usage_example.py        # Working demonstration
+└── tests/
+    └── test_singletons.py      # Pytest test suite
+```
+
+### Quality Checks
+- Multiple instantiation attempts return same object
+- Thread safety works under concurrent access
+- Initialization code runs only once per class
+- ConfigManager handles configuration correctly
+- Logger filters and stores messages properly
+- Alternative implementations work correctly
+- Reset functionality enables proper testing
+- Example code runs without errors
+- Tests pass with pytest
+
+---
+
+Generate the complete Singleton pattern implementation now.

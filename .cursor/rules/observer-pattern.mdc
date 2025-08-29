@@ -1,0 +1,216 @@
+---
+description: Generate a focused Python implementation of the Observer design pattern with ABC, type hints, and multiple observers.
+
+globs:
+alwaysApply: false
+---
+
+# Observer Design Pattern - Python
+
+**Rule Name:** `observer-pattern-python`
+
+**Description:** Generate a focused Python implementation of the Observer design pattern with ABC, type hints, and multiple observers.
+
+## Rule Configuration
+
+```json
+{
+  "name": "observer-pattern-python",
+  "description": "Implement the Observer design pattern in Python with subject and concrete observers",
+  "trigger": "manual",
+  "files": ["**/*.py"],
+  "output": {
+    "observer": "src/observers/base.py",
+    "subject": "src/observers/subject.py",
+    "concrete_observers": "src/observers/implementations.py",
+    "example": "examples/usage_example.py",
+    "tests": "tests/test_observers.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer implementing the Observer design pattern. Create a complete, working implementation for **Stock Price Monitoring** with a stock subject and 3 observer types.
+
+### Primary Tasks
+
+#### 1. Generate Observer Base Class (`src/observers/base.py`)
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class StockEvent:
+    symbol: str
+    old_price: float
+    new_price: float
+    timestamp: str
+    change_percent: float
+
+class Observer(ABC):
+    """Abstract base class for stock price observers."""
+    
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Observer name for identification."""
+    
+    @abstractmethod
+    def update(self, event: StockEvent) -> None:
+        """Handle stock price update notification. All methods are synchronous."""
+```
+
+#### 2. Create Subject Class (`src/observers/subject.py`)
+```python
+from typing import Set
+from .base import Observer, StockEvent
+import logging
+from datetime import datetime
+
+class StockSubject:
+    """Subject that notifies observers of stock price changes."""
+    
+    def __init__(self, symbol: str, initial_price: float):
+        self._symbol = symbol
+        self._price = initial_price
+        self._observers: Set[Observer] = set()
+        self._logger = logging.getLogger(__name__)
+    
+    def attach(self, observer: Observer) -> None:
+        """Add an observer."""
+        self._observers.add(observer)
+        self._logger.info(f"Attached observer: {observer.name}")
+    
+    def detach(self, observer: Observer) -> None:
+        """Remove an observer."""
+        self._observers.discard(observer)
+        self._logger.info(f"Detached observer: {observer.name}")
+    
+    def notify_observers(self, event: StockEvent) -> None:
+        """Notify all observers of price change."""
+        for observer in self._observers:
+            try:
+                observer.update(event)
+            except Exception as e:
+                self._logger.error(f"Observer {observer.name} failed: {e}")
+    
+    def set_price(self, new_price: float) -> None:
+        """Update stock price and notify observers."""
+        old_price = self._price
+        change_percent = ((new_price - old_price) / old_price) * 100
+        
+        event = StockEvent(
+            symbol=self._symbol,
+            old_price=old_price,
+            new_price=new_price,
+            timestamp=datetime.now().isoformat(),
+            change_percent=change_percent
+        )
+        
+        self._price = new_price
+        self.notify_observers(event)
+    
+    @property
+    def price(self) -> float:
+        return self._price
+    
+    @property
+    def symbol(self) -> str:
+        return self._symbol
+```
+
+#### 3. Create 3 Concrete Observers (`src/observers/implementations.py`)
+- **EmailAlertObserver**: Logs email alerts for significant price changes (>5%)
+- **SMSNotificationObserver**: Logs SMS notifications for all price changes
+- **DatabaseLoggerObserver**: Logs all events to simulated database
+
+Each observer must:
+- Implement the Observer interface
+- Include unique behavior for handling stock events
+- Use simple logging with `logging.getLogger(__name__)`
+- Handle errors gracefully with try/except
+
+Example structure:
+```python
+class EmailAlertObserver(Observer):
+    def __init__(self, email: str, threshold_percent: float = 5.0):
+        self._email = email
+        self._threshold = threshold_percent
+        self._logger = logging.getLogger(__name__)
+    
+    @property
+    def name(self) -> str:
+        return f"EmailAlert({self._email})"
+    
+    def update(self, event: StockEvent) -> None:
+        if abs(event.change_percent) >= self._threshold:
+            self._logger.info(f"EMAIL to {self._email}: {event.symbol} changed {event.change_percent:.2f}%")
+```
+
+#### 4. Usage Example (`examples/usage_example.py`)
+Demonstrate:
+- Creating a stock subject with initial price
+- Creating and attaching 3 different observers
+- Price updates that trigger notifications
+- Observer removal and re-attachment
+- Error handling scenarios
+
+#### 5. Tests (`tests/test_observers.py`)
+- Test observer attach/detach functionality
+- Test notification delivery to all observers
+- Test error isolation (one observer failure doesn't stop others)
+- Test that observers receive correct event data
+- Use pytest with simple assertions
+
+### Implementation Requirements
+
+**Code Quality:**
+- Type hints on all methods and variables
+- Docstrings on classes and public methods
+- Simple error handling with try/except blocks
+- Use `logging.getLogger(__name__)` for logging
+
+**Keep It Simple:**
+- All methods are synchronous (no async)
+- No external dependencies beyond standard library
+- No event filtering or complex routing
+- No thread safety or WeakRef usage
+
+**Stock Monitoring Logic:**
+- Calculate change percentage: `((new_price - old_price) / old_price) * 100`
+- Use `datetime.now().isoformat()` for timestamps
+- EmailAlert only triggers if change > threshold
+- SMS and Database observers always respond
+
+**Error Isolation:**
+- Use try/except in `notify_observers()` to catch individual observer failures
+- Log errors but continue notifying other observers
+- Don't let one broken observer stop the notification process
+
+### Generated File Structure
+```
+├── src/
+│   └── observers/
+│       ├── __init__.py
+│       ├── base.py              # Observer ABC and StockEvent
+│       ├── subject.py           # StockSubject implementation
+│       └── implementations.py   # 3 concrete observers
+├── examples/
+│   └── usage_example.py        # Working demonstration
+└── tests/
+    └── test_observers.py       # Pytest test suite
+```
+
+### Quality Checks
+- All observers implement the Observer interface correctly
+- Subject properly attaches/detaches observers
+- Notifications reach all attached observers
+- Error isolation works (failed observer doesn't break others)
+- Example code runs without errors
+- Tests pass with pytest
+
+---
+
+Generate the complete Observer pattern implementation now.

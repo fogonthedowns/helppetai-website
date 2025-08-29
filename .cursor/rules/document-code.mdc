@@ -1,0 +1,142 @@
+---
+description: Automatically analyze source code and generate comprehensive documentation including API documentation, system overview, and interaction diagrams.
+globs:
+alwaysApply: false
+---
+
+# Source Code Documentation
+
+**Rule Name:** `source-code-documentation`
+
+**Description:** Automatically analyze source code and generate comprehensive documentation including API documentation, system overview, and interaction diagrams.
+
+## Rule Configuration
+
+```json
+{
+  "name": "source-code-documentation",
+  "description": "Analyze source code and generate comprehensive documentation",
+  "trigger": "manual",
+  "files": ["**/*.js", "**/*.ts", "**/*.py", "**/*.java", "**/*.cs", "**/*.go", "**/*.php"],
+  "output": {
+    "documentation": "docs/about.md",
+    "diagram": "docs/diagram.puml"
+  }
+}
+```
+
+## Instructions
+
+You are a senior software engineer tasked with documenting an existing codebase. Analyze the source code thoroughly and create comprehensive documentation.
+
+### Primary Tasks
+
+#### 1. Read and analyze the entire codebase
+- Examine all source files in the project
+- Identify main entry points, core modules, and dependencies
+- Understand the application architecture and flow
+- Identify key classes, functions, and interfaces
+
+#### 2. Generate `docs/about.md` with:
+
+**Introduction & Brief**
+- Clear explanation of what the application does
+- Primary purpose and key features
+- Target audience or use cases
+- Important architectural decisions or design patterns
+
+**API Documentation**
+- Document all public APIs, endpoints, or interfaces
+- Include request/response formats for web APIs
+- Document function signatures, parameters, and return values
+- Provide example usage where applicable
+- Note authentication requirements if applicable
+
+**Additional Sections (choose relevant ones):**
+- **Setup & Installation**: How to get the app running
+- **Configuration**: Environment variables, config files
+- **Dependencies**: Key libraries and their purposes
+- **Database Schema**: If applicable, document data models
+- **Authentication & Authorization**: Security implementation
+- **Error Handling**: How errors are managed and returned
+- **Performance Considerations**: Caching, optimization notes
+- **Known Limitations**: Current constraints or technical debt
+- **Future Improvements**: Suggested enhancements
+
+#### 3. Generate `docs/diagram.puml` with:
+- A sequence diagram showing the main system interactions
+- Focus on the primary user flow or most important process
+- Include key components, services, or modules
+- Show data flow and major decision points
+- Use proper PlantUML sequence diagram syntax
+
+### Documentation Standards
+
+- **Clarity**: Write for a staff software engineer who is new to the codebase
+- **Completeness**: Cover all major functionality and public interfaces
+- **Accuracy**: Ensure all documented APIs and behaviors match the actual code
+- **Structure**: Use clear headings and logical organization
+- **Examples**: Include code examples and usage patterns where helpful
+- **Conciseness**: Be thorough but avoid unnecessary verbosity
+
+### Analysis Approach
+
+1. Start with entry points (main files, routes, controllers)
+2. Map out the application flow and major components
+3. Identify and document all public interfaces
+4. Understand data models and business logic
+5. Note any unusual patterns or important implementation details
+6. Create a sequence diagram for the most critical user journey
+
+### Output Format
+
+**For `docs/about.md`:**
+```markdown
+# Application Documentation
+
+## Overview
+[Brief description]
+
+## What This Application Does
+[Detailed explanation]
+
+## Architecture
+[Key architectural decisions]
+
+## API Documentation
+[Complete API docs]
+
+## [Additional relevant sections]
+```
+
+**For `docs/diagram.puml`:**
+```plantuml
+@startuml
+title System Interaction Diagram
+
+actor User
+participant "Component A" as A
+participant "Component B" as B
+database "Database" as DB
+
+User -> A: Request
+A -> B: Process
+B -> DB: Query
+DB --> B: Result
+B --> A: Response
+A --> User: Result
+
+@enduml
+```
+
+### Quality Checks
+
+- Ensure all major code paths are documented
+- Verify API documentation matches implementation
+- Confirm sequence diagram represents actual system flow
+- Check that non-technical stakeholders could understand the overview
+- Validate that a new developer could onboard using this documentation
+
+---
+
+Execute this analysis now and generate both documentation files.

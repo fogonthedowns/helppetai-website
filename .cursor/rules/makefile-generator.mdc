@@ -1,0 +1,140 @@
+---
+description: Generate a standard Makefile with common targets for project automation.
+globs:
+alwaysApply: false
+---
+
+# Makefile Generator
+
+**Rule Name:** `makefile-generator`
+
+## Rule Configuration
+
+```json
+{
+  "name": "makefile-generator",
+  "description": "Generate a standard Makefile with help, build, run, clean, and test targets",
+  "trigger": "manual",
+  "files": ["**/"],
+  "output": {
+    "makefile": "Makefile"
+  }
+}
+```
+
+## Instructions
+
+You are a senior DevOps engineer tasked with creating a standard Makefile for project automation. Generate a clean, cross-platform compatible Makefile.
+
+### Requirements
+
+#### Target Structure
+The Makefile must include exactly 5 targets:
+1. **help** - Display available commands and their descriptions
+2. **build** - Compile/build the project
+3. **run** - Execute the application
+4. **clean** - Remove build artifacts and temporary files
+5. **test** - Run project tests
+
+#### Behavior Requirements
+- Default target when running `make` should be `help`
+- Compatible with macOS and Linux systems
+- Use standard POSIX shell commands
+- Include clear, concise descriptions for each target
+- No emojis or decorative characters
+
+### Implementation Standards
+
+**Cross-Platform Compatibility:**
+- Use POSIX-compliant shell commands
+- Avoid GNU-specific make extensions
+- Test commands that work on both macOS and Linux
+- Use portable file operations
+
+**Code Quality:**
+- Clean, readable syntax
+- Consistent indentation (tabs, not spaces)
+- Meaningful variable names
+- Proper error handling where applicable
+
+**Documentation:**
+- Each target should have a brief description
+- Help output should be well-formatted
+- Include usage examples in comments if needed
+
+### Makefile Template Structure
+
+```makefile
+.DEFAULT_GOAL := help
+
+# Variables
+PROJECT_NAME := project-name
+BUILD_DIR := build
+SRC_DIR := src
+
+# Help target
+help: ## Show available targets
+	@echo "Available targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+# Build target
+build: ## Build the project
+	@echo "Building $(PROJECT_NAME)..."
+	# Add build commands here
+
+# Run target  
+run: ## Run the application
+	@echo "Running $(PROJECT_NAME)..."
+	# Add run commands here
+
+# Clean target
+clean: ## Remove build artifacts
+	@echo "Cleaning build artifacts..."
+	# Add clean commands here
+
+# Test target
+test: ## Run tests
+	@echo "Running tests..."
+	# Add test commands here
+
+.PHONY: help build run clean test
+```
+
+### Customization Guidelines
+
+**Language-Specific Adaptations:**
+- For Python: Use `python -m pip install`, `python -m pytest`
+- For Node.js: Use `npm install`, `npm start`, `npm test`
+- For Go: Use `go build`, `go run`, `go test`
+- For Java: Use `javac`, `java`, `mvn test` or `gradle test`
+- For C/C++: Use `gcc`/`g++`, appropriate compiler flags
+
+**Project Structure Awareness:**
+- Detect common project files (package.json, requirements.txt, go.mod, etc.)
+- Adapt build commands based on detected project type
+- Set appropriate source and build directories
+- Include relevant dependency management
+
+### Output Requirements
+
+Generate a `Makefile` that:
+- Has `help` as the default target
+- Contains all 5 required targets
+- Uses appropriate commands for the detected project type
+- Includes proper `.PHONY` declarations
+- Has clean, consistent formatting
+- Works on both macOS and Linux
+- Provides useful feedback when targets are executed
+
+### Quality Checks
+
+- Verify default target is `help`
+- Confirm all targets have descriptions
+- Test cross-platform compatibility
+- Ensure proper tab indentation (not spaces)
+- Validate `.PHONY` target includes all non-file targets
+- Check that help output is well-formatted and readable
+
+---
+
+Analyze the current project structure and generate an appropriate Makefile now.

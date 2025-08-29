@@ -1,0 +1,208 @@
+---
+description: Generate a focused Python implementation of the Chain of Responsibility design pattern with request handling and processing chain.
+globs:
+alwaysApply: false
+---
+
+# Chain of Responsibility Design Pattern - Python
+
+## Rule Configuration
+
+```json
+{
+  "name": "chain-of-responsibility-python",
+  "description": "Implement the Chain of Responsibility design pattern in Python with request handlers",
+  "trigger": "manual",
+  "files": ["**/*.py"],
+  "output": {
+    "handler": "src/handlers/base.py",
+    "concrete_handlers": "src/handlers/implementations.py",
+    "request": "src/handlers/request.py",
+    "example": "examples/usage_example.py",
+    "tests": "tests/test_handlers.py"
+  }
+}
+```
+
+## Instructions
+
+You are a senior Python developer implementing the Chain of Responsibility design pattern. Create a complete, working implementation for **Support Ticket Processing** with multiple handler levels.
+
+### Primary Tasks
+
+#### 1. Generate Handler Base Class (`src/handlers/base.py`)
+```python
+from abc import ABC, abstractmethod
+from typing import Optional, Any
+
+class Handler(ABC):
+    """Abstract base class for request handlers."""
+    
+    def __init__(self):
+        self._next_handler: Optional['Handler'] = None
+    
+    def set_next(self, handler: 'Handler') -> 'Handler':
+        """Set the next handler in the chain."""
+        self._next_handler = handler
+        return handler
+    
+    def handle(self, request: Any) -> Optional[str]:
+        """Handle request or pass to next handler. All methods are synchronous."""
+        result = self._handle_request(request)
+        if result is not None:
+            return result
+        
+        if self._next_handler:
+            return self._next_handler.handle(request)
+        
+        return None
+    
+    @abstractmethod
+    def _handle_request(self, request: Any) -> Optional[str]:
+        """Handle the request if possible, return None if cannot handle."""
+    
+    @abstractmethod
+    def can_handle(self, request: Any) -> bool:
+        """Check if this handler can process the request."""
+```
+
+#### 2. Create Request Model (`src/handlers/request.py`)
+```python
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Optional
+
+class Priority(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+class Category(Enum):
+    TECHNICAL = "technical"
+    BILLING = "billing"
+    GENERAL = "general"
+    ACCOUNT = "account"
+
+@dataclass
+class SupportRequest:
+    """Support ticket request model."""
+    id: str
+    title: str
+    description: str
+    priority: Priority
+    category: Category
+    customer_tier: str  # "basic", "premium", "enterprise"
+    created_at: datetime
+    assigned_to: Optional[str] = None
+    
+    @classmethod
+    def create(cls, title: str, description: str, priority: Priority, 
+               category: Category, customer_tier: str) -> 'SupportRequest':
+        """Create a new support request."""
+        import uuid
+        return cls(
+            id=str(uuid.uuid4())[:8],
+            title=title,
+            description=description,
+            priority=priority,
+            category=category,
+            customer_tier=customer_tier,
+            created_at=datetime.utcnow()
+        )
+```
+
+#### 3. Create 4 Concrete Handlers (`src/handlers/implementations.py`)
+- **Level1SupportHandler**: Handles basic/general requests for all customer tiers
+- **Level2SupportHandler**: Handles medium priority technical/billing issues
+- **Level3SupportHandler**: Handles high priority issues and premium customers
+- **ManagerHandler**: Handles critical issues and enterprise customers
+
+Each handler must:
+- Implement can_handle() and _handle_request() methods
+- Check request priority, category, and customer tier
+- Return descriptive message when handling request
+- Return None when cannot handle (passes to next)
+
+Example structure:
+```python
+class Level1SupportHandler(Handler):
+    def can_handle(self, request: SupportRequest) -> bool:
+        return (request.priority == Priority.LOW and 
+                request.category == Category.GENERAL)
+    
+    def _handle_request(self, request: SupportRequest) -> Optional[str]:
+        if self.can_handle(request):
+            return f"L1 Support handling request {request.id}: {request.title}"
+        return None
+```
+
+#### 4. Usage Example (`examples/usage_example.py`)
+Demonstrate:
+- Creating support requests with different priorities and categories
+- Building handler chain (L1 -> L2 -> L3 -> Manager)
+- Processing requests through the chain
+- Showing requests handled at different levels
+- Unhandled requests (no handler in chain can process)
+
+#### 5. Tests (`tests/test_handlers.py`)
+- Test each handler's can_handle() logic
+- Test complete chain processing
+- Test requests handled at correct level
+- Test unhandled requests return None
+- Use pytest with simple assertions
+
+### Implementation Requirements
+
+**Code Quality:**
+- Type hints on all methods and variables
+- Docstrings on classes and public methods
+- Simple error handling with None returns
+- Use `logging.getLogger(__name__)` for logging
+
+**Keep It Simple:**
+- All methods are synchronous (no async)
+- No external dependencies beyond standard library
+- No complex routing or configuration
+- No handler registration systems
+
+**Support Request Logic:**
+- L1: LOW priority, GENERAL category only
+- L2: MEDIUM priority, TECHNICAL or BILLING category
+- L3: HIGH priority any category, or any PREMIUM customer requests
+- Manager: CRITICAL priority, or ENTERPRISE customer requests
+- Chain processes in order: L1 -> L2 -> L3 -> Manager
+
+**Chain Behavior:**
+- Handlers check if they can handle the request
+- First matching handler processes and returns result
+- If no handler can process, return None
+- Chain setup should be fluent: `l1.set_next(l2).set_next(l3).set_next(manager)`
+
+### Generated File Structure
+```
+├── src/
+│   └── handlers/
+│       ├── __init__.py
+│       ├── base.py              # Handler ABC
+│       ├── request.py           # SupportRequest and enums
+│       └── implementations.py   # 4 concrete handlers
+├── examples/
+│   └── usage_example.py        # Working demonstration
+└── tests/
+    └── test_handlers.py        # Pytest test suite
+```
+
+### Quality Checks
+- All handlers implement the Handler interface correctly
+- Chain processes requests in correct order
+- Requests are handled by appropriate level
+- Unhandled requests return None gracefully
+- Handler chain can be built fluently
+- Example code runs without errors
+- Tests pass with pytest
+
+---
+
+Generate the complete Chain of Responsibility pattern implementation now.
