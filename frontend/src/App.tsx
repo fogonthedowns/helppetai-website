@@ -10,6 +10,9 @@ import AboutUs from './components/AboutUs';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import PracticesList from './components/practices/PracticesList';
+import PracticeDetail from './components/practices/PracticeDetail';
+import PracticeForm from './components/practices/PracticeForm';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -29,6 +32,22 @@ const App = () => {
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            
+            {/* Practice Routes - Public */}
+            <Route path="/practices" element={<PracticesList />} />
+            <Route path="/practices/:id" element={<PracticeDetail />} />
+            
+            {/* Practice Routes - Admin Only */}
+            <Route path="/practices/new" element={
+              <ProtectedRoute>
+                <PracticeForm mode="create" />
+              </ProtectedRoute>
+            } />
+            <Route path="/practices/:id/edit" element={
+              <ProtectedRoute>
+                <PracticeForm mode="edit" />
+              </ProtectedRoute>
+            } />
             
             {/* Protected RAG Search Routes */}
             <Route path="/rag" element={

@@ -35,11 +35,12 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Home</Link>
             <Link to="/vets" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Vets</Link>
+            <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
             <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
             
             {isAuthenticated ? (
               <>
-                <Link to="/rag" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">RAG Search</Link>
+                <Link to="/rag" className="text-gray-600 hover:text-gray-900 font-medium transition-colorss">AI Search</Link>
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-600">Welcome, {username}</span>
                   <button 

@@ -75,7 +75,7 @@ const Home = () => {
                 
                 <Link to="/rag" className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2">
                   <Brain className="w-4 h-4" />
-                  Try RAG Search
+                  Expert AI Search
                 </Link>
               </div>
               
@@ -142,8 +142,8 @@ const Home = () => {
       {/* Clean Hims-Style Boxes */}
       <section className="w-full bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-6">
-          {/* First Row - Two Large Clean Boxes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* First Row - Three Large Clean Boxes */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             {/* Clean Red Box */}
             <div className="bg-gradient-to-br from-red-400 to-red-500 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
               <div>
@@ -171,6 +171,21 @@ const Home = () => {
               </div>
               <Link to="/vets" className="bg-white text-orange-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
                 Learn more
+              </Link>
+            </div>
+
+            {/* Clean Blue Box - Practices */}
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
+              <div>
+                <h2 className="text-4xl font-light leading-tight mb-4" style={{
+                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
+                }}>
+                  Find veterinary<br />
+                  practices
+                </h2>
+              </div>
+              <Link to="/practices" className="bg-white text-blue-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
+                Browse practices
               </Link>
             </div>
           </div>

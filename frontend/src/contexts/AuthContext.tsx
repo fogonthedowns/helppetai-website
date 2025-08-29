@@ -1,8 +1,22 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
+import { API_ENDPOINTS } from '../config/api';
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  full_name: string;
+  practice_id?: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
   username: string | null;
+  user: User | null;
   login: (username: string, token: string) => void;
   logout: () => void;
   isLoading: boolean;
@@ -13,6 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -23,16 +38,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (token && storedUsername) {
       setIsAuthenticated(true);
       setUsername(storedUsername);
+      // Fetch user details
+      fetchUserDetails();
+    } else {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }, []);
+
+  const fetchUserDetails = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.AUTH.ME);
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user details:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = (username: string, token: string) => {
     localStorage.setItem('token', token);
     localStorage.setItem('username', username);
     setIsAuthenticated(true);
     setUsername(username);
+    // Fetch user details after login
+    fetchUserDetails();
   };
 
   const logout = () => {
@@ -40,10 +73,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('username');
     setIsAuthenticated(false);
     setUsername(null);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, username, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, username, user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

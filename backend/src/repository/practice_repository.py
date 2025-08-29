@@ -16,6 +16,57 @@ class PracticeRepository(BaseRepository[VeterinaryPractice]):
     def __init__(self):
         super().__init__(VeterinaryPractice)
     
+    async def get_by_uuid(self, uuid: str) -> Optional[VeterinaryPractice]:
+        """
+        Get practice by UUID
+        
+        Args:
+            uuid: Practice UUID
+            
+        Returns:
+            Practice if found, None otherwise
+        """
+        return await VeterinaryPractice.find_one({"uuid": uuid})
+    
+    async def update_by_uuid(self, uuid: str, update_data: dict) -> Optional[VeterinaryPractice]:
+        """
+        Update practice by UUID
+        
+        Args:
+            uuid: Practice UUID
+            update_data: Data to update
+            
+        Returns:
+            Updated practice if found, None otherwise
+        """
+        practice = await self.get_by_uuid(uuid)
+        if not practice:
+            return None
+        
+        for key, value in update_data.items():
+            if hasattr(practice, key):
+                setattr(practice, key, value)
+        
+        await practice.save()
+        return practice
+    
+    async def delete_by_uuid(self, uuid: str) -> bool:
+        """
+        Delete practice by UUID
+        
+        Args:
+            uuid: Practice UUID
+            
+        Returns:
+            True if deleted, False if not found
+        """
+        practice = await self.get_by_uuid(uuid)
+        if not practice:
+            return False
+        
+        await practice.delete()
+        return True
+
     async def get_by_admin(self, admin_user_id: str | PydanticObjectId) -> Optional[VeterinaryPractice]:
         """
         Get practice by admin user ID

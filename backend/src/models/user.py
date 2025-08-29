@@ -13,7 +13,7 @@ class UserRole(str, Enum):
     """User roles in the HelpPet system"""
     PET_OWNER = "PetOwner"
     VET_STAFF = "VetStaff"
-    PRACTICE_ADMIN = "PracticeAdmin"
+    ADMIN = "Admin"
 
 
 class User(Document):
@@ -44,11 +44,11 @@ class User(Document):
 
     def is_vet_staff(self) -> bool:
         """Check if user is veterinary staff"""
-        return self.role in [UserRole.VET_STAFF, UserRole.PRACTICE_ADMIN]
+        return self.role in [UserRole.VET_STAFF, UserRole.ADMIN]
 
-    def is_practice_admin(self) -> bool:
-        """Check if user is a practice administrator"""
-        return self.role == UserRole.PRACTICE_ADMIN
+    def is_admin(self) -> bool:
+        """Check if user is an administrator"""
+        return self.role == UserRole.ADMIN
 
 
 class UserCreate(BaseModel):

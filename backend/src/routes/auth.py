@@ -12,12 +12,11 @@ from ..auth.jwt_auth import (
     create_access_token,
     get_current_user,
     get_password_hash,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    User
+    ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from ..models.user import User as UserDocument
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(tags=["Authentication"])
 
 @router.get("/ping")
 async def ping():
@@ -84,7 +83,17 @@ async def signup(signup_data: SignupRequest):
     
     return {"message": f"User {signup_data.username} created successfully"}
 
-@router.get("/me", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_user)):
+@router.get("/me")
+async def read_users_me(current_user: UserDocument = Depends(get_current_user)):
     """Get current user info."""
-    return current_user
+    return {
+        "id": str(current_user.id),
+        "username": current_user.username,
+        "email": current_user.email,
+        "role": current_user.role,
+        "full_name": current_user.full_name,
+        "practice_id": str(current_user.practice_id) if current_user.practice_id else None,
+        "created_at": current_user.created_at,
+        "updated_at": current_user.updated_at,
+        "is_active": current_user.is_active
+    }

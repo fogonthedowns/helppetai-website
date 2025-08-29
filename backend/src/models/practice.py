@@ -6,12 +6,14 @@ from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
+import uuid
 
 
 class VeterinaryPractice(Document):
     """
     Veterinary practice document for MongoDB storage
     """
+    uuid: str = Field(default_factory=lambda: str(uuid.uuid4()), unique=True)
     name: str = Field(..., min_length=1, max_length=200)
     admin_user_id: PydanticObjectId  # Reference to User document
     
@@ -32,6 +34,7 @@ class VeterinaryPractice(Document):
     class Settings:
         name = "veterinaryPractices"
         indexes = [
+            "uuid",
             "name",
             "admin_user_id",
             "license_number",
@@ -63,7 +66,7 @@ class VeterinaryPracticeUpdate(BaseModel):
 
 class VeterinaryPracticeResponse(BaseModel):
     """Schema for veterinary practice responses"""
-    id: str
+    uuid: str
     name: str
     admin_user_id: str
     phone: Optional[str] = None

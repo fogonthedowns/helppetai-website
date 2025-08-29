@@ -17,11 +17,18 @@ export const API_BASE_URL = getApiBaseUrl();
 
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: `${API_BASE_URL}/auth/token`,
-    SIGNUP: `${API_BASE_URL}/auth/signup`,
-    ME: `${API_BASE_URL}/auth/me`,
+    LOGIN: `${API_BASE_URL}/api/v1/auth/token`,
+    SIGNUP: `${API_BASE_URL}/api/v1/auth/signup`,
+    ME: `${API_BASE_URL}/api/v1/auth/me`,
   },
   RAG: {
     QUERY: `${API_BASE_URL}/api/v1/rag/query`,
+  },
+  PRACTICES: {
+    LIST: `${API_BASE_URL}/api/v1/practices`,
+    CREATE: `${API_BASE_URL}/api/v1/practices`,
+    GET: (id: string) => `${API_BASE_URL}/api/v1/practices/${id}`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/v1/practices/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/v1/practices/${id}`,
   }
 } as const;
