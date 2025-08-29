@@ -35,7 +35,17 @@ class Settings(BaseSettings):
     # Database Configuration
     database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
     
-    # MongoDB Configuration
+    # PostgreSQL Configuration
+    postgresql_url: str = Field(
+        default="postgresql+asyncpg://postgres:password@localhost:5432/helppet_dev", 
+        env="POSTGRESQL_URL"
+    )
+    postgresql_sync_url: str = Field(
+        default="postgresql+psycopg2://postgres:password@localhost:5432/helppet_dev",
+        env="POSTGRESQL_SYNC_URL"
+    )
+    
+    # MongoDB Configuration (keeping for migration)
     mongodb_url: str = Field(default="mongodb://localhost:27017", env="MONGODB_URL")
     database_name: str = Field(default="ai_visit_summary", env="DATABASE_NAME")
     

@@ -14,9 +14,9 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import settings
-from .routes import router
+from .routes_pg import router
 from .models.base import ErrorResponse
-from .database import Database
+from .database_pg import database_pg
 
 # Configure logging
 logging.basicConfig(
@@ -141,12 +141,12 @@ async def startup_event():
     logger.info(f"Debug mode: {settings.debug}")
     logger.info(f"API documentation available at: {settings.docs_url}")
     
-    # Initialize database connection
+    # Initialize PostgreSQL database connection
     try:
-        await Database.connect_db()
-        logger.info("Database connection established successfully")
+        await database_pg.connect()
+        logger.info("PostgreSQL database connection established successfully")
     except Exception as e:
-        logger.error(f"Failed to connect to database: {e}")
+        logger.error(f"Failed to connect to PostgreSQL database: {e}")
         # Don't raise the exception to allow the app to start
         # but log the error so developers know there's an issue
 
@@ -156,12 +156,12 @@ async def shutdown_event():
     """Execute shutdown operations."""
     logger.info(f"Shutting down {settings.app_name}")
     
-    # Close database connection
+    # Close PostgreSQL database connection
     try:
-        await Database.close_db()
-        logger.info("Database connection closed successfully")
+        await database_pg.disconnect()
+        logger.info("PostgreSQL database connection closed successfully")
     except Exception as e:
-        logger.error(f"Error closing database connection: {e}")
+        logger.error(f"Error closing PostgreSQL database connection: {e}")
 
 
 # Add request logging middleware

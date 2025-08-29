@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
   const { isAuthenticated, username, logout, user } = useAuth();
-  const isAdmin = user?.role === 'Admin';
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <header className="bg-white border-b border-gray-100">

@@ -37,5 +37,13 @@ export const API_ENDPOINTS = {
     GET: (uuid: string) => `${API_BASE_URL}/api/v1/pet_owners/${uuid}`,
     UPDATE: (uuid: string) => `${API_BASE_URL}/api/v1/pet_owners/${uuid}`,
     DELETE: (uuid: string) => `${API_BASE_URL}/api/v1/pet_owners/${uuid}`,
+  },
+  ASSOCIATIONS: {
+    CREATE: `${API_BASE_URL}/api/v1/associations/`,
+    BY_PRACTICE: (practiceId: string) => `${API_BASE_URL}/api/v1/associations/practice/${practiceId}`,
+    BY_PET_OWNER: (petOwnerId: string) => `${API_BASE_URL}/api/v1/associations/pet-owner/${petOwnerId}`,
+    APPROVE: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}/approve`,
+    REJECT: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}/reject`,
+    DELETE: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}`,
   }
 } as const;

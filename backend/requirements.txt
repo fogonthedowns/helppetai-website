@@ -17,7 +17,14 @@ python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
 
-# MongoDB
+# PostgreSQL and ORM
+sqlalchemy>=2.0.0
+alembic
+asyncpg
+psycopg2-binary
+greenlet
+
+# MongoDB (keeping for migration)
 motor==3.6.0
 beanie==1.26.0
 
