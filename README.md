@@ -1,46 +1,34 @@
-# Getting Started with Create React App
+## Startup Backend
+cd backend
+source .venv/bin/activate
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+## start frontend
+cd frontend
+npm run dev
 
-In the project directory, you can run:
 
-### `yarn start`
+## verify mongodb
+mongosh
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+curl -X POST "http://localhost:8000/api/v1/rag/query" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "question": "How do I know if my cat has kidney disease?",
+       "species": ["cat"],
+       "audience": "pet-owner",
+       "symptoms": ["kidney-disease", "chronic-kidney-disease"]
+     }'
 
-### `yarn test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+     curl -X POST "http://localhost:8000/api/v1/rag/query" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "question": "Compare diarrhea treatment across species",
+       "species": ["dog", "cat"],
+       "medical_system": "digestive",
+       "symptoms": ["diarrhea"],
+       "audience": "expert"
+     }'
