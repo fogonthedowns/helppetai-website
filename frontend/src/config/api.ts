@@ -46,5 +46,14 @@ export const API_ENDPOINTS = {
     APPROVE: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}/approve`,
     REJECT: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}/reject`,
     DELETE: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}`,
+  },
+  PETS: {
+    LIST: `${API_BASE_URL}/api/v1/pets/`,
+    CREATE: `${API_BASE_URL}/api/v1/pets/`,
+    GET: (uuid: string) => `${API_BASE_URL}/api/v1/pets/${uuid}`,
+    UPDATE: (uuid: string) => `${API_BASE_URL}/api/v1/pets/${uuid}`,
+    DELETE: (uuid: string) => `${API_BASE_URL}/api/v1/pets/${uuid}`,
+    BY_OWNER: (ownerUuid: string) => `${API_BASE_URL}/api/v1/pets/owner/${ownerUuid}`,
+    REACTIVATE: (uuid: string) => `${API_BASE_URL}/api/v1/pets/${uuid}/reactivate`,
   }
 } as const;

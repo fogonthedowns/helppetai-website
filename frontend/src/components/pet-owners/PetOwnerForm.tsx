@@ -4,6 +4,7 @@ import { Users, Save, ArrowLeft, AlertCircle, CheckCircle, Building2, Plus, X } 
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
 import { formatPhoneNumber, unformatPhoneNumber, handlePhoneInput } from '../../utils/phoneUtils';
+import PetsList from '../pets/PetsList';
 import '../../utils/authUtils'; // Import to ensure fetch interceptor is set up
 
 interface Practice {
@@ -789,6 +790,22 @@ const PetOwnerForm: React.FC<PetOwnerFormProps> = ({ mode }) => {
               </div>
             </form>
           </div>
+
+          {/* Pets Section - Only show in edit mode */}
+          {mode === 'edit' && uuid && (
+            <div className="mt-8">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <PetsList 
+                  ownerUuid={uuid} 
+                  petOwner={{
+                    id: uuid,
+                    user_id: formData.user_id,
+                    full_name: formData.full_name
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>

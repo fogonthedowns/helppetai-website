@@ -24,6 +24,7 @@ const PetOwnersList = () => {
   const [petOwners, setPetOwners] = useState<PetOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [petCounts, setPetCounts] = useState<{[key: string]: number}>({});
   const { isAuthenticated, user } = useAuth();
 
   const isAdmin = user?.role === 'ADMIN';
@@ -48,11 +49,36 @@ const PetOwnersList = () => {
       }
       const data = await response.json();
       setPetOwners(data);
+      
+      // Fetch pet counts for each owner
+      await fetchPetCounts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load pet owners');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPetCounts = async (owners: PetOwner[]) => {
+    const counts: {[key: string]: number} = {};
+    
+    // Fetch pet counts for each owner in parallel
+    const promises = owners.map(async (owner) => {
+      try {
+        const response = await fetch(API_ENDPOINTS.PETS.BY_OWNER(owner.uuid));
+        if (response.ok) {
+          const pets = await response.json();
+          counts[owner.uuid] = pets.length;
+        } else {
+          counts[owner.uuid] = 0;
+        }
+      } catch {
+        counts[owner.uuid] = 0;
+      }
+    });
+    
+    await Promise.all(promises);
+    setPetCounts(counts);
   };
 
   if (!isAuthenticated) {
@@ -177,6 +203,9 @@ const PetOwnersList = () => {
                       Emergency Contact
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pets
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Communication
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -186,7 +215,12 @@ const PetOwnersList = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {petOwners.map((petOwner) => (
-                    <PetOwnerRow key={petOwner.uuid} petOwner={petOwner} canEdit={canEditPetOwners} />
+                    <PetOwnerRow 
+                      key={petOwner.uuid} 
+                      petOwner={petOwner} 
+                      canEdit={canEditPetOwners}
+                      petCount={petCounts[petOwner.uuid]}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -201,9 +235,10 @@ const PetOwnersList = () => {
 interface PetOwnerRowProps {
   petOwner: PetOwner;
   canEdit: boolean;
+  petCount?: number;
 }
 
-const PetOwnerRow: React.FC<PetOwnerRowProps> = ({ petOwner, canEdit }) => {
+const PetOwnerRow: React.FC<PetOwnerRowProps> = ({ petOwner, canEdit, petCount }) => {
   return (
     <tr className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
@@ -225,6 +260,13 @@ const PetOwnerRow: React.FC<PetOwnerRowProps> = ({ petOwner, canEdit }) => {
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">
           {petOwner.emergency_contact || 'Not provided'}
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+            {petCount !== undefined ? `${petCount} pet${petCount !== 1 ? 's' : ''}` : 'Loading...'}
+          </span>
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">

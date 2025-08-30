@@ -6,10 +6,12 @@ from .user import User
 from .practice import VeterinaryPractice
 from .pet_owner import PetOwner
 from .pet_owner_practice_association import PetOwnerPracticeAssociation
+from .pet import Pet
 
 __all__ = [
     "User",
     "VeterinaryPractice", 
     "PetOwner",
-    "PetOwnerPracticeAssociation"
+    "PetOwnerPracticeAssociation",
+    "Pet"
 ]

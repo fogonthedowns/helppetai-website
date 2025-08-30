@@ -17,6 +17,8 @@ import PetOwnersList from './components/pet-owners/PetOwnersList';
 import PetOwnerDetail from './components/pet-owners/PetOwnerDetail';
 import PetOwnerForm from './components/pet-owners/PetOwnerForm';
 import PetOwnerCreate from './components/pet-owners/PetOwnerCreate';
+import PetDetail from './components/pets/PetDetail';
+import PetForm from './components/pets/PetForm';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -72,6 +74,23 @@ const App = () => {
             <Route path="/pet_owners/:uuid/edit" element={
               <ProtectedRoute>
                 <PetOwnerForm mode="edit" />
+              </ProtectedRoute>
+            } />
+            
+            {/* Pet Routes */}
+            <Route path="/pets/create" element={
+              <ProtectedRoute>
+                <PetForm mode="create" />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:uuid" element={
+              <ProtectedRoute>
+                <PetDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:uuid/edit" element={
+              <ProtectedRoute>
+                <PetForm mode="edit" />
               </ProtectedRoute>
             } />
             

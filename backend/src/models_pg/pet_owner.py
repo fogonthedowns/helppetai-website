@@ -68,6 +68,11 @@ class PetOwner(Base):
         back_populates="pet_owner",
         cascade="all, delete-orphan"
     )
+    pets: Mapped[List["Pet"]] = relationship(
+        "Pet", 
+        foreign_keys="Pet.owner_id",
+        cascade="all, delete-orphan"
+    )
     
     def __repr__(self) -> str:
         return f"<PetOwner(id={self.id}, full_name='{self.full_name}')>"

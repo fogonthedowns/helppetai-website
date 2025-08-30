@@ -9,6 +9,7 @@ from .auth import router as auth_router
 from .practices import router as practices_router
 from .pet_owners import router as pet_owners_router
 from .associations import router as associations_router
+from .pets import router as pets_router
 from .rag import router as rag_router
 
 # Create main router
@@ -24,6 +25,7 @@ router.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"
 router.include_router(practices_router, prefix="/api/v1/practices", tags=["veterinary-practices"])
 router.include_router(pet_owners_router, prefix="/api/v1/pet_owners", tags=["pet-owners"])
 router.include_router(associations_router, prefix="/api/v1/associations", tags=["pet-owner-practice-associations"])
+router.include_router(pets_router, tags=["pets"])  # pets router already has /api/v1/pets prefix
 router.include_router(rag_router, prefix="/api/v1/rag", tags=["rag-search"])
 
 __all__ = ["router"]

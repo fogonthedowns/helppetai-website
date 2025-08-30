@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
+import PetsList from '../pets/PetsList';
 
 interface PetOwner {
   uuid: string;
@@ -319,6 +320,20 @@ const PetOwnerDetail = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Pets Section */}
+          <div className="mt-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <PetsList 
+                ownerUuid={petOwner.uuid} 
+                petOwner={{
+                  id: petOwner.uuid,
+                  user_id: petOwner.user_id,
+                  full_name: petOwner.full_name
+                }}
+              />
             </div>
           </div>
         </div>
