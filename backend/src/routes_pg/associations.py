@@ -32,6 +32,7 @@ class AssociationCreate(BaseModel):
 
 
 class AssociationUpdate(BaseModel):
+    request_type: Optional[AssociationRequestType] = None
     status: Optional[AssociationStatus] = None
     notes: Optional[str] = None
     primary_contact: Optional[bool] = None
@@ -200,6 +201,70 @@ async def get_associations_for_pet_owner(
     ]
 
 
+@router.put("/{association_id}", response_model=AssociationResponse)
+async def update_association(
+    association_id: UUID = Path(..., description="Association ID"),
+    association_update: AssociationUpdate = ...,
+    session: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user)
+) -> AssociationResponse:
+    """Update an association (Admin can update any, VET_STAFF can update their practice's associations)"""
+    
+    association_repo = AssociationRepository(session)
+    
+    # Get the association
+    association = await association_repo.get_by_id(association_id)
+    if not association:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Association with ID {association_id} not found"
+        )
+    
+    # Check access permissions
+    if current_user.role == UserRole.ADMIN:
+        # Admin can update any association
+        pass
+    elif current_user.role == UserRole.VET_STAFF:
+        # VET_STAFF can only update associations for their practice
+        if not current_user.practice_id or current_user.practice_id != association.practice_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only update associations for your own practice"
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or Vet Staff access required to update associations"
+        )
+    
+    # Update the association
+    update_data = association_update.dict(exclude_unset=True)
+    updated_association = await association_repo.update_by_id(association_id, update_data)
+    
+    if not updated_association:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Association with ID {association_id} not found"
+        )
+    
+    return AssociationResponse(
+        id=str(updated_association.id),
+        pet_owner_id=str(updated_association.pet_owner_id),
+        practice_id=str(updated_association.practice_id),
+        status=updated_association.status,
+        request_type=updated_association.request_type,
+        requested_by_user_id=str(updated_association.requested_by_user_id) if updated_association.requested_by_user_id else None,
+        approved_by_user_id=str(updated_association.approved_by_user_id) if updated_association.approved_by_user_id else None,
+        requested_at=updated_association.requested_at.isoformat(),
+        approved_at=updated_association.approved_at.isoformat() if updated_association.approved_at else None,
+        last_visit_date=updated_association.last_visit_date.isoformat() if updated_association.last_visit_date else None,
+        notes=updated_association.notes,
+        primary_contact=updated_association.primary_contact,
+        created_at=updated_association.created_at.isoformat(),
+        updated_at=updated_association.updated_at.isoformat()
+    )
+
+
 @router.put("/{association_id}/approve", response_model=AssociationResponse)
 async def approve_association(
     association_id: UUID = Path(..., description="Association ID"),
@@ -282,11 +347,38 @@ async def reject_association(
 async def delete_association(
     association_id: UUID = Path(..., description="Association ID"),
     session: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(require_admin())
+    current_user: User = Depends(get_current_user)
 ) -> None:
-    """Delete an association (Admin only)"""
+    """Delete an association (Admin can delete any, VET_STAFF can delete their practice's associations)"""
     
     association_repo = AssociationRepository(session)
+    
+    # Get the association first to check permissions
+    association = await association_repo.get_by_id(association_id)
+    if not association:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Association with ID {association_id} not found"
+        )
+    
+    # Check access permissions
+    if current_user.role == UserRole.ADMIN:
+        # Admin can delete any association
+        pass
+    elif current_user.role == UserRole.VET_STAFF:
+        # VET_STAFF can only delete associations for their practice
+        if not current_user.practice_id or current_user.practice_id != association.practice_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only delete associations for your own practice"
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or Vet Staff access required to delete associations"
+        )
+    
+    # Delete the association
     deleted = await association_repo.delete_by_id(association_id)
     
     if not deleted:

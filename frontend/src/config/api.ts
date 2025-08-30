@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
   },
   ASSOCIATIONS: {
     CREATE: `${API_BASE_URL}/api/v1/associations/`,
+    UPDATE: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}`,
     BY_PRACTICE: (practiceId: string) => `${API_BASE_URL}/api/v1/associations/practice/${practiceId}`,
     BY_PET_OWNER: (petOwnerId: string) => `${API_BASE_URL}/api/v1/associations/pet-owner/${petOwnerId}`,
     APPROVE: (associationId: string) => `${API_BASE_URL}/api/v1/associations/${associationId}/approve`,

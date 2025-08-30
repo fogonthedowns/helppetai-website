@@ -70,14 +70,19 @@ async def get_accessible_pet_owner_ids(
     if current_user.role == UserRole.ADMIN:
         return None  # Admin can access all
     
-    # For vet staff, we need to find their practice first
-    # For now, we'll assume they can access all (this needs proper practice association logic)
+    # For vet staff, get pet owners associated with their practice
     if current_user.role == UserRole.VET_STAFF:
-        # TODO: Implement proper practice association lookup
-        # For now, return empty list to restrict access
-        return []
+        if not current_user.practice_id:
+            # VET_STAFF without practice_id can't access any pet owners
+            return []
+        
+        # Get all approved pet owners associated with this practice
+        pet_owner_ids = await association_repo.get_pet_owners_for_practice(
+            current_user.practice_id
+        )
+        return pet_owner_ids
     
-    # If no practice association, user can't access any pet owners
+    # If no practice association or other role, user can't access any pet owners
     return []
 
 
@@ -205,7 +210,7 @@ async def create_pet_owner(
     
     # Create pet owner
     new_pet_owner = PetOwner(
-        user_id=UUID(pet_owner_data.user_id) if pet_owner_data.user_id else None,
+        user_id=UUID(pet_owner_data.user_id) if pet_owner_data.user_id and pet_owner_data.user_id.strip() else None,
         full_name=pet_owner_data.full_name,
         email=pet_owner_data.email,
         phone=pet_owner_data.phone,
@@ -218,8 +223,33 @@ async def create_pet_owner(
     
     created_pet_owner = await pet_owner_repo.create(new_pet_owner)
     
+    # Auto-create practice association for VET_STAFF users
+    if current_user.role == UserRole.VET_STAFF and current_user.practice_id:
+        from ..models_pg.pet_owner_practice_association import PetOwnerPracticeAssociation, AssociationStatus, AssociationRequestType
+        
+        association_repo = AssociationRepository(session)
+        
+        # Check if association already exists (in case frontend created it)
+        existing_association = await association_repo.check_association_exists(
+            created_pet_owner.id, current_user.practice_id
+        )
+        
+        if not existing_association:
+            # Create automatic association for VET_STAFF
+            auto_association = PetOwnerPracticeAssociation(
+                pet_owner_id=created_pet_owner.id,
+                practice_id=current_user.practice_id,
+                request_type=AssociationRequestType.NEW_CLIENT,
+                notes="Automatically created by vet staff",
+                primary_contact=True,
+                requested_by_user_id=current_user.id,
+                status=AssociationStatus.APPROVED  # Auto-approve for VET_STAFF
+            )
+            
+            await association_repo.create(auto_association)
+    
     return PetOwnerResponse(
-        id=str(created_pet_owner.id),
+        uuid=str(created_pet_owner.id),
         user_id=str(created_pet_owner.user_id) if created_pet_owner.user_id else None,
         full_name=created_pet_owner.full_name,
         email=created_pet_owner.email,
@@ -239,11 +269,12 @@ async def update_pet_owner(
     pet_owner_id: UUID = Path(..., description="Pet Owner ID"),
     pet_owner_update: PetOwnerUpdate = ...,
     session: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(require_admin())
+    current_user: User = Depends(get_current_user)
 ) -> PetOwnerResponse:
-    """Update an existing pet owner (Admin | Current User logged in must be that uuid)"""
+    """Update an existing pet owner (Admin can update any, VET_STAFF can update their practice's pet owners)"""
     
     pet_owner_repo = PetOwnerRepository(session)
+    association_repo = AssociationRepository(session)
     
     # Check if pet owner exists
     pet_owner = await pet_owner_repo.get_by_id(pet_owner_id)
@@ -251,6 +282,31 @@ async def update_pet_owner(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Pet owner with ID {pet_owner_id} not found"
+        )
+    
+    # Check access permissions
+    if current_user.role == UserRole.ADMIN:
+        # Admin can update any pet owner
+        pass
+    elif current_user.role == UserRole.VET_STAFF:
+        # VET_STAFF can only update pet owners associated with their practice
+        if not current_user.practice_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="VET_STAFF user must have a practice_id to update pet owners"
+            )
+        
+        # Check if this pet owner is associated with the user's practice
+        accessible_ids = await get_accessible_pet_owner_ids(current_user, association_repo)
+        if accessible_ids is not None and pet_owner_id not in accessible_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only update pet owners associated with your practice"
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or Vet Staff access required to update pet owners"
         )
     
     # Check email uniqueness if being updated
@@ -271,13 +327,16 @@ async def update_pet_owner(
     
     # Update pet owner
     update_data = pet_owner_update.dict(exclude_unset=True)
-    if 'user_id' in update_data and update_data['user_id']:
-        update_data['user_id'] = UUID(update_data['user_id'])
+    if 'user_id' in update_data:
+        if update_data['user_id']:
+            update_data['user_id'] = UUID(update_data['user_id'])
+        else:
+            update_data['user_id'] = None
     
     updated_pet_owner = await pet_owner_repo.update_by_id(pet_owner_id, update_data)
     
     return PetOwnerResponse(
-        id=str(updated_pet_owner.id),
+        uuid=str(updated_pet_owner.id),
         user_id=str(updated_pet_owner.user_id) if updated_pet_owner.user_id else None,
         full_name=updated_pet_owner.full_name,
         email=updated_pet_owner.email,

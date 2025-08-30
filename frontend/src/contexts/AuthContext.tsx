@@ -47,7 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserDetails = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.AUTH.ME);
+      const token = localStorage.getItem('token');
+      const response = await fetch(API_ENDPOINTS.AUTH.ME, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);

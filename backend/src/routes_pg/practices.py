@@ -147,9 +147,14 @@ async def create_practice(
     
     practice_repo = PracticeRepository(session)
     
-    # Check if license number already exists
-    if practice_data.license_number:
-        if await practice_repo.license_number_exists(practice_data.license_number):
+    # Handle empty license number - convert to None for database
+    license_number = practice_data.license_number.strip() if practice_data.license_number else None
+    if not license_number:  # Empty string becomes None
+        license_number = None
+    
+    # Check if license number already exists (only if not None)
+    if license_number:
+        if await practice_repo.license_number_exists(license_number):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="License number already exists"
@@ -163,7 +168,7 @@ async def create_practice(
         email=practice_data.email,
         website=practice_data.website,
         address_line1=practice_data.address,  # Store single address in address_line1
-        license_number=practice_data.license_number,
+        license_number=license_number,  # Use processed license_number
         specialties=practice_data.specialties,
         accepts_new_patients=practice_data.accepts_new_patients
     )
@@ -207,9 +212,16 @@ async def update_practice(
             detail=f"Practice with ID {practice_id} not found"
         )
     
-    # Check license number uniqueness if being updated
-    if practice_update.license_number and practice_update.license_number != practice.license_number:
-        if await practice_repo.license_number_exists(practice_update.license_number, exclude_id=practice_id):
+    # Handle empty license number - convert to None for database
+    license_number = None
+    if hasattr(practice_update, 'license_number') and practice_update.license_number is not None:
+        license_number = practice_update.license_number.strip() if practice_update.license_number else None
+        if not license_number:  # Empty string becomes None
+            license_number = None
+    
+    # Check license number uniqueness if being updated (only if not None)
+    if license_number and license_number != practice.license_number:
+        if await practice_repo.license_number_exists(license_number, exclude_id=practice_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="License number already exists"
@@ -217,6 +229,10 @@ async def update_practice(
     
     # Update practice
     update_data = practice_update.dict(exclude_unset=True)
+    
+    # Handle license number conversion
+    if 'license_number' in update_data:
+        update_data['license_number'] = license_number
     
     # Handle address mapping: frontend sends 'address', we store in 'address_line1'
     if 'address' in update_data:
