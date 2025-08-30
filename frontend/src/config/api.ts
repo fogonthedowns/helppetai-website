@@ -55,5 +55,15 @@ export const API_ENDPOINTS = {
     DELETE: (uuid: string) => `${API_BASE_URL}/api/v1/pets/${uuid}`,
     BY_OWNER: (ownerUuid: string) => `${API_BASE_URL}/api/v1/pets/owner/${ownerUuid}`,
     REACTIVATE: (uuid: string) => `${API_BASE_URL}/api/v1/pets/${uuid}/reactivate`,
+  },
+  MEDICAL_RECORDS: {
+    BY_PET: (petUuid: string) => `${API_BASE_URL}/api/v1/medical-records/pet/${petUuid}`,
+    GET: (uuid: string) => `${API_BASE_URL}/api/v1/medical-records/${uuid}`,
+    CREATE: `${API_BASE_URL}/api/v1/medical-records/`,
+    UPDATE: (uuid: string) => `${API_BASE_URL}/api/v1/medical-records/${uuid}`,
+    DELETE: (uuid: string) => `${API_BASE_URL}/api/v1/medical-records/${uuid}`,
+    TIMELINE: (petUuid: string) => `${API_BASE_URL}/api/v1/medical-records/pet/${petUuid}/timeline`,
+    HISTORY: (petUuid: string) => `${API_BASE_URL}/api/v1/medical-records/pet/${petUuid}/history`,
+    FOLLOW_UPS_DUE: `${API_BASE_URL}/api/v1/medical-records/follow-ups/due`,
   }
 } as const;

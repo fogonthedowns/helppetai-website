@@ -19,6 +19,9 @@ import PetOwnerForm from './components/pet-owners/PetOwnerForm';
 import PetOwnerCreate from './components/pet-owners/PetOwnerCreate';
 import PetDetail from './components/pets/PetDetail';
 import PetForm from './components/pets/PetForm';
+import MedicalRecordForm from './components/medical-records/MedicalRecordForm';
+import MedicalRecordDetail from './components/medical-records/MedicalRecordDetail';
+import MedicalRecordHistory from './components/medical-records/MedicalRecordHistory';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -91,6 +94,28 @@ const App = () => {
             <Route path="/pets/:uuid/edit" element={
               <ProtectedRoute>
                 <PetForm mode="edit" />
+              </ProtectedRoute>
+            } />
+            
+            {/* Medical Record Routes */}
+            <Route path="/pets/:petId/medical-records/create" element={
+              <ProtectedRoute>
+                <MedicalRecordForm mode="create" />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:petId/medical-records/history" element={
+              <ProtectedRoute>
+                <MedicalRecordHistory />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:petId/medical-records/:recordId" element={
+              <ProtectedRoute>
+                <MedicalRecordDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:petId/medical-records/:recordId/edit" element={
+              <ProtectedRoute>
+                <MedicalRecordForm mode="edit" />
               </ProtectedRoute>
             } />
             

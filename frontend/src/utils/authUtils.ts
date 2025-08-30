@@ -54,3 +54,8 @@ export const logout = (): void => {
   localStorage.removeItem('username');
   window.location.href = '/';
 };
+
+export const getAuthHeaders = (): Record<string, string> => {
+  const token = getAuthToken();
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};

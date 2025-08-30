@@ -8,6 +8,7 @@ import { PetWithOwner } from '../../types/pet';
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import '../../utils/authUtils';
+import MedicalRecordsTimeline from '../medical-records/MedicalRecordsTimeline';
 
 const PetDetail: React.FC = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -384,6 +385,15 @@ const PetDetail: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Medical Records */}
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <MedicalRecordsTimeline 
+                petId={pet.id} 
+                showHeader={true}
+                maxItems={5}
+              />
+            </div>
           </div>
 
           {/* Sidebar */}

@@ -4,7 +4,7 @@ Pet model for PostgreSQL - HelpPet MVP
 
 import uuid
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import String, Boolean, DateTime, Text, UUID, ForeignKey, Date, Integer, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -62,6 +62,12 @@ class Pet(Base):
     
     # Relationships
     owner: Mapped["PetOwner"] = relationship("PetOwner", foreign_keys=[owner_id])
+    medical_records: Mapped[List["MedicalRecord"]] = relationship(
+        "MedicalRecord", 
+        foreign_keys="MedicalRecord.pet_id",
+        cascade="all, delete-orphan",
+        order_by="MedicalRecord.visit_date.desc()"
+    )
     
     def __repr__(self) -> str:
         return f"<Pet(id={self.id}, name='{self.name}', species='{self.species}')>"
