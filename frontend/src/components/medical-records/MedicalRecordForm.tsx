@@ -14,6 +14,7 @@ import { PetWithOwner } from '../../types/pet';
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthHeaders } from '../../utils/authUtils';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 
 interface MedicalRecordFormProps {
   mode: 'create' | 'edit';
@@ -253,13 +254,21 @@ const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({ mode }) => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(`/pets/${petId}`)}
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {pet?.name || 'Pet'}
-          </button>
+          {/* Breadcrumbs */}
+          <Breadcrumb 
+            items={mode === 'edit' ? [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: pet?.name || 'Pet', href: `/pets/${petId}` },
+              { label: 'Medical Records', href: `/pets/${petId}/medical-records/history` },
+              { label: 'Edit', isActive: true }
+            ] : [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: pet?.name || 'Pet', href: `/pets/${petId}` },
+              { label: 'Medical Records', href: `/pets/${petId}/medical-records/history` },
+              { label: 'Create', isActive: true }
+            ]}
+            className="mb-6"
+          />
           
           <div className="flex items-center justify-between">
             <div>

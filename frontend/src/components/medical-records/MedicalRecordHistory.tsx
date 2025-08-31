@@ -17,6 +17,7 @@ import {
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthHeaders } from '../../utils/authUtils';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 
 const MedicalRecordHistory: React.FC = () => {
   const { petId } = useParams<{ petId: string }>();
@@ -122,13 +123,15 @@ const MedicalRecordHistory: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
-        <button
-          onClick={() => navigate(`/pets/${petId}`)}
-          className="flex items-center text-blue-600 hover:text-blue-700 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to {petName || 'Pet'}
-        </button>
+        {/* Breadcrumbs */}
+        <Breadcrumb 
+          items={[
+            { label: 'Pet Owners', href: '/pet_owners' },
+            { label: petName || 'Pet', href: `/pets/${petId}` },
+            { label: 'Medical Records', isActive: true }
+          ]}
+          className="mb-6"
+        />
         
         <h1 className="text-2xl font-bold text-gray-900 flex items-center">
           <History className="w-6 h-6 mr-3 text-blue-600" />

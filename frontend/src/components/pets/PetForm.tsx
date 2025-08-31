@@ -4,6 +4,7 @@ import { ArrowLeft, Heart, Save, AlertCircle } from 'lucide-react';
 import { Pet, PetFormData, PetCreateRequest, PetUpdateRequest, PET_SPECIES_OPTIONS, PET_GENDER_OPTIONS } from '../../types/pet';
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 import '../../utils/authUtils';
 
 interface PetFormProps {
@@ -34,6 +35,7 @@ const PetForm: React.FC<PetFormProps> = ({ mode }) => {
   });
 
   const [ownerUuid, setOwnerUuid] = useState<string>('');
+  const [pet, setPet] = useState<Pet | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +70,7 @@ const PetForm: React.FC<PetFormProps> = ({ mode }) => {
       }
 
       const petData: Pet = await response.json();
+      setPet(petData);
       
       // Convert pet data to form data
       setFormData({
@@ -229,13 +232,18 @@ const PetForm: React.FC<PetFormProps> = ({ mode }) => {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </button>
+          {/* Breadcrumbs */}
+          <Breadcrumb 
+            items={mode === 'edit' ? [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: pet?.name || 'Pet', href: `/pets/${uuid}` },
+              { label: 'Edit', isActive: true }
+            ] : [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: 'Create Pet', isActive: true }
+            ]}
+            className="mb-6"
+          />
           
           <div className="flex items-center">
             <div className="bg-blue-100 p-3 rounded-lg mr-4">

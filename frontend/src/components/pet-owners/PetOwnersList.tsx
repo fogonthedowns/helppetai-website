@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Users, Plus, MapPin, Phone, Mail, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 import '../../utils/authUtils'; // Import to ensure fetch interceptor is set up
 
 interface PetOwner {
@@ -164,6 +165,14 @@ const PetOwnersList = () => {
       {/* Header */}
       <section className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Breadcrumbs */}
+          <Breadcrumb 
+            items={[
+              { label: 'Pet Owners', isActive: true }
+            ]}
+            className="mb-6"
+          />
+          
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="bg-blue-100 p-3 rounded-xl">

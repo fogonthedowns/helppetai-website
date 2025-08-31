@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
 import { formatPhoneNumber, unformatPhoneNumber, handlePhoneInput } from '../../utils/phoneUtils';
 import PetsList from '../pets/PetsList';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 import '../../utils/authUtils'; // Import to ensure fetch interceptor is set up
 
 interface Practice {
@@ -455,15 +456,18 @@ const PetOwnerForm: React.FC<PetOwnerFormProps> = ({ mode }) => {
       {/* Header */}
       <section className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back
-            </button>
-          </div>
+          {/* Breadcrumbs */}
+          <Breadcrumb 
+            items={mode === 'edit' ? [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: formData.full_name || 'Pet Owner', href: `/pet_owners/${uuid}` },
+              { label: 'Edit', isActive: true }
+            ] : [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: 'Create', isActive: true }
+            ]}
+            className="mb-6"
+          />
 
           <div className="flex items-center space-x-4">
             <div className="bg-blue-100 p-4 rounded-xl">
@@ -765,15 +769,7 @@ const PetOwnerForm: React.FC<PetOwnerFormProps> = ({ mode }) => {
               )}
 
               {/* Submit Button */}
-              <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-
+              <div className="flex items-center justify-end pt-6 border-t border-gray-200">
                 <button
                   type="submit"
                   disabled={isSubmitting}

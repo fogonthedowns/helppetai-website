@@ -23,6 +23,7 @@ import {
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthHeaders } from '../../utils/authUtils';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 
 const MedicalRecordDetail: React.FC = () => {
   const { petId, recordId } = useParams<{ petId: string; recordId: string }>();
@@ -137,6 +138,14 @@ const MedicalRecordDetail: React.FC = () => {
            recordType.charAt(0).toUpperCase() + recordType.slice(1);
   };
 
+  const getBreadcrumbLabel = (record: MedicalRecordWithRelations) => {
+    if (record.is_current) {
+      return 'Current';
+    }
+    // For historical records, show the date
+    return formatDate(record.created_at);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -187,13 +196,16 @@ const MedicalRecordDetail: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(`/pets/${petId}`)}
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {record.pet.name}
-          </button>
+          {/* Breadcrumbs */}
+          <Breadcrumb 
+            items={[
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: record.pet.name, href: `/pets/${petId}` },
+              { label: 'Medical Records', href: `/pets/${petId}/medical-records/history` },
+              { label: getBreadcrumbLabel(record), isActive: true }
+            ]}
+            className="mb-6"
+          />
           
           <div className="flex items-start justify-between">
             <div className="flex-1">

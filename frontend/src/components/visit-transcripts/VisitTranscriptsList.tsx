@@ -7,9 +7,7 @@ import {
   CheckCircle, 
   AlertCircle, 
   XCircle,
-  Play,
-  Calendar,
-  User
+  Calendar
 } from 'lucide-react';
 import { 
   VisitTranscript, 
@@ -20,15 +18,18 @@ import {
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthHeaders } from '../../utils/authUtils';
+import PastAppointmentsList from '../appointments/PastAppointmentsList';
 
 interface VisitTranscriptsListProps {
   petId: string;
+  petOwnerId?: string;
   showHeader?: boolean;
   maxItems?: number;
 }
 
 const VisitTranscriptsList: React.FC<VisitTranscriptsListProps> = ({ 
-  petId, 
+  petId,
+  petOwnerId, 
   showHeader = true, 
   maxItems 
 }) => {
@@ -211,24 +212,7 @@ const VisitTranscriptsList: React.FC<VisitTranscriptsListProps> = ({
                     </p>
                   )}
 
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <FileText className="w-4 h-4" />
-                      <span>{transcript.full_text.length} characters</span>
-                    </div>
-                    {transcript.audio_transcript_url && (
-                      <div className="flex items-center space-x-1">
-                        <Play className="w-4 h-4" />
-                        <span>Audio available</span>
-                      </div>
-                    )}
-                    {transcript.created_by && (
-                      <div className="flex items-center space-x-1">
-                        <User className="w-4 h-4" />
-                        <span>Created by vet</span>
-                      </div>
-                    )}
-                  </div>
+
                 </div>
 
                 <div className="flex items-center space-x-2 ml-4">
@@ -262,6 +246,19 @@ const VisitTranscriptsList: React.FC<VisitTranscriptsListProps> = ({
               </Link>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Past Appointments with Transcript Links */}
+      {petOwnerId && (
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <PastAppointmentsList
+            petOwnerId={petOwnerId}
+            petId={petId}
+            showHeader={true}
+            maxItems={3}
+            title="Related Past Appointments"
+          />
         </div>
       )}
     </div>

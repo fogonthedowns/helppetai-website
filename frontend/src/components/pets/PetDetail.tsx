@@ -11,6 +11,7 @@ import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 import '../../utils/authUtils';
 import MedicalRecordsTimeline from '../medical-records/MedicalRecordsTimeline';
 import VisitTranscriptsList from '../visit-transcripts/VisitTranscriptsList';
+import AppointmentsList from '../appointments/AppointmentsList';
 
 const PetDetail: React.FC = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -396,7 +397,8 @@ const PetDetail: React.FC = () => {
             {/* Visit Transcripts */}
             <div className="bg-white shadow-sm rounded-lg p-6">
               <VisitTranscriptsList 
-                petId={pet.id} 
+                petId={pet.id}
+                petOwnerId={pet.owner_id}
                 showHeader={true}
                 maxItems={5}
               />
@@ -405,6 +407,18 @@ const PetDetail: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Scheduled Appointments */}
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <AppointmentsList 
+                petOwnerId={pet.owner_id}
+                petId={pet.id}
+                showHeader={true}
+                maxItems={3}
+                showCreateButton={true}
+                title="Scheduled Appointments"
+              />
+            </div>
+
             {/* Owner Information */}
             <div className="bg-white shadow-sm rounded-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Owner Information</h3>

@@ -10,6 +10,7 @@ import {
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthHeaders } from '../../utils/authUtils';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 
 interface VisitTranscriptFormProps {
   mode: 'create' | 'edit';
@@ -23,6 +24,7 @@ const VisitTranscriptForm: React.FC<VisitTranscriptFormProps> = ({ mode }) => {
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [petName, setPetName] = useState<string>('');
   
   const [formData, setFormData] = useState({
     visit_date: '',
@@ -33,6 +35,9 @@ const VisitTranscriptForm: React.FC<VisitTranscriptFormProps> = ({ mode }) => {
   });
 
   useEffect(() => {
+    // Fetch pet name for breadcrumbs
+    fetchPetName();
+    
     if (mode === 'edit' && transcriptId) {
       fetchTranscript();
     } else {
@@ -45,6 +50,20 @@ const VisitTranscriptForm: React.FC<VisitTranscriptFormProps> = ({ mode }) => {
       setLoading(false);
     }
   }, [mode, transcriptId]);
+
+  const fetchPetName = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.PETS.GET(petId!), {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const pet = await response.json();
+        setPetName(pet.name);
+      }
+    } catch (err) {
+      console.error('Error fetching pet name:', err);
+    }
+  };
 
   const fetchTranscript = async () => {
     if (!transcriptId) return;
@@ -213,13 +232,21 @@ const VisitTranscriptForm: React.FC<VisitTranscriptFormProps> = ({ mode }) => {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <Link
-          to={mode === 'edit' && transcriptId ? `/pets/${petId}/visit-transcripts/${transcriptId}` : `/pets/${petId}`}
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          {mode === 'edit' ? 'Back to Transcript' : 'Back to Pet'}
-        </Link>
+        {/* Breadcrumbs */}
+        <Breadcrumb 
+          items={mode === 'edit' ? [
+            { label: 'Pet Owners', href: '/pet_owners' },
+            { label: petName || 'Pet', href: `/pets/${petId}` },
+            { label: 'Visit Transcripts', href: `/pets/${petId}` },
+            { label: 'Edit', isActive: true }
+          ] : [
+            { label: 'Pet Owners', href: '/pet_owners' },
+            { label: petName || 'Pet', href: `/pets/${petId}` },
+            { label: 'Visit Transcripts', href: `/pets/${petId}` },
+            { label: 'Create', isActive: true }
+          ]}
+          className="mb-6"
+        />
         
         <h1 className="text-2xl font-bold text-gray-900">
           {mode === 'create' ? 'Add Visit Transcript' : 'Edit Visit Transcript'}

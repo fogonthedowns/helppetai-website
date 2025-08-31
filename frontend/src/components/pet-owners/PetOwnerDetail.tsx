@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
 import PetsList from '../pets/PetsList';
+import AppointmentsList from '../appointments/AppointmentsList';
 import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 
 interface PetOwner {
@@ -147,7 +148,6 @@ const PetOwnerDetail = () => {
           {/* Breadcrumbs */}
           <Breadcrumb 
             items={[
-              { label: 'Home', href: '/' },
               { label: 'Pet Owners', href: '/pet_owners' },
               { label: petOwner.full_name, isActive: true }
             ]}
@@ -187,9 +187,12 @@ const PetOwnerDetail = () => {
               <h1 className="text-3xl font-bold text-gray-900">
                 {petOwner.full_name}
               </h1>
-              <p className="text-gray-600 mt-1">
-                UUID: {petOwner.uuid}
-              </p>
+              {petOwner.phone && (
+                <p className="text-gray-600 mt-1 flex items-center">
+                  <Phone className="w-4 h-4 mr-1" />
+                  {petOwner.phone}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -323,6 +326,18 @@ const PetOwnerDetail = () => {
                   user_id: petOwner.user_id,
                   full_name: petOwner.full_name
                 }}
+              />
+            </div>
+          </div>
+
+          {/* Scheduled Appointments Section */}
+          <div className="mt-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <AppointmentsList 
+                petOwnerId={petOwner.uuid}
+                showHeader={true}
+                maxItems={5}
+                showCreateButton={true}
               />
             </div>
           </div>

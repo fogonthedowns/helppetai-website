@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Building2, Save, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 import '../../utils/authUtils'; // Import to ensure fetch interceptor is set up
 
 interface PracticeFormData {
@@ -176,13 +177,22 @@ const PracticeForm: React.FC<PracticeFormProps> = ({ mode }) => {
       {/* Header Section */}
       <section className="bg-gradient-to-br from-blue-50 to-indigo-50 py-16">
         <div className="max-w-4xl mx-auto px-6">
+          {/* Breadcrumbs */}
+          <Breadcrumb 
+            items={mode === 'edit' ? [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: 'Practices', href: '/practices' },
+              { label: formData.name || 'Practice', href: `/practices/${id}` },
+              { label: 'Edit', isActive: true }
+            ] : [
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: 'Practices', href: '/practices' },
+              { label: 'Create', isActive: true }
+            ]}
+            className="mb-6"
+          />
+          
           <div className="flex items-center mb-6">
-            <button
-              onClick={() => navigate('/practices')}
-              className="mr-4 p-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mr-4">
               <Building2 className="w-8 h-8 text-white" />
             </div>
