@@ -79,3 +79,5 @@ class User(Base):
     # Relationships
     created_visits: Mapped[List["Visit"]] = relationship("Visit", foreign_keys="Visit.created_by", back_populates="creator")
     vet_visits: Mapped[List["Visit"]] = relationship("Visit", foreign_keys="Visit.vet_user_id", back_populates="veterinarian")
+    assigned_appointments: Mapped[List["Appointment"]] = relationship("Appointment", foreign_keys="Appointment.assigned_vet_user_id", back_populates="assigned_vet")
+    created_appointments: Mapped[List["Appointment"]] = relationship("Appointment", foreign_keys="Appointment.created_by_user_id", back_populates="created_by")

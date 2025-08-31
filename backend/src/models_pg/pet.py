@@ -95,3 +95,4 @@ class Pet(Base):
     
     # Relationships
     visits: Mapped[List["Visit"]] = relationship("Visit", back_populates="pet", cascade="all, delete-orphan")
+    appointment_pets: Mapped[List["AppointmentPet"]] = relationship("AppointmentPet", back_populates="pet", cascade="all, delete-orphan")

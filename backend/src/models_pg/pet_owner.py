@@ -77,6 +77,9 @@ class PetOwner(Base):
     def __repr__(self) -> str:
         return f"<PetOwner(id={self.id}, full_name='{self.full_name}')>"
     
+    # Relationships
+    appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="pet_owner")
+    
     @property
     def primary_practice_association(self) -> Optional["PetOwnerPracticeAssociation"]:
         """Get the primary practice association"""

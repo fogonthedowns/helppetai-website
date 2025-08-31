@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Header = () => {
   const { isAuthenticated, username, logout, user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const isVet = user?.role === 'VET' || user?.role === 'VET_STAFF';
 
   return (
     <header className="bg-white border-b border-gray-100">
@@ -38,18 +39,23 @@ const Header = () => {
             {!isAuthenticated && (
               <Link to="/vets" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Vets</Link>
             )}
-            <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
-            {isAdmin && (
-              <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
-            )}
-
             {!isAuthenticated && (
-              <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
+              <>
+                <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
+                <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
+              </>
             )}
             
             {isAuthenticated ? (
               <>
-                <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colorss">Pet Owners</Link>
+                {isVet && (
+                  <Link to="/dashboard/vet" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">Dashboard</Link>
+                )}
+                {isAdmin && (
+                  <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
+                )}
+                <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
+                <Link to="/rag/search" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Search</Link>
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-600">Welcome, {username}</span>
                   <button 

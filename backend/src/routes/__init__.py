@@ -11,6 +11,7 @@ from .pet_owners import router as pet_owners_router
 from .rag import router as rag_router
 from .api import router as api_router
 from .associations import router as associations_router
+from .dashboard import router as dashboard_router
 
 # Create main router
 router = APIRouter()
@@ -25,6 +26,7 @@ router.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"
 router.include_router(practices_router, prefix="/api/v1/practices", tags=["veterinary-practices"])
 router.include_router(pet_owners_router, prefix="/api/v1/pet_owners", tags=["pet-owners"])
 router.include_router(associations_router, prefix="/api/v1/associations", tags=["pet-owner-practice-associations"])
+router.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["vet-dashboard"])
 router.include_router(rag_router, prefix="/api/v1/rag", tags=["rag-search"])
 router.include_router(api_router, prefix="/api/v1", tags=["general"])
 

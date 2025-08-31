@@ -24,6 +24,10 @@ import MedicalRecordDetail from './components/medical-records/MedicalRecordDetai
 import MedicalRecordHistory from './components/medical-records/MedicalRecordHistory';
 import VisitTranscriptDetail from './components/visit-transcripts/VisitTranscriptDetail';
 import VisitTranscriptForm from './components/visit-transcripts/VisitTranscriptForm';
+import VisitTranscriptRecorder from './components/visit-transcripts/VisitTranscriptRecorder';
+import AppointmentPetRecorder from './components/visit-transcripts/AppointmentPetRecorder';
+import AppointmentForm from './components/appointments/AppointmentForm';
+import VetDashboardPage from './pages/VetDashboardPage';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -43,6 +47,37 @@ const App = () => {
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            
+            {/* Dashboard Routes */}
+            <Route path="/dashboard/vet" element={
+              <ProtectedRoute>
+                <VetDashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/vet/:date" element={
+              <ProtectedRoute>
+                <VetDashboardPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Appointment Routes */}
+            <Route path="/appointments/new" element={
+              <ProtectedRoute>
+                <AppointmentForm />
+              </ProtectedRoute>
+            } />
+            
+            {/* Visit Transcript Routes */}
+            <Route path="/visit-transcripts/record" element={
+              <ProtectedRoute>
+                <VisitTranscriptRecorder />
+              </ProtectedRoute>
+            } />
+            <Route path="/visit-transcripts/record/:appointmentId" element={
+              <ProtectedRoute>
+                <AppointmentPetRecorder />
+              </ProtectedRoute>
+            } />
             
             {/* Practice Routes - Public */}
             <Route path="/practices" element={<PracticesList />} />

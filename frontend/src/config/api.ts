@@ -72,5 +72,19 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/v1/visit-transcripts/`,
     UPDATE: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
     DELETE: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
+  },
+  APPOINTMENTS: {
+    LIST_BY_PRACTICE: (practiceUuid: string) => `${API_BASE_URL}/api/v1/appointments/practice/${practiceUuid}`,
+    LIST_BY_PET_OWNER: (ownerUuid: string) => `${API_BASE_URL}/api/v1/appointments/pet-owner/${ownerUuid}`,
+    LIST_BY_VET: (vetUuid: string) => `${API_BASE_URL}/api/v1/appointments/vet/${vetUuid}`,
+    GET: (appointmentUuid: string) => `${API_BASE_URL}/api/v1/appointments/${appointmentUuid}`,
+    CREATE: `${API_BASE_URL}/api/v1/appointments`,
+    UPDATE: (appointmentUuid: string) => `${API_BASE_URL}/api/v1/appointments/${appointmentUuid}`,
+    CANCEL: (appointmentUuid: string) => `${API_BASE_URL}/api/v1/appointments/${appointmentUuid}`,
+  },
+  DASHBOARD: {
+    VET_DASHBOARD: (vetUuid: string) => `${API_BASE_URL}/api/v1/dashboard/vet/${vetUuid}`,
+    VET_TODAY: (vetUuid: string) => `${API_BASE_URL}/api/v1/dashboard/vet/${vetUuid}/today`,
+    PENDING_VISITS: (vetUuid: string) => `${API_BASE_URL}/api/v1/visits/vet/${vetUuid}/pending`,
   }
 } as const;
