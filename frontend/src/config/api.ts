@@ -86,5 +86,9 @@ export const API_ENDPOINTS = {
     VET_DASHBOARD: (vetUuid: string) => `${API_BASE_URL}/api/v1/dashboard/vet/${vetUuid}`,
     VET_TODAY: (vetUuid: string) => `${API_BASE_URL}/api/v1/dashboard/vet/${vetUuid}/today`,
     PENDING_VISITS: (vetUuid: string) => `${API_BASE_URL}/api/v1/visits/vet/${vetUuid}/pending`,
+  },
+  UPLOAD: {
+    AUDIO: `${API_BASE_URL}/api/v1/upload/audio`,
+    AUDIO_PRESIGNED_URL: (visitId: string) => `${API_BASE_URL}/api/v1/upload/audio/${visitId}/presigned-url`,
   }
 } as const;

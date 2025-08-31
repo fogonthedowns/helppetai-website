@@ -26,6 +26,9 @@ S3_REGION = os.getenv('S3_REGION', 'us-east-1')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
+# Presigned URL expiration (15 minutes)
+PRESIGNED_URL_EXPIRATION = 900
+
 def get_s3_client():
     """Get configured S3 client"""
     if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
@@ -286,4 +289,97 @@ async def check_upload_status():
                 "bucket": S3_BUCKET_NAME,
                 "region": S3_REGION
             }
+        )
+
+
+@router.get(
+    "/audio/{visit_id}/presigned-url",
+    summary="Get Presigned URL for Audio Playback",
+    description="Generate a secure, temporary URL for audio playback"
+)
+async def get_audio_presigned_url(
+    visit_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Generate a presigned URL for secure audio playback.
+    Only authenticated users can access visit audio.
+    """
+    
+    try:
+        # Validate visit ID format
+        visit_uuid = uuid.UUID(visit_id)
+        
+        # Get visit record from database
+        from sqlalchemy import select
+        visit_result = await db.execute(
+            select(Visit).where(Visit.id == visit_uuid)
+        )
+        visit = visit_result.scalar_one_or_none()
+        
+        if not visit:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Visit {visit_id} not found"
+            )
+        
+        # Check if user has access to this visit
+        # For now, any authenticated user can access any visit
+        # TODO: Add proper authorization based on practice/user relationship
+        
+        # Extract S3 key from additional_data
+        s3_key = visit.additional_data.get('audio_s3_key')
+        if not s3_key:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No audio file found for this visit"
+            )
+        
+        # Generate presigned URL
+        s3_client = get_s3_client()
+        
+        try:
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket': S3_BUCKET_NAME,
+                    'Key': s3_key
+                },
+                ExpiresIn=PRESIGNED_URL_EXPIRATION
+            )
+            
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "success": True,
+                    "presigned_url": presigned_url,
+                    "expires_in": PRESIGNED_URL_EXPIRATION,
+                    "visit_id": str(visit.id),
+                    "audio_filename": visit.additional_data.get('audio_filename', 'recording.mp3')
+                }
+            )
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'NoSuchKey':
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Audio file not found in storage"
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to generate presigned URL: {error_code}"
+                )
+        
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid visit ID format"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {str(e)}"
         )

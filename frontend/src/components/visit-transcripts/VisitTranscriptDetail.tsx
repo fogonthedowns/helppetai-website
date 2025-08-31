@@ -6,7 +6,6 @@ import {
   User, 
   Edit, 
   Trash2, 
-  ArrowLeft, 
   Play, 
   Pause,
   Volume2,
@@ -109,19 +108,42 @@ const VisitTranscriptDetail: React.FC = () => {
     }
   };
 
-  const toggleAudio = () => {
-    if (!transcript?.audio_transcript_url) return;
+  const toggleAudio = async () => {
+    if (!transcript?.audio_transcript_url || !transcriptId) return;
 
     if (!audioElement) {
-      const audio = new Audio(transcript.audio_transcript_url);
-      audio.addEventListener('ended', () => setIsPlaying(false));
-      audio.addEventListener('error', () => {
-        setError('Failed to load audio file');
+      try {
+        // Get presigned URL for secure audio access
+        const response = await fetch(API_ENDPOINTS.UPLOAD.AUDIO_PRESIGNED_URL(transcriptId), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get audio access');
+        }
+
+        const data = await response.json();
+        
+        if (!data.success || !data.presigned_url) {
+          throw new Error('Invalid audio access response');
+        }
+
+        const audio = new Audio(data.presigned_url);
+        audio.addEventListener('ended', () => setIsPlaying(false));
+        audio.addEventListener('error', () => {
+          setError('Failed to load audio file');
+          setIsPlaying(false);
+        });
+        setAudioElement(audio);
+        audio.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.error('Error loading audio:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load audio');
         setIsPlaying(false);
-      });
-      setAudioElement(audio);
-      audio.play();
-      setIsPlaying(true);
+      }
     } else {
       if (isPlaying) {
         audioElement.pause();
@@ -185,13 +207,7 @@ const VisitTranscriptDetail: React.FC = () => {
             </div>
           </div>
           <div className="mt-4">
-            <Link
-              to={`/pets/${petId}`}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Pet
-            </Link>
+            <p className="text-gray-600 text-sm">Use your browser's back button to return to the previous page.</p>
           </div>
         </div>
       </div>
@@ -213,15 +229,7 @@ const VisitTranscriptDetail: React.FC = () => {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            to={`/pets/${petId}`}
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Pet
-          </Link>
-          
+        <div className="flex items-center justify-end mb-4">
           <div className="flex items-center space-x-3">
             {canEdit() && (
               <Link
