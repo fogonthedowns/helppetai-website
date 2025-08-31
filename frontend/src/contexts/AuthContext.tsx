@@ -17,7 +17,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   username: string | null;
   user: User | null;
-  login: (username: string, token: string) => void;
+  login: (username: string, token: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -64,13 +64,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = (username: string, token: string) => {
+  const login = async (username: string, token: string) => {
     localStorage.setItem('token', token);
     localStorage.setItem('username', username);
     setIsAuthenticated(true);
     setUsername(username);
-    // Fetch user details after login
-    fetchUserDetails();
+    // Fetch user details after login and wait for completion
+    await fetchUserDetails();
   };
 
   const logout = () => {

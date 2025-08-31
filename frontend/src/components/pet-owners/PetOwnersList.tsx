@@ -25,7 +25,7 @@ const PetOwnersList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [petCounts, setPetCounts] = useState<{[key: string]: number}>({});
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
 
   const isAdmin = user?.role === 'ADMIN';
   const canCreatePetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF';
@@ -33,13 +33,18 @@ const PetOwnersList = () => {
   const canEditPetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF';
 
   useEffect(() => {
+    // Don't check permissions while auth is still loading
+    if (authLoading) {
+      return;
+    }
+    
     if (canViewPetOwners) {
       fetchPetOwners();
     } else {
       setError('Admin or Vet Staff access required');
       setLoading(false);
     }
-  }, [canViewPetOwners]);
+  }, [canViewPetOwners, authLoading]);
 
   const fetchPetOwners = async () => {
     try {
@@ -80,6 +85,16 @@ const PetOwnersList = () => {
     await Promise.all(promises);
     setPetCounts(counts);
   };
+
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

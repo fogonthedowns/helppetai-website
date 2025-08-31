@@ -65,5 +65,12 @@ export const API_ENDPOINTS = {
     TIMELINE: (petUuid: string) => `${API_BASE_URL}/api/v1/medical-records/pet/${petUuid}/timeline`,
     HISTORY: (petUuid: string) => `${API_BASE_URL}/api/v1/medical-records/pet/${petUuid}/history`,
     FOLLOW_UPS_DUE: `${API_BASE_URL}/api/v1/medical-records/follow-ups/due`,
+  },
+  VISIT_TRANSCRIPTS: {
+    BY_PET: (petUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/pet/${petUuid}`,
+    GET: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
+    CREATE: `${API_BASE_URL}/api/v1/visit-transcripts/`,
+    UPDATE: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
+    DELETE: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
   }
 } as const;

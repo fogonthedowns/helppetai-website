@@ -9,6 +9,7 @@ import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import '../../utils/authUtils';
 import MedicalRecordsTimeline from '../medical-records/MedicalRecordsTimeline';
+import VisitTranscriptsList from '../visit-transcripts/VisitTranscriptsList';
 
 const PetDetail: React.FC = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -389,6 +390,15 @@ const PetDetail: React.FC = () => {
             {/* Medical Records */}
             <div className="bg-white shadow-sm rounded-lg p-6">
               <MedicalRecordsTimeline 
+                petId={pet.id} 
+                showHeader={true}
+                maxItems={5}
+              />
+            </div>
+
+            {/* Visit Transcripts */}
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <VisitTranscriptsList 
                 petId={pet.id} 
                 showHeader={true}
                 maxItems={5}

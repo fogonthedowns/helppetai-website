@@ -22,6 +22,8 @@ import PetForm from './components/pets/PetForm';
 import MedicalRecordForm from './components/medical-records/MedicalRecordForm';
 import MedicalRecordDetail from './components/medical-records/MedicalRecordDetail';
 import MedicalRecordHistory from './components/medical-records/MedicalRecordHistory';
+import VisitTranscriptDetail from './components/visit-transcripts/VisitTranscriptDetail';
+import VisitTranscriptForm from './components/visit-transcripts/VisitTranscriptForm';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -116,6 +118,23 @@ const App = () => {
             <Route path="/pets/:petId/medical-records/:recordId/edit" element={
               <ProtectedRoute>
                 <MedicalRecordForm mode="edit" />
+              </ProtectedRoute>
+            } />
+            
+            {/* Visit Transcript Routes */}
+            <Route path="/pets/:petId/visit-transcripts/create" element={
+              <ProtectedRoute>
+                <VisitTranscriptForm mode="create" />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:petId/visit-transcripts/:transcriptId" element={
+              <ProtectedRoute>
+                <VisitTranscriptDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/pets/:petId/visit-transcripts/:transcriptId/edit" element={
+              <ProtectedRoute>
+                <VisitTranscriptForm mode="edit" />
               </ProtectedRoute>
             } />
             

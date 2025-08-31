@@ -10,7 +10,8 @@ import {
   FileText,
   User,
   DollarSign,
-  History
+  History,
+  Edit
 } from 'lucide-react';
 import { 
   MedicalRecord, 
@@ -146,8 +147,12 @@ const MedicalRecordsTimeline: React.FC<MedicalRecordsTimelineProps> = ({
               to={`/pets/${petId}/medical-records/create`}
               className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Record
+              {timeline && timeline.records_by_date.length > 0 ? (
+                <Edit className="w-4 h-4 mr-2" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              {timeline && timeline.records_by_date.length > 0 ? 'Edit Record' : 'Add Record'}
             </Link>
           )}
         </div>

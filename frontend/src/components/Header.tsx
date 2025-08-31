@@ -49,7 +49,7 @@ const Header = () => {
             
             {isAuthenticated ? (
               <>
-                <Link to="/rag" className="text-gray-600 hover:text-gray-900 font-medium transition-colorss">AI Search</Link>
+                <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colorss">Pet Owners</Link>
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-600">Welcome, {username}</span>
                   <button 

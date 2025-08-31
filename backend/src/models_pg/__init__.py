@@ -8,6 +8,7 @@ from .pet_owner import PetOwner
 from .pet_owner_practice_association import PetOwnerPracticeAssociation
 from .pet import Pet
 from .medical_record import MedicalRecord
+from .visit import Visit
 
 __all__ = [
     "User",
@@ -15,5 +16,6 @@ __all__ = [
     "PetOwner",
     "PetOwnerPracticeAssociation",
     "Pet",
-    "MedicalRecord"
+    "MedicalRecord",
+    "Visit"
 ]

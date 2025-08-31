@@ -92,3 +92,6 @@ class Pet(Base):
     def display_name(self) -> str:
         """Display name with species for UI"""
         return f"{self.name} ({self.species})"
+    
+    # Relationships
+    visits: Mapped[List["Visit"]] = relationship("Visit", back_populates="pet", cascade="all, delete-orphan")

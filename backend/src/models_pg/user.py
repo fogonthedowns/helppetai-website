@@ -75,3 +75,7 @@ class User(Base):
     def is_admin(self) -> bool:
         """Check if user is an admin"""
         return self.role == UserRole.ADMIN
+    
+    # Relationships
+    created_visits: Mapped[List["Visit"]] = relationship("Visit", foreign_keys="Visit.created_by", back_populates="creator")
+    vet_visits: Mapped[List["Visit"]] = relationship("Visit", foreign_keys="Visit.vet_user_id", back_populates="veterinarian")

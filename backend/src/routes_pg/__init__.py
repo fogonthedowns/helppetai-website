@@ -12,6 +12,7 @@ from .associations import router as associations_router
 from .pets import router as pets_router
 from .medical_records import router as medical_records_router
 from .rag import router as rag_router
+from .visit_transcripts import router as visit_transcripts_router
 
 # Create main router
 router = APIRouter()
@@ -28,6 +29,7 @@ router.include_router(pet_owners_router, prefix="/api/v1/pet_owners", tags=["pet
 router.include_router(associations_router, prefix="/api/v1/associations", tags=["pet-owner-practice-associations"])
 router.include_router(pets_router, tags=["pets"])  # pets router already has /api/v1/pets prefix
 router.include_router(medical_records_router, tags=["medical-records"])  # medical records router already has prefix
+router.include_router(visit_transcripts_router, tags=["visit-transcripts"])  # visit transcripts router already has prefix
 router.include_router(rag_router, prefix="/api/v1/rag", tags=["rag-search"])
 
 __all__ = ["router"]
