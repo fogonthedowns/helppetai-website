@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
-  ArrowLeft, Heart, Edit, Trash2, Calendar, Weight, 
+  Heart, Edit, Trash2, Calendar, Weight, 
   Stethoscope, Phone, AlertCircle, CheckCircle, RotateCcw 
 } from 'lucide-react';
 import { PetWithOwner } from '../../types/pet';
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 import '../../utils/authUtils';
 import MedicalRecordsTimeline from '../medical-records/MedicalRecordsTimeline';
 import VisitTranscriptsList from '../visit-transcripts/VisitTranscriptsList';
@@ -182,13 +183,15 @@ const PetDetail: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </button>
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb
+            items={[
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: pet.owner.full_name, href: `/pet_owners/${pet.owner_id}` },
+              { label: pet.display_name, isActive: true }
+            ]}
+            className="mb-6"
+          />
           
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -198,13 +201,7 @@ const PetDetail: React.FC = () => {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{pet.display_name}</h1>
                 <p className="text-gray-600">
-                  Owned by{' '}
-                  <Link 
-                    to={`/pet_owners/${pet.owner_id}`}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    {pet.owner.full_name}
-                  </Link>
+                  {pet.species} {pet.breed && `• ${pet.breed}`}
                 </p>
               </div>
             </div>

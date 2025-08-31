@@ -23,12 +23,14 @@ import {
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthHeaders } from '../../utils/authUtils';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 
 const VisitTranscriptDetail: React.FC = () => {
   const { petId, transcriptId } = useParams<{ petId: string; transcriptId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [transcript, setTranscript] = useState<VisitTranscript | null>(null);
+  const [pet, setPet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -36,10 +38,11 @@ const VisitTranscriptDetail: React.FC = () => {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (transcriptId) {
+    if (transcriptId && petId) {
       fetchTranscript();
+      fetchPet();
     }
-  }, [transcriptId]);
+  }, [transcriptId, petId]);
 
   useEffect(() => {
     // Cleanup audio when component unmounts
@@ -76,6 +79,24 @@ const VisitTranscriptDetail: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to load visit transcript');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPet = async () => {
+    if (!petId) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.PETS.GET(petId), {
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const petData = await response.json();
+        setPet(petData);
+      }
+    } catch (err) {
+      console.error('Error fetching pet:', err);
+      // Don't set error for pet fetch failure, just log it
     }
   };
 
@@ -229,6 +250,19 @@ const VisitTranscriptDetail: React.FC = () => {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
+        {/* Breadcrumb Navigation */}
+        {pet && (
+          <Breadcrumb
+            items={[
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: pet.owner?.full_name || 'Owner', href: `/pet_owners/${pet.owner_id}` },
+              { label: pet.display_name || pet.name, href: `/pets/${petId}` },
+              { label: `${new Date(transcript.visit_date).toLocaleDateString()} Visit`, isActive: true }
+            ]}
+            className="mb-6"
+          />
+        )}
+        
         <div className="flex items-center justify-end mb-4">
           <div className="flex items-center space-x-3">
             {canEdit() && (
