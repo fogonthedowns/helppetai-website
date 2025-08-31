@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
 import PetsList from '../pets/PetsList';
+import Breadcrumb, { BreadcrumbItem } from '../common/Breadcrumb';
 
 interface PetOwner {
   uuid: string;
@@ -117,13 +118,6 @@ const PetOwnerDetail = () => {
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-red-800 mb-2">Pet Owner Not Found</h2>
             <p className="text-red-600 mb-6">{error}</p>
-            <Link
-              to="/pet_owners"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Pet Owners</span>
-            </Link>
           </div>
         </div>
       </div>
@@ -137,12 +131,6 @@ const PetOwnerDetail = () => {
           <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Pet Owner Not Found</h2>
           <p className="text-gray-600 mb-6">Pet owner not found</p>
-          <Link
-            to="/pet_owners"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Back to Pet Owners
-          </Link>
         </div>
       </div>
     );
@@ -156,15 +144,17 @@ const PetOwnerDetail = () => {
       {/* Header */}
       <section className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 py-8">
+          {/* Breadcrumbs */}
+          <Breadcrumb 
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Pet Owners', href: '/pet_owners' },
+              { label: petOwner.full_name, isActive: true }
+            ]}
+            className="mb-6"
+          />
+          
           <div className="flex items-center justify-between mb-6">
-            <Link
-              to="/pet_owners"
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Pet Owners
-            </Link>
-            
             <div className="flex space-x-3">
               {canEdit && (
                 <Link
