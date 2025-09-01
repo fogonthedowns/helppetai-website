@@ -201,6 +201,34 @@ const PetOwnerDetail = () => {
       {/* Content */}
       <section className="py-8">
         <div className="max-w-4xl mx-auto px-6">
+          {/* Scheduled Appointments Section */}
+          <div className="mt-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <AppointmentsList 
+                petOwnerId={petOwner.uuid}
+                showHeader={true}
+                maxItems={5}
+                showCreateButton={true}
+              />
+            </div>
+          </div>
+
+          <hr className="my-8" />
+
+          {/* Pets Section - Most Important */}
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <PetsList 
+                ownerUuid={petOwner.uuid} 
+                petOwner={{
+                  id: petOwner.uuid,
+                  user_id: petOwner.user_id,
+                  full_name: petOwner.full_name
+                }}
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Contact Information */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -316,31 +344,7 @@ const PetOwnerDetail = () => {
             </div>
           </div>
 
-          {/* Pets Section */}
-          <div className="mt-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <PetsList 
-                ownerUuid={petOwner.uuid} 
-                petOwner={{
-                  id: petOwner.uuid,
-                  user_id: petOwner.user_id,
-                  full_name: petOwner.full_name
-                }}
-              />
-            </div>
-          </div>
 
-          {/* Scheduled Appointments Section */}
-          <div className="mt-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <AppointmentsList 
-                petOwnerId={petOwner.uuid}
-                showHeader={true}
-                maxItems={5}
-                showCreateButton={true}
-              />
-            </div>
-          </div>
         </div>
       </section>
     </div>

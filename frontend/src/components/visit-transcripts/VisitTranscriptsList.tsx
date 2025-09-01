@@ -18,7 +18,6 @@ import {
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthHeaders } from '../../utils/authUtils';
-import PastAppointmentsList from '../appointments/PastAppointmentsList';
 
 interface VisitTranscriptsListProps {
   petId: string;
@@ -246,19 +245,6 @@ const VisitTranscriptsList: React.FC<VisitTranscriptsListProps> = ({
               </Link>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Past Appointments with Transcript Links */}
-      {petOwnerId && (
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <PastAppointmentsList
-            petOwnerId={petOwnerId}
-            petId={petId}
-            showHeader={true}
-            maxItems={3}
-            title="Related Past Appointments"
-          />
         </div>
       )}
     </div>

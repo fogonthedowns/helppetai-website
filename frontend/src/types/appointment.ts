@@ -12,6 +12,10 @@ export enum AppointmentType {
 
 export enum AppointmentStatus {
   SCHEDULED = 'scheduled',
+  IN_PROGRESS = 'in_progress',
+  COMPLETE = 'complete',
+  ERROR = 'error',
+  // Legacy values for backward compatibility
   CONFIRMED = 'confirmed',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',

@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { uploadAudioToS3, generateAudioFileName, isS3Configured } from '../../config/s3';
-import { Mic, MicOff, Square, Play, Pause, Upload, Check, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Mic, MicOff, Square, Play, Pause, Upload, Check, AlertCircle, ArrowLeft, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { VisitTranscript, TranscriptState, TRANSCRIPT_STATE_LABELS, TRANSCRIPT_STATE_COLORS } from '../../types/visitTranscript';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface RecordingState {
   isRecording: boolean;
@@ -18,7 +20,7 @@ interface RecordingState {
 export const VisitTranscriptRecorder: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { appointmentId } = useParams<{ appointmentId?: string }>();
+  const { appointmentId, visitId } = useParams<{ appointmentId?: string; visitId?: string }>();
   
   const [recordingState, setRecordingState] = useState<RecordingState>({
     isRecording: false,
@@ -30,12 +32,20 @@ export const VisitTranscriptRecorder: React.FC = () => {
     uploadStatus: 'idle'
   });
 
+  const [visitTranscript, setVisitTranscript] = useState<VisitTranscript | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
+    if (visitId) {
+      fetchVisitTranscript();
+    }
+    
     // Cleanup on unmount
     return () => {
       stopRecording();
@@ -46,7 +56,30 @@ export const VisitTranscriptRecorder: React.FC = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, []);
+  }, [visitId]);
+
+  const fetchVisitTranscript = async () => {
+    if (!visitId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.GET(visitId));
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch visit transcript');
+      }
+      
+      const transcript: VisitTranscript = await response.json();
+      setVisitTranscript(transcript);
+    } catch (err) {
+      console.error('Error fetching visit transcript:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch visit transcript');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -234,6 +267,21 @@ export const VisitTranscriptRecorder: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getStatusIcon = (state: TranscriptState) => {
+    switch (state) {
+      case TranscriptState.NEW:
+        return <Clock className="w-4 h-4" />;
+      case TranscriptState.PROCESSING:
+        return <Clock className="w-4 h-4 animate-spin" />;
+      case TranscriptState.PROCESSED:
+        return <CheckCircle className="w-4 h-4" />;
+      case TranscriptState.FAILED:
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Clock className="w-4 h-4" />;
+    }
+  };
+
   const getRecordingStatusColor = () => {
     if (recordingState.isRecording && !recordingState.isPaused) return 'text-red-600';
     if (recordingState.isPaused) return 'text-yellow-600';
@@ -266,6 +314,14 @@ export const VisitTranscriptRecorder: React.FC = () => {
                 <p className="text-gray-600">
                   {appointmentId ? `Appointment: ${appointmentId.slice(0, 8)}...` : 'New Visit Recording'}
                 </p>
+                {visitTranscript && (
+                  <div className="flex items-center mt-2">
+                    <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${TRANSCRIPT_STATE_COLORS[visitTranscript.state]}`}>
+                      {getStatusIcon(visitTranscript.state)}
+                      <span className="ml-1">{TRANSCRIPT_STATE_LABELS[visitTranscript.state]}</span>
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="text-right">
@@ -282,6 +338,65 @@ export const VisitTranscriptRecorder: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Visit Status Card */}
+        {visitTranscript && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Recording Status</h2>
+                <div className="flex items-center space-x-4">
+                  <span className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-full ${TRANSCRIPT_STATE_COLORS[visitTranscript.state]}`}>
+                    {getStatusIcon(visitTranscript.state)}
+                    <span className="ml-2">{TRANSCRIPT_STATE_LABELS[visitTranscript.state]}</span>
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    Created: {new Date(visitTranscript.created_at).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              
+              {visitTranscript.state === TranscriptState.PROCESSED && (
+                <div className="text-right">
+                  <div className="text-sm text-gray-600 mb-1">Recording Complete</div>
+                  <button
+                    onClick={() => navigate(`/visit-transcripts/${visitTranscript.uuid}`)}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    View Transcript
+                  </button>
+                </div>
+              )}
+              
+              {visitTranscript.state === TranscriptState.PROCESSING && (
+                <div className="text-right">
+                  <div className="text-sm text-gray-600 mb-1">Processing...</div>
+                  <button
+                    onClick={fetchVisitTranscript}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Refresh Status
+                  </button>
+                </div>
+              )}
+              
+              {visitTranscript.state === TranscriptState.FAILED && (
+                <div className="text-right">
+                  <div className="text-sm text-red-600 mb-1">Processing Failed</div>
+                  <button
+                    onClick={fetchVisitTranscript}
+                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Retry
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           
           {/* Recording Visualization */}

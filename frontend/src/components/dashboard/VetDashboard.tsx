@@ -70,6 +70,14 @@ const VetDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Initialize selectedDate from URL parameter or default to today
+  // Helper function to format date for URL using local timezone
+  const formatDateForURL = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     if (dateParam) {
       try {
@@ -97,25 +105,31 @@ const VetDashboard: React.FC = () => {
         const [year, month, day] = dateParam.split('-').map(Number);
         if (year && month && day) {
           const parsedDate = new Date(year, month - 1, day); // month is 0-indexed
-          if (!isNaN(parsedDate.getTime()) && parsedDate.toDateString() !== selectedDate.toDateString()) {
+          const currentDateStr = formatDateForURL(selectedDate);
+          const newDateStr = formatDateForURL(parsedDate);
+          
+          if (!isNaN(parsedDate.getTime()) && currentDateStr !== newDateStr) {
             setSelectedDate(parsedDate);
           }
         } else {
           // Invalid date format in URL, redirect to today
-          navigate('/dashboard/vet');
+          navigate('/dashboard/vet', { replace: true });
         }
       } catch (e) {
         // Invalid date in URL, redirect to today
-        navigate('/dashboard/vet');
+        navigate('/dashboard/vet', { replace: true });
       }
     } else {
       // No date parameter, should be today
       const today = new Date();
-      if (selectedDate.toDateString() !== today.toDateString()) {
+      const currentDateStr = formatDateForURL(selectedDate);
+      const todayDateStr = formatDateForURL(today);
+      
+      if (currentDateStr !== todayDateStr) {
         setSelectedDate(today);
       }
     }
-  }, [dateParam, navigate, selectedDate]);
+  }, [dateParam, navigate]); // Remove selectedDate from dependencies to prevent infinite loop
 
   useEffect(() => {
     if (user?.id) {
@@ -136,25 +150,28 @@ const VetDashboard: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      // Format selected date as YYYY-MM-DD
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      // Format selected date as YYYY-MM-DD using local timezone
+      const dateStr = formatDateForURL(selectedDate);
       
-      // Fetch both dashboard and today's work summary for selected date
-      const [dashboardResponse, todayResponse] = await Promise.all([
-        fetch(`${API_ENDPOINTS.DASHBOARD.VET_DASHBOARD(user.id)}?date=${dateStr}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_ENDPOINTS.DASHBOARD.VET_TODAY(user.id)}?date=${dateStr}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
+      // Fetch today's work summary (contains all needed data)
+      const todayResponse = await fetch(`${API_ENDPOINTS.DASHBOARD.VET_TODAY(user.id)}?date=${dateStr}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-      if (!dashboardResponse.ok || !todayResponse.ok) {
+      if (!todayResponse.ok) {
         throw new Error('Failed to fetch dashboard data');
       }
 
-      const dashboardData = await dashboardResponse.json();
       const todayData = await todayResponse.json();
+      
+      // Create dashboard data from today data
+      const dashboardData = {
+        today_appointments: todayData.appointments_today,
+        stats: {
+          appointments_today: todayData.appointments_today.length,
+          completed_visits: todayData.completed_count
+        }
+      };
       
       setDashboard(dashboardData);
       setTodayWork(todayData);
@@ -167,15 +184,17 @@ const VetDashboard: React.FC = () => {
   };
 
   const updateDateAndURL = (newDate: Date) => {
-    setSelectedDate(newDate);
-    const dateStr = newDate.toISOString().split('T')[0];
+    const dateStr = formatDateForURL(newDate);
     const isToday = newDate.toDateString() === new Date().toDateString();
+    
+    // Update state first
+    setSelectedDate(newDate);
     
     // Navigate to URL with date parameter, or base URL for today
     if (isToday) {
-      navigate('/dashboard/vet');
+      navigate('/dashboard/vet', { replace: true });
     } else {
-      navigate(`/dashboard/vet/${dateStr}`);
+      navigate(`/dashboard/vet/${dateStr}`, { replace: true });
     }
   };
 

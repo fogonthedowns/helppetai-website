@@ -49,12 +49,17 @@ export const TodaysScheduleCard: React.FC<TodaysScheduleCardProps> = ({
     switch (status) {
       case AppointmentStatus.SCHEDULED:
         return 'bg-blue-100 text-blue-800';
-      case AppointmentStatus.CONFIRMED:
+      case AppointmentStatus.IN_PROGRESS:
+        return 'bg-yellow-100 text-yellow-800';
+      case AppointmentStatus.COMPLETE:
+      case AppointmentStatus.COMPLETED: // Legacy
         return 'bg-green-100 text-green-800';
-      case AppointmentStatus.COMPLETED:
-        return 'bg-gray-100 text-gray-800';
-      case AppointmentStatus.CANCELLED:
+      case AppointmentStatus.ERROR:
         return 'bg-red-100 text-red-800';
+      case AppointmentStatus.CONFIRMED:
+        return 'bg-emerald-100 text-emerald-800';
+      case AppointmentStatus.CANCELLED:
+        return 'bg-gray-100 text-gray-800';
       case AppointmentStatus.NO_SHOW:
         return 'bg-orange-100 text-orange-800';
       default:
@@ -177,7 +182,7 @@ export const TodaysScheduleCard: React.FC<TodaysScheduleCardProps> = ({
                 className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
                   isCurrentTime(appointment) 
                     ? 'border-green-200 bg-green-50' 
-                    : 'border-gray-200 bg-gray-50'
+                    : 'border-gray-200 bg-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -211,19 +216,32 @@ export const TodaysScheduleCard: React.FC<TodaysScheduleCardProps> = ({
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    {appointment.pets[0] && (
+                    {appointment.pets.length === 1 ? (
                       <Link
                         to={`/pets/${appointment.pets[0].id}`}
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         View Pet
                       </Link>
-                    )}
+                    ) : appointment.pets.length > 1 ? (
+                      <div className="flex items-center space-x-1">
+                        {appointment.pets.map((pet, index) => (
+                          <Link
+                            key={pet.id}
+                            to={`/pets/${pet.id}`}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          >
+                            {pet.name}
+                            {index < appointment.pets.length - 1 && <span className="text-gray-400 ml-1">•</span>}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
                     <Link
                       to={`/visit-transcripts/record/${appointment.id}`}
                       className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 transition-colors"
                     >
-                      {appointment.status === AppointmentStatus.COMPLETED ? 'Review' : 'Start'}
+                      {(appointment.status === AppointmentStatus.COMPLETED || appointment.status === AppointmentStatus.COMPLETE) ? 'Review' : 'Start'}
                     </Link>
                   </div>
                 </div>

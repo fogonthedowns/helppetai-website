@@ -23,6 +23,7 @@ const PetDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     if (uuid) {
@@ -81,6 +82,7 @@ const PetDetail: React.FC = () => {
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
+      setDeleteConfirmText('');
     }
   };
 
@@ -143,7 +145,7 @@ const PetDetail: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <span className="ml-2 text-gray-600">Loading pet...</span>
@@ -156,7 +158,7 @@ const PetDetail: React.FC = () => {
   if (error || !pet) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-center">
               <AlertCircle className="w-6 h-6 text-red-600 mr-3" />
@@ -181,7 +183,7 @@ const PetDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           {/* Breadcrumb Navigation */}
@@ -228,15 +230,7 @@ const PetDetail: React.FC = () => {
                 </Link>
               )}
               
-              {canDeletePet() && pet.is_active && (
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors duration-200"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </button>
-              )}
+
             </div>
           </div>
 
@@ -251,10 +245,85 @@ const PetDetail: React.FC = () => {
         </div>
 
         {/* Pet Information */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Basic Information */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Main Content */}
+          <div className="space-y-6">
+            {/* Medical Records - Top Priority */}
             <div className="bg-white shadow-sm rounded-lg p-6">
+              <MedicalRecordsTimeline 
+                petId={pet.id} 
+                showHeader={true}
+                maxItems={5}
+              />
+            </div>
+
+            {/* Visit Transcripts */}
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <VisitTranscriptsList 
+                petId={pet.id}
+                petOwnerId={pet.owner_id}
+                showHeader={true}
+                maxItems={5}
+              />
+            </div>
+
+            {/* Medical Information */}
+            {(pet.allergies || pet.medications || pet.medical_notes) && (
+              <div className="bg-white shadow-sm rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Stethoscope className="w-5 h-5 mr-2 text-red-500" />
+                  Medical Information
+                </h2>
+                <div className="space-y-4">
+                  {pet.allergies && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <p className="text-gray-900 whitespace-pre-wrap">{pet.allergies}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {pet.medications && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Current Medications</label>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-gray-900 whitespace-pre-wrap">{pet.medications}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {pet.medical_notes && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Medical Notes</label>
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <p className="text-gray-900 whitespace-pre-wrap">{pet.medical_notes}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Scheduled Appointments */}
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <AppointmentsList 
+                petOwnerId={pet.owner_id}
+                petId={pet.id}
+                showHeader={true}
+                maxItems={3}
+                showCreateButton={true}
+                title="Scheduled Appointments"
+              />
+            </div>
+
+           {/* Basic Information */}
+           <div className="bg-white shadow-sm rounded-lg p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -347,119 +416,6 @@ const PetDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Medical Information */}
-            {(pet.allergies || pet.medications || pet.medical_notes) && (
-              <div className="bg-white shadow-sm rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Stethoscope className="w-5 h-5 mr-2 text-red-500" />
-                  Medical Information
-                </h2>
-                <div className="space-y-4">
-                  {pet.allergies && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <p className="text-gray-900 whitespace-pre-wrap">{pet.allergies}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {pet.medications && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Current Medications</label>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p className="text-gray-900 whitespace-pre-wrap">{pet.medications}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {pet.medical_notes && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Medical Notes</label>
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        <p className="text-gray-900 whitespace-pre-wrap">{pet.medical_notes}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Medical Records */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <MedicalRecordsTimeline 
-                petId={pet.id} 
-                showHeader={true}
-                maxItems={5}
-              />
-            </div>
-
-            {/* Visit Transcripts */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <VisitTranscriptsList 
-                petId={pet.id}
-                petOwnerId={pet.owner_id}
-                showHeader={true}
-                maxItems={5}
-              />
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Scheduled Appointments */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <AppointmentsList 
-                petOwnerId={pet.owner_id}
-                petId={pet.id}
-                showHeader={true}
-                maxItems={3}
-                showCreateButton={true}
-                title="Scheduled Appointments"
-              />
-            </div>
-
-            {/* Owner Information */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Owner Information</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <Link 
-                    to={`/pet_owners/${pet.owner_id}`}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    {pet.owner.full_name}
-                  </Link>
-                </div>
-                
-                {pet.owner.email && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <a 
-                      href={`mailto:${pet.owner.email}`}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      {pet.owner.email}
-                    </a>
-                  </div>
-                )}
-
-                {pet.owner.phone && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <a 
-                      href={`tel:${pet.owner.phone}`}
-                      className="text-blue-600 hover:text-blue-700 flex items-center"
-                    >
-                      <Phone className="w-4 h-4 mr-1" />
-                      {pet.owner.phone}
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Emergency Contact */}
             {(pet.emergency_contact || pet.emergency_phone) && (
               <div className="bg-white shadow-sm rounded-lg p-6">
@@ -491,60 +447,88 @@ const PetDetail: React.FC = () => {
               </div>
             )}
 
-            {/* Record Information */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Record Information</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-                  <p className="text-gray-600">{formatDate(pet.created_at)}</p>
+            {/* Danger Zone */}
+            {canDeletePet() && pet.is_active && (
+              <div className="bg-white shadow-sm rounded-lg p-6 border-2 border-red-200">
+                <div className="flex items-center mb-4">
+                  <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-red-900">Danger Zone</h3>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
-                  <p className="text-gray-600">{formatDate(pet.updated_at)}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
-                    pet.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {pet.is_active ? 'Active' : 'Inactive'}
-                  </span>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-red-900 mb-2">Delete Pet Record</h4>
+                  <p className="text-sm text-red-700 mb-4">
+                    Once you delete this pet, the record will be deactivated but preserved for historical purposes. This action cannot be undone.
+                  </p>
+                  
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50 transition-colors duration-200"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Pet
+                  </button>
                 </div>
               </div>
-            </div>
+            )}
+
           </div>
         </div>
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full">
               <div className="flex items-center mb-4">
                 <AlertCircle className="w-6 h-6 text-red-600 mr-3" />
-                <h3 className="text-lg font-medium text-gray-900">Delete Pet</h3>
+                <h3 className="text-lg font-medium text-gray-900">Delete Pet Record</h3>
               </div>
               
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete <strong>{pet.name}</strong>? This action will deactivate the pet record but preserve the data for historical purposes.
-              </p>
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  This action will permanently deactivate <strong>{pet.name}</strong>'s record. While the data will be preserved for historical purposes, this action cannot be undone.
+                </p>
+                
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-red-800 font-medium mb-2">
+                    ⚠️ This is a destructive action
+                  </p>
+                  <p className="text-sm text-red-700">
+                    To confirm deletion, please type <strong>{pet.name.toLowerCase()}</strong> in the field below:
+                  </p>
+                </div>
+                
+                <div>
+                  <label htmlFor="confirmText" className="block text-sm font-medium text-gray-700 mb-2">
+                    Pet name confirmation
+                  </label>
+                  <input
+                    id="confirmText"
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder={`Type "${pet.name.toLowerCase()}" to confirm`}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    disabled={isDeleting}
+                  />
+                </div>
+              </div>
               
               <div className="flex justify-end space-x-3">
                 <button
-                  onClick={() => setShowDeleteConfirm(false)}
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmText('');
+                  }}
                   disabled={isDeleting}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
+                  disabled={isDeleting || deleteConfirmText.toLowerCase() !== pet.name.toLowerCase()}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDeleting ? 'Deleting...' : 'Delete Pet'}
                 </button>

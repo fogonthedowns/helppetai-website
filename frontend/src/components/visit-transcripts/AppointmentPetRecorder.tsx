@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Mic, Square, Play, Pause, Upload, CheckCircle } from 'lucide-react';
+import { Mic, Square, Play, Pause, Upload, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
 import { uploadAudioToS3, generateAudioFileName } from '../../config/s3';
 
 interface Pet {
@@ -25,6 +25,11 @@ interface RecordingState {
   isUploading: boolean;
   uploadSuccess: boolean;
   visitId?: string;
+  existingVisit?: {
+    id: string;
+    state: string;
+    created_at: string;
+  };
 }
 
 const AppointmentPetRecorder: React.FC = () => {
@@ -59,18 +64,24 @@ const AppointmentPetRecorder: React.FC = () => {
         const data = await response.json();
         setAppointment(data);
         
-        // Initialize recording states for each pet
+        // Initialize recording states for each pet and check for existing visits
         const initialRecordings: Record<string, RecordingState> = {};
-        data.pets.forEach((pet: Pet) => {
+        
+        for (const pet of data.pets) {
+          // Check for existing visit for this pet and appointment
+          const existingVisit = await checkExistingVisit(pet.id);
+          
           initialRecordings[pet.id] = {
             isRecording: false,
             isPaused: false,
             duration: 0,
             audioBlob: null,
             isUploading: false,
-            uploadSuccess: false
+            uploadSuccess: false,
+            existingVisit: existingVisit || undefined
           };
-        });
+        }
+        
         setRecordings(initialRecordings);
         
         if (data.pets.length > 0) {
@@ -84,6 +95,42 @@ const AppointmentPetRecorder: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkExistingVisit = async (petId: string) => {
+    try {
+      // Get all visits for this pet and check if any match this appointment
+      const response = await fetch(`http://localhost:8000/api/v1/visit-transcripts/pet/${petId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const visits = await response.json(); // This is directly an array
+        console.log(`Checking visits for pet ${petId}:`, visits);
+        
+        // Find visit that matches this appointment
+        const existingVisit = visits.find((visit: any) => 
+          visit.metadata?.appointment_id === appointmentId
+        );
+        
+        console.log(`Found existing visit for appointment ${appointmentId}:`, existingVisit);
+        
+        if (existingVisit) {
+          return {
+            id: existingVisit.uuid,
+            state: existingVisit.state,
+            created_at: existingVisit.created_at
+          };
+        }
+      } else {
+        console.log(`Failed to fetch visits for pet ${petId}:`, response.status, response.statusText);
+      }
+    } catch (err) {
+      console.error('Error checking existing visit:', err);
+    }
+    return null;
   };
 
   const startRecording = async (petId: string) => {
@@ -255,47 +302,88 @@ const AppointmentPetRecorder: React.FC = () => {
 
                 {/* Recording Controls */}
                 <div className="flex items-center space-x-4">
-                  {!recording.isRecording && !recording.audioBlob && (
-                    <button
-                      onClick={() => startRecording(pet.id)}
-                      className="flex items-center bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-                    >
-                      <Mic className="w-5 h-5 mr-2" />
-                      Start Recording
-                    </button>
-                  )}
-
-                  {recording.isRecording && (
-                    <>
-                      <button
-                        onClick={() => stopRecording(pet.id)}
-                        className="flex items-center bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-                      >
-                        <Square className="w-5 h-5 mr-2" />
-                        Stop Recording
-                      </button>
-                      <div className="flex items-center text-red-600">
-                        <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse mr-2"></div>
-                        <span className="font-mono text-lg">{formatDuration(recording.duration)}</span>
+                  {recording.existingVisit ? (
+                    // Show existing recording status
+                    <div className="w-full">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-full ${
+                              recording.existingVisit.state === 'processed' ? 'bg-green-100 text-green-800' :
+                              recording.existingVisit.state === 'processing' ? 'bg-blue-100 text-blue-800' :
+                              recording.existingVisit.state === 'failed' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {recording.existingVisit.state === 'processed' && <CheckCircle className="w-4 h-4 mr-1" />}
+                              {recording.existingVisit.state === 'processing' && <Clock className="w-4 h-4 mr-1 animate-spin" />}
+                              {recording.existingVisit.state === 'failed' && <XCircle className="w-4 h-4 mr-1" />}
+                              {recording.existingVisit.state === 'new' && <Clock className="w-4 h-4 mr-1" />}
+                              Recording {recording.existingVisit.state.charAt(0).toUpperCase() + recording.existingVisit.state.slice(1)}
+                            </div>
+                            <span className="text-sm text-gray-600">
+                              {new Date(recording.existingVisit.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          <button
+                            onClick={() => navigate(`/pets/${pet.id}/visit-transcripts/${recording.existingVisit!.id}`)}
+                            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            <Eye className="w-5 h-5 mr-2" />
+                            View Recording
+                          </button>
+                        </div>
+                        <p className="text-sm text-green-700 mt-2">
+                          ✅ This pet has already been recorded for this appointment.
+                        </p>
                       </div>
-                    </>
-                  )}
-
-                  {recording.audioBlob && !recording.uploadSuccess && (
-                    <button
-                      onClick={() => uploadRecording(pet.id)}
-                      disabled={recording.isUploading}
-                      className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                    >
-                      <Upload className="w-5 h-5 mr-2" />
-                      {recording.isUploading ? 'Uploading...' : 'Upload Recording'}
-                    </button>
-                  )}
-
-                  {recording.audioBlob && (
-                    <div className="text-sm text-gray-600">
-                      Duration: {formatDuration(recording.duration)}
                     </div>
+                  ) : (
+                    // Show recording controls for new recordings
+                    <>
+                      {!recording.isRecording && !recording.audioBlob && (
+                        <button
+                          onClick={() => startRecording(pet.id)}
+                          className="flex items-center bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+                        >
+                          <Mic className="w-5 h-5 mr-2" />
+                          Start Recording
+                        </button>
+                      )}
+
+                      {recording.isRecording && (
+                        <>
+                          <button
+                            onClick={() => stopRecording(pet.id)}
+                            className="flex items-center bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+                          >
+                            <Square className="w-5 h-5 mr-2" />
+                            Stop Recording
+                          </button>
+                          <div className="flex items-center text-red-600">
+                            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse mr-2"></div>
+                            <span className="font-mono text-lg">{formatDuration(recording.duration)}</span>
+                          </div>
+                        </>
+                      )}
+
+                      {recording.audioBlob && !recording.uploadSuccess && (
+                        <button
+                          onClick={() => uploadRecording(pet.id)}
+                          disabled={recording.isUploading}
+                          className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        >
+                          <Upload className="w-5 h-5 mr-2" />
+                          {recording.isUploading ? 'Uploading...' : 'Upload Recording'}
+                        </button>
+                      )}
+
+                      {recording.audioBlob && (
+                        <div className="text-sm text-gray-600">
+                          Duration: {formatDuration(recording.duration)}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -316,12 +404,34 @@ const AppointmentPetRecorder: React.FC = () => {
           })}
         </div>
 
+        {/* Debug Info */}
+        <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-900 mb-2">Debug Info</h4>
+          <p className="text-yellow-800 text-sm mb-2">Appointment ID: {appointmentId}</p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchAppointmentDetails();
+            }}
+            className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
+          >
+            Refresh & Check Again
+          </button>
+          <div className="mt-2 text-xs text-yellow-700">
+            {Object.entries(recordings).map(([petId, recording]) => (
+              <div key={petId}>
+                Pet {petId}: {recording.existingVisit ? `Has existing visit ${recording.existingVisit.id}` : 'No existing visit'}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Summary */}
         {appointment?.pets && (
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-medium text-blue-900 mb-2">Recording Progress</h4>
             <p className="text-blue-800 text-sm">
-              {Object.values(recordings).filter(r => r.uploadSuccess).length} of {appointment.pets.length} pets recorded
+              {Object.values(recordings).filter(r => r.uploadSuccess || r.existingVisit).length} of {appointment.pets.length} pets recorded
             </p>
           </div>
         )}

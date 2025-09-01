@@ -34,6 +34,10 @@ class AppointmentType(str, Enum):
 class AppointmentStatus(str, Enum):
     """Appointment status options"""
     SCHEDULED = "scheduled"
+    IN_PROGRESS = "in_progress"
+    COMPLETE = "complete"
+    ERROR = "error"
+    # Keep legacy values for backward compatibility
     CONFIRMED = "confirmed"
     COMPLETED = "completed"
     CANCELLED = "cancelled"

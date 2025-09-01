@@ -29,7 +29,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
   showHeader = true,
   maxItems,
   showCreateButton = false,
-  title = "Scheduled Appointments"
+  title = "Recent Appointments"
 }) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,9 +58,13 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
 
       const data = await response.json();
       
-      // Filter for scheduled/confirmed appointments and optionally by pet
+      // Filter for relevant appointments (scheduled, confirmed, in_progress, complete) and optionally by pet
       let filteredAppointments = data.filter((apt: Appointment) => 
-        apt.status === AppointmentStatus.SCHEDULED || apt.status === AppointmentStatus.CONFIRMED
+        apt.status === AppointmentStatus.SCHEDULED || 
+        apt.status === AppointmentStatus.CONFIRMED ||
+        apt.status === AppointmentStatus.IN_PROGRESS ||
+        apt.status === AppointmentStatus.COMPLETE ||
+        apt.status === AppointmentStatus.COMPLETED // Legacy
       );
 
       // If petId is provided, filter appointments that include this pet
@@ -100,29 +104,45 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
     });
   };
 
-  const getStatusIcon = (status: AppointmentStatus) => {
-    switch (status) {
-      case AppointmentStatus.SCHEDULED:
-        return <Clock className="w-4 h-4 text-blue-500" />;
-      case AppointmentStatus.CONFIRMED:
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case AppointmentStatus.CANCELLED:
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Calendar className="w-4 h-4 text-gray-500" />;
-    }
-  };
+
 
   const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
       case AppointmentStatus.SCHEDULED:
         return 'bg-blue-100 text-blue-800';
-      case AppointmentStatus.CONFIRMED:
+      case AppointmentStatus.IN_PROGRESS:
+        return 'bg-yellow-100 text-yellow-800';
+      case AppointmentStatus.COMPLETE:
+      case AppointmentStatus.COMPLETED: // Legacy
         return 'bg-green-100 text-green-800';
-      case AppointmentStatus.CANCELLED:
+      case AppointmentStatus.ERROR:
         return 'bg-red-100 text-red-800';
+      case AppointmentStatus.CONFIRMED:
+        return 'bg-emerald-100 text-emerald-800';
+      case AppointmentStatus.CANCELLED:
+        return 'bg-gray-100 text-gray-800';
+      case AppointmentStatus.NO_SHOW:
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: AppointmentStatus) => {
+    switch (status) {
+      case AppointmentStatus.SCHEDULED:
+        return <Calendar className="w-3 h-3 mr-1" />;
+      case AppointmentStatus.IN_PROGRESS:
+        return <Clock className="w-3 h-3 mr-1" />;
+      case AppointmentStatus.COMPLETE:
+      case AppointmentStatus.COMPLETED: // Legacy
+        return <CheckCircle className="w-3 h-3 mr-1" />;
+      case AppointmentStatus.ERROR:
+        return <XCircle className="w-3 h-3 mr-1" />;
+      case AppointmentStatus.CONFIRMED:
+        return <CheckCircle className="w-3 h-3 mr-1" />;
+      default:
+        return null;
     }
   };
 
@@ -160,22 +180,24 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
   return (
     <div className="space-y-4">
       {showHeader && (
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-            {title}
-            {appointments.length > 0 && (
-              <span className="ml-2 text-sm text-gray-500">
-                ({appointments.length} appointment{appointments.length !== 1 ? 's' : ''})
-              </span>
-            )}
-          </h3>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+              {title}
+              {appointments.length > 0 && (
+                <span className="ml-2 text-sm text-gray-500">
+                  ({appointments.length} appointment{appointments.length !== 1 ? 's' : ''})
+                </span>
+              )}
+            </h3>
+          </div>
           {showCreateButton && (
             <Link
               to="/appointments/new"
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-md transition-colors duration-200 w-full justify-center"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-1.5" />
               Schedule Appointment
             </Link>
           )}
@@ -185,16 +207,16 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
       {appointments.length === 0 ? (
         <div className="text-center py-8">
           <Calendar className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Scheduled Appointments</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Recent Appointments</h3>
           <p className="text-gray-600">
-            {petId ? 'This pet has no upcoming appointments.' : 'No upcoming appointments found.'}
+            {petId ? 'This pet has no recent appointments.' : 'No recent appointments found.'}
           </p>
           {showCreateButton && (
             <Link
               to="/appointments/new"
-              className="inline-flex items-center px-4 py-2 mt-4 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200"
+              className="inline-flex items-center px-3 py-1.5 mt-4 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-md transition-colors duration-200"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-1.5" />
               Schedule First Appointment
             </Link>
           )}
@@ -206,47 +228,19 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({
               key={appointment.id}
               className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center mb-2">
-                    {getTypeIcon(appointment.appointment_type)}
-                    <h4 className="ml-2 text-lg font-medium text-gray-900">
-                      {appointment.title}
-                    </h4>
-                    <span className={`ml-3 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
-                      {appointment.status.replace('_', ' ').toUpperCase()}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{formatDateTime(appointment.appointment_date)}</span>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{appointment.duration_minutes} minutes</span>
-                    </div>
-
-                    {appointment.pets.length > 0 && (
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 mr-2" />
-                        <span>
-                          Pets: {appointment.pets.map(pet => pet.name).join(', ')}
-                        </span>
-                      </div>
-                    )}
-
-                    {appointment.description && (
-                      <p className="text-gray-700 mt-2">{appointment.description}</p>
-                    )}
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-gray-900">
+                    {appointment.title}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {formatDateTime(appointment.appointment_date)}
+                  </p>
                 </div>
-
-                <div className="flex items-center ml-4">
+                <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
                   {getStatusIcon(appointment.status)}
-                </div>
+                  {appointment.status.replace('_', ' ').toUpperCase()}
+                </span>
               </div>
             </div>
           ))}

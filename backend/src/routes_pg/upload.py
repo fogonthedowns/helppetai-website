@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.jwt_auth_pg import get_current_user, User
 from ..database_pg import get_db_session
 from ..models_pg.visit import Visit, VisitState
-from ..models_pg.appointment import Appointment, AppointmentPet
+from ..models_pg.appointment import Appointment, AppointmentPet, AppointmentStatus
 
 router = APIRouter()
 
@@ -169,6 +169,25 @@ async def upload_audio_file(
         # Create visit record for the specific pet if appointment and pet provided
         created_visit = None
         if appointment and target_pet_id:
+            # Check if a visit already exists for this appointment and pet
+            from sqlalchemy import select, and_
+            existing_visit_result = await db.execute(
+                select(Visit).where(
+                    and_(
+                        Visit.additional_data.op('->>')('appointment_id') == str(appointment.id),
+                        Visit.pet_id == target_pet_id
+                    )
+                )
+            )
+            existing_visit = existing_visit_result.scalar_one_or_none()
+            
+            if existing_visit:
+                # Visit already exists, return error
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Recording already exists for this appointment and pet. Visit ID: {existing_visit.id}"
+                )
+            
             visit = Visit(
                 pet_id=target_pet_id,
                 practice_id=appointment.practice_id,
@@ -194,6 +213,13 @@ async def upload_audio_file(
             # Refresh to get ID
             await db.refresh(visit)
             created_visit = visit
+            
+            # Update appointment status to complete
+            if appointment:
+                appointment.status = AppointmentStatus.COMPLETE.value
+                appointment.updated_at = datetime.utcnow()
+                await db.commit()
+                await db.refresh(appointment)
         
         response_content = {
             "success": True,

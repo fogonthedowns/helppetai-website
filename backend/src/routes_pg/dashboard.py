@@ -108,7 +108,9 @@ async def get_vet_dashboard(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     else:
-        target_date = date.today()
+        # Use UTC today to avoid timezone issues
+        from datetime import timezone
+        target_date = datetime.now(timezone.utc).date()
     
     start_of_day = datetime.combine(target_date, datetime.min.time())
     end_of_day = datetime.combine(target_date, datetime.max.time())
@@ -160,7 +162,7 @@ async def get_vet_dashboard(
         ))
     
     # Calculate stats
-    completed_count = len([apt for apt in today_appointments if apt.status == "completed"])
+    completed_count = len([apt for apt in today_appointments if apt.status in ["completed", "complete"]])
     stats = DashboardStats(
         appointments_today=len(today_appointments),
         completed_visits=completed_count
@@ -208,7 +210,9 @@ async def get_vet_today_summary(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     else:
-        target_date = date.today()
+        # Use UTC today to avoid timezone issues
+        from datetime import timezone
+        target_date = datetime.now(timezone.utc).date()
     
     start_of_day = datetime.combine(target_date, datetime.min.time())
     end_of_day = datetime.combine(target_date, datetime.max.time())
@@ -276,7 +280,7 @@ async def get_vet_today_summary(
                   apt_date + timedelta(minutes=apt.duration_minutes) > now):
                 current_appointment = apt
     
-    completed_count = len([apt for apt in today_appointments if apt.status == "completed"])
+    completed_count = len([apt for apt in today_appointments if apt.status in ["completed", "complete"]])
     remaining_count = len(today_appointments) - completed_count
     
     return TodayWorkSummaryResponse(
