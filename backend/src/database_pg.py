@@ -30,9 +30,10 @@ class DatabasePG:
     async def connect(self):
         """Connect to PostgreSQL database"""
         try:
-            # Create async engine
+            # Create async engine - use RDS if configured
+            database_url = settings.get_postgresql_url
             self.engine = create_async_engine(
-                settings.postgresql_url,
+                database_url,
                 echo=settings.debug,  # Log SQL queries in debug mode
                 pool_size=20,
                 max_overflow=0,
@@ -47,7 +48,11 @@ class DatabasePG:
                 expire_on_commit=False
             )
             
-            logger.info(f"Connected to PostgreSQL at {settings.postgresql_url}")
+            # Log connection without exposing credentials
+            if settings.rds_hostname:
+                logger.info(f"Connected to PostgreSQL RDS at {settings.rds_hostname}:{settings.rds_port}/{settings.rds_db_name}")
+            else:
+                logger.info("Connected to PostgreSQL (local development)")
             
         except Exception as e:
             logger.error(f"Failed to connect to PostgreSQL: {e}")

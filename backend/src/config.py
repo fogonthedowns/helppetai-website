@@ -28,14 +28,21 @@ class Settings(BaseSettings):
     redoc_url: str = Field(default="/redoc", env="REDOC_URL")
     
     # Security Configuration
-    cors_origins: str = Field(default="*", env="CORS_ORIGINS")
-    cors_methods: str = Field(default="*", env="CORS_METHODS")
+    cors_origins: str = Field(
+        default="http://localhost:3000,http://localhost:3001,https://helppet.ai,https://www.helppet.ai", 
+        env="CORS_ORIGINS"
+    )
+    cors_methods: str = Field(default="GET,POST,PUT,DELETE,OPTIONS", env="CORS_METHODS")
     cors_headers: str = Field(default="*", env="CORS_HEADERS")
+    
+    # Production URLs
+    frontend_url: str = Field(default="http://localhost:3000", env="FRONTEND_URL")
+    api_url: str = Field(default="http://localhost:8000", env="API_URL")
     
     # Database Configuration
     database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
     
-    # PostgreSQL Configuration
+    # PostgreSQL Configuration (RDS Support)
     postgresql_url: str = Field(
         default="postgresql+asyncpg://postgres:password@localhost:5432/helppet_dev", 
         env="POSTGRESQL_URL"
@@ -44,6 +51,27 @@ class Settings(BaseSettings):
         default="postgresql+psycopg2://postgres:password@localhost:5432/helppet_dev",
         env="POSTGRESQL_SYNC_URL"
     )
+    
+    # RDS specific configuration
+    rds_hostname: Optional[str] = Field(default=None, env="RDS_HOSTNAME")
+    rds_port: int = Field(default=5432, env="RDS_PORT")
+    rds_db_name: str = Field(default="helppet_prod", env="RDS_DB_NAME")
+    rds_username: Optional[str] = Field(default=None, env="RDS_USERNAME")
+    rds_password: Optional[str] = Field(default=None, env="RDS_PASSWORD")
+    
+    @property
+    def get_postgresql_url(self) -> str:
+        """Get PostgreSQL URL - use RDS if configured, otherwise fallback to POSTGRESQL_URL"""
+        if self.rds_hostname and self.rds_username and self.rds_password:
+            return f"postgresql+asyncpg://{self.rds_username}:{self.rds_password}@{self.rds_hostname}:{self.rds_port}/{self.rds_db_name}"
+        return self.postgresql_url
+    
+    @property
+    def get_postgresql_sync_url(self) -> str:
+        """Get PostgreSQL sync URL - use RDS if configured, otherwise fallback to POSTGRESQL_SYNC_URL"""
+        if self.rds_hostname and self.rds_username and self.rds_password:
+            return f"postgresql+psycopg2://{self.rds_username}:{self.rds_password}@{self.rds_hostname}:{self.rds_port}/{self.rds_db_name}"
+        return self.postgresql_sync_url
     
     # MongoDB Configuration (keeping for migration)
     mongodb_url: str = Field(default="mongodb://localhost:27017", env="MONGODB_URL")

@@ -3,14 +3,18 @@
  */
 
 const getApiBaseUrl = (): string => {
-  // In development, use explicit backend URL
-  if (process.env.NODE_ENV === 'development') {
-    return process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  // Use environment variable if set
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
   }
   
-  // In production, assume same domain with different port or path
-  // You can customize this based on your deployment setup
-  return process.env.REACT_APP_API_URL || '';
+  // In development, use localhost backend
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:8000';
+  }
+  
+  // In production, use api.helppet.ai
+  return 'https://api.helppet.ai';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
