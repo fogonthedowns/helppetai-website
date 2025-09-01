@@ -1,6 +1,6 @@
-# FastAPI Application
+# HelpPetAI Backend
 
-A modern, production-ready FastAPI application built with best practices, type safety, and comprehensive documentation.
+A modern FastAPI application for HelpPetAI - providing veterinary practice management and AI-powered features.
 
 ## 🚀 Features
 
@@ -68,11 +68,29 @@ A modern, production-ready FastAPI application built with best practices, type s
    - **Alternative API Docs (ReDoc)**: http://localhost:8000/redoc
    - **Health Check**: http://localhost:8000/health
 
-### Production Deployment
+## 🚀 Deployment
 
-For production deployment:
+Deploy to production with one simple command:
+
 ```bash
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4
+make deploy
+```
+
+This will:
+1. Build the Docker image with correct architecture (linux/amd64)
+2. Push to AWS ECR
+3. Create a new ECS task definition with RDS database connection
+4. Update the ECS service
+5. Deploy automatically to https://api.helppet.ai
+
+**Other deployment commands:**
+- `make build-prod` - Build production Docker image only
+- `make push-image` - Push image to ECR only  
+- `make update-service` - Build, push, and update service
+
+**Development deployment:**
+```bash
+uvicorn src.main_pg:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ## 📖 API Documentation

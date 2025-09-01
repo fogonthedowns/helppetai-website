@@ -6,11 +6,11 @@ It imports and configures the app from the src module.
 """
 
 import uvicorn
-from src.main import app
+from src.main_pg import app
 
 if __name__ == "__main__":
     uvicorn.run(
-        "src.main:app",
+        "src.main_pg:app",
         host="0.0.0.0",
         port=8000,
         reload=True,

@@ -1,0 +1,438 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  ECS Fargate service for HelpPetAI FastAPI backend on api.helppet.ai
+
+Parameters:
+  Environment:
+    Type: String
+    Default: "prod"
+    Description: Deployment environment
+  DomainName:
+    Type: String
+    Default: "api.helppet.ai"
+    Description: API domain name
+  HostedZoneId:
+    Type: AWS::Route53::HostedZone::Id
+    Description: Route53 Hosted Zone ID for helppet.ai
+  CertificateArn:
+    Type: String
+    Description: ACM Certificate ARN for *.helppet.ai
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where ALB & tasks will run
+  PublicSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Public subnets for the ALB
+  PrivateSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnets for ECS tasks
+  ContainerImage:
+    Type: String
+    Description: ECR image URI for your FastAPI container
+  DesiredCount:
+    Type: String
+    Default: "1"
+    Description: Number of Fargate tasks (start with 1 to keep costs low)
+  ContainerPort:
+    Type: String
+    Default: "8000"
+    Description: Port your FastAPI app listens on
+  TaskCpu:
+    Type: String
+    Default: '256'
+    Description: CPU units for the task (256 = 0.25 vCPU - lowest cost)
+  TaskMemory:
+    Type: String
+    Default: '512'
+    Description: Memory (MiB) for the task (512 MB - lowest cost)
+  
+  # Environment Variables from .env.production
+  JwtSecretKey:
+    Type: String
+    Description: JWT Secret Key
+    NoEcho: true
+  OpenAIApiKey:
+    Type: String
+    Default: ""
+    Description: OpenAI API Key
+    NoEcho: true
+  PineconeApiKey:
+    Type: String
+    Default: ""
+    Description: Pinecone API Key
+    NoEcho: true
+  PineconeIndexName:
+    Type: String
+    Default: "1536"
+    Description: Pinecone Index Name
+  
+  # Optional RDS Configuration (for future use)
+  RdsHostname:
+    Type: String
+    Default: ""
+    Description: RDS PostgreSQL hostname (optional - leave empty to use DynamoDB only)
+  RdsPort:
+    Type: String
+    Default: "5432"
+    Description: RDS PostgreSQL port
+  RdsDbName:
+    Type: String
+    Default: "helppet_prod"
+    Description: RDS database name
+  RdsUsername:
+    Type: String
+    Default: ""
+    Description: RDS username (optional)
+  RdsPassword:
+    Type: String
+    Default: ""
+    Description: RDS password (optional)
+    NoEcho: true
+
+Resources:
+  # ECS Cluster
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub helppet-${Environment}
+
+  # IAM Roles
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: HelpPetAITaskPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                  - s3:*
+                Resource: "*"
+
+  # RDS Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for HelpPetAI RDS database
+      SubnetIds: !Ref PrivateSubnets
+      Tags:
+        - Key: Name
+          Value: !Sub helppet-${Environment}-db-subnet-group
+
+  # RDS Security Group
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for HelpPetAI RDS database
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref ServiceSecurityGroup
+          Description: Allow PostgreSQL access from ECS tasks
+      Tags:
+        - Key: Name
+          Value: !Sub helppet-${Environment}-db-sg
+
+  # RDS PostgreSQL Database
+  PostgreSQLDatabase:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub helppet-${Environment}-postgres
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: '15.7'
+      MasterUsername: helppetadmin
+      MasterUserPassword: !Sub "${JwtSecretKey}DB"  # Use JWT secret + "DB" as password
+      AllocatedStorage: 20
+      StorageType: gp2
+      StorageEncrypted: true
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      BackupRetentionPeriod: 7
+      MultiAZ: false
+      PubliclyAccessible: false
+      DeletionProtection: false
+      Tags:
+        - Key: Name
+          Value: !Sub helppet-${Environment}-postgres
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Logging
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${Environment}/helppet-api
+      RetentionInDays: 14
+
+  # Security Groups
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB ingress for HelpPetAI API
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  ServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS task ingress from ALB
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ContainerPort
+          ToPort: !Ref ContainerPort
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+
+  # Load Balancer
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub helppet-api-${Environment}
+      Scheme: internet-facing
+      Subnets: !Ref PublicSubnets
+      SecurityGroups: [ !Ref ALBSecurityGroup ]
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub helppet-api-${Environment}
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: 443
+            StatusCode: HTTP_301
+
+  # ECS Task Definition
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub helppet-api-${Environment}
+      Cpu: !Ref TaskCpu
+      Memory: !Ref TaskMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [ FARGATE ]
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: helppet-api
+          Image: !Ref ContainerImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+          Environment:
+            # App Configuration
+            - Name: ENVIRONMENT
+              Value: production
+            - Name: DEBUG
+              Value: "false"
+            - Name: LOG_LEVEL
+              Value: INFO
+            - Name: APP_NAME
+              Value: "HelpPetAI API"
+            - Name: APP_VERSION
+              Value: "1.0.0"
+            
+            # CORS Configuration
+            - Name: CORS_ORIGINS
+              Value: "https://helppet.ai,https://www.helppet.ai"
+            - Name: CORS_METHODS
+              Value: "GET,POST,PUT,DELETE,OPTIONS"
+            - Name: CORS_HEADERS
+              Value: "*"
+            
+            # URLs
+            - Name: FRONTEND_URL
+              Value: "https://helppet.ai"
+            - Name: API_URL
+              Value: !Sub "https://${DomainName}"
+            
+            # API Documentation (disabled in production)
+            - Name: DOCS_URL
+              Value: "null"
+            - Name: REDOC_URL
+              Value: "null"
+            
+            # JWT Authentication
+            - Name: JWT_SECRET_KEY
+              Value: !Ref JwtSecretKey
+            
+            # External API Keys
+            - Name: OPENAI_API_KEY
+              Value: !Ref OpenAIApiKey
+            - Name: PINECONE_API_KEY
+              Value: !Ref PineconeApiKey
+            - Name: PINECONE_INDEX_NAME
+              Value: !Ref PineconeIndexName
+            - Name: OPENAI_EMBED_MODEL
+              Value: "text-embedding-3-small"
+            
+            # AWS Configuration
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: DYNAMODB_VECTOR_TABLE
+              Value: "rag_vector_index"
+            - Name: RAG_SOURCES_TABLE
+              Value: "rag_content_sources"
+            
+            # RDS Configuration
+            - Name: RDS_HOSTNAME
+              Value: !GetAtt PostgreSQLDatabase.Endpoint.Address
+            - Name: RDS_PORT
+              Value: !GetAtt PostgreSQLDatabase.Endpoint.Port
+            - Name: RDS_DB_NAME
+              Value: postgres
+            - Name: RDS_USERNAME
+              Value: helppetadmin
+            - Name: RDS_PASSWORD
+              Value: !Sub "${JwtSecretKey}DB"
+              
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: helppet-api
+
+  # ECS Service
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: HTTPSListener
+    Properties:
+      ServiceName: !Sub helppet-api-${Environment}
+      Cluster: !Ref ECSCluster
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      TaskDefinition: !Ref TaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PrivateSubnets
+          SecurityGroups: [ !Ref ServiceSecurityGroup ]
+      LoadBalancers:
+        - TargetGroupArn: !Ref TargetGroup
+          ContainerName: helppet-api
+          ContainerPort: !Ref ContainerPort
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+
+  # DNS Record
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancer.DNSName
+        HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+
+  # Health check endpoint - add this to your FastAPI routes
+  # We need to create a health endpoint that returns 200 OK
+
+Outputs:
+  ServiceURL:
+    Description: "HelpPetAI API URL"
+    Value: !Sub "https://${DomainName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-ServiceURL"
+  
+  ECSServiceName:
+    Description: "The name of the ECS Service"
+    Value: !Ref ECSService
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSService"
+
+  ECSClusterName:
+    Description: "The name of the ECS Cluster"
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSCluster"
+
+  LoadBalancerDNS:
+    Description: "Load Balancer DNS Name"
+    Value: !GetAtt LoadBalancer.DNSName
+    Export:
+      Name: !Sub "${AWS::StackName}-LoadBalancerDNS"
+
+  TaskExecutionRoleArn:
+    Description: "ECS Task execution role ARN"
+    Value: !GetAtt TaskExecutionRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-TaskExecutionRole"
+
+  DatabaseEndpoint:
+    Description: "RDS PostgreSQL database endpoint"
+    Value: !GetAtt PostgreSQLDatabase.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-DatabaseEndpoint"
+
+  DatabasePort:
+    Description: "RDS PostgreSQL database port"
+    Value: !GetAtt PostgreSQLDatabase.Endpoint.Port
+    Export:
+      Name: !Sub "${AWS::StackName}-DatabasePort"

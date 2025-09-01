@@ -69,13 +69,26 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+cors_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
+cors_methods = [method.strip() for method in settings.cors_methods.split(",")]
+cors_headers = [header.strip() for header in settings.cors_headers.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins.split(","),
+    allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=settings.cors_methods.split(","),
-    allow_headers=settings.cors_headers.split(","),
+    allow_methods=cors_methods,
+    allow_headers=cors_headers,
 )
+
+# Log CORS configuration for debugging
+logger.info(f"CORS origins: {cors_origins}")
+logger.info(f"CORS methods: {cors_methods}")
+logger.info(f"CORS headers: {cors_headers}")
+
+# Additional CORS debugging
+logger.info(f"Environment: {settings.environment}")
+logger.info(f"Raw CORS_ORIGINS setting: {settings.cors_origins}")
 
 
 # Add request timing middleware
@@ -90,12 +103,19 @@ async def add_process_time_header(request, call_next):
     return response
 
 
-# Add request logging middleware
+# Add request logging middleware  
 @app.middleware("http")
 async def log_requests(request, call_next):
-    """Log all requests"""
+    """Log all requests with CORS debugging"""
     import time
     start_time = time.time()
+    
+    # Log CORS related headers
+    origin = request.headers.get("origin")
+    if origin:
+        logger.info(f"Request from origin: {origin}")
+        if origin not in cors_origins:
+            logger.warning(f"Origin {origin} not in allowed origins: {cors_origins}")
     
     response = await call_next(request)
     
@@ -103,6 +123,7 @@ async def log_requests(request, call_next):
     logger.info(
         f"{request.method} {request.url.path} - "
         f"Status: {response.status_code} - "
+        f"Origin: {origin} - "
         f"Time: {process_time:.3f}s"
     )
     

@@ -214,40 +214,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-gray-50 text-gray-500 font-medium">Demo Credentials</span>
-                </div>
-              </div>
-              
-              <div className="mt-4 bg-white rounded-lg border border-gray-200 p-4">
-                <div className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Test Accounts</div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="bg-blue-50 rounded-md p-2">
-                    <div className="font-medium text-blue-900">vet1</div>
-                    <div className="text-blue-700">password123</div>
-                  </div>
-                  <div className="bg-purple-50 rounded-md p-2">
-                    <div className="font-medium text-purple-900">vet2</div>
-                    <div className="text-purple-700">password123</div>
-                  </div>
-                  <div className="bg-green-50 rounded-md p-2">
-                    <div className="font-medium text-green-900">tech1</div>
-                    <div className="text-green-700">password123</div>
-                  </div>
-                  <div className="bg-orange-50 rounded-md p-2">
-                    <div className="font-medium text-orange-900">admin</div>
-                    <div className="text-orange-700">admin123</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div className="text-center">
               <span className="text-sm text-gray-600">
                 Don't have an account?{' '}

@@ -4,6 +4,7 @@ Handles environment variables and app settings.
 """
 
 import os
+import sys
 from typing import Optional
 from pydantic_settings import BaseSettings
 from pydantic import Field
@@ -29,7 +30,7 @@ class Settings(BaseSettings):
     
     # Security Configuration
     cors_origins: str = Field(
-        default="http://localhost:3000,http://localhost:3001,https://helppet.ai,https://www.helppet.ai", 
+        default="http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://host.docker.internal:3000,https://helppet.ai,https://www.helppet.ai", 
         env="CORS_ORIGINS"
     )
     cors_methods: str = Field(default="GET,POST,PUT,DELETE,OPTIONS", env="CORS_METHODS")
@@ -104,5 +105,63 @@ class Settings(BaseSettings):
         extra = "ignore"  # Ignore extra environment variables
 
 
-# Global settings instance
+def validate_environment():
+    """Validate critical environment variables and fail fast if missing."""
+    
+    # Check if we're in Docker (by checking if we're running as 'appuser' or in container)
+    is_docker = (os.getenv('USER') == 'appuser' or 
+                 os.path.exists('/.dockerenv') or 
+                 os.getenv('ENVIRONMENT') and not os.path.exists('/Users'))
+    
+    # Check if .env file exists (required for local, should be copied into Docker)
+    env_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    
+    if not os.path.exists(env_file_path):
+        if is_docker:
+            print("❌ DOCKER ERROR: .env file not found in container!")
+            print("💡 Solution: Rebuild the Docker image - .env file should be copied during build")
+            print("   1. Make sure .env exists on host: cp env.template .env")
+            print("   2. Rebuild: make build")
+            print("   3. Run: make run")
+        else:
+            print("❌ STARTUP ERROR: .env file not found!")
+            print("💡 Solution:")
+            print("   1. Copy the template: cp env.template .env")
+            print("   2. Edit .env with your PostgreSQL connection details")
+            print("   3. For your local setup, use:")
+            print("      POSTGRESQL_URL=postgresql+asyncpg://justinzollars@localhost:5432/helppet_dev")
+            print("      POSTGRESQL_SYNC_URL=postgresql+psycopg2://justinzollars@localhost:5432/helppet_dev")
+            print("")
+            print("⚠️  IMPORTANT: Make sure you're running the PostgreSQL version:")
+            print("   uvicorn src.main_pg:app --host 0.0.0.0 --port 8000 --reload")
+            print("   NOT: uvicorn src.main:app ...")
+        sys.exit(1)
+    
+    # Test database connection string format
+    test_settings = Settings()
+    
+    # Check PostgreSQL URL format
+    if not test_settings.postgresql_url.startswith(('postgresql+asyncpg://', 'postgresql://')):
+        print("❌ STARTUP ERROR: Invalid POSTGRESQL_URL format!")
+        print(f"   Current: {test_settings.postgresql_url}")
+        print("💡 Expected format: postgresql+asyncpg://user@host:port/database")
+        print("   For your local setup: postgresql+asyncpg://justinzollars@localhost:5432/helppet_dev")
+        sys.exit(1)
+    
+    # Check if required database fields are present
+    if 'localhost' in test_settings.postgresql_url and 'justinzollars' not in test_settings.postgresql_url:
+        print("❌ STARTUP ERROR: PostgreSQL connection uses wrong username!")
+        print(f"   Current: {test_settings.postgresql_url}")
+        print("💡 For your local setup, change to:")
+        print("   POSTGRESQL_URL=postgresql+asyncpg://justinzollars@localhost:5432/helppet_dev")
+        print("   POSTGRESQL_SYNC_URL=postgresql+psycopg2://justinzollars@localhost:5432/helppet_dev")
+        sys.exit(1)
+    
+    print("✅ Environment validation passed")
+    print(f"✅ Using PostgreSQL: {test_settings.postgresql_url}")
+    return test_settings
+
+
+# Validate environment on import and create settings
+validate_environment()
 settings = Settings()

@@ -16,6 +16,7 @@ python-multipart
 # Security
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt==4.0.1
 
 # PostgreSQL and ORM
 sqlalchemy>=2.0.0

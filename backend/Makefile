@@ -31,7 +31,9 @@ help:
 	@echo ""
 	@echo "Production:"
 	@echo "  make build-prod     - Build production Docker image"
-	@echo "  make deploy-prep    - Prepare for deployment"
+	@echo "  make push-image     - Push image to ECR"
+	@echo "  make update-service - Build, push, and update ECS service"
+	@echo "  make deploy         - Complete deployment (build + push + update)"
 
 # Development
 .PHONY: dev
@@ -50,12 +52,12 @@ test:
 .PHONY: build
 build:
 	@echo "Building Docker image: $(IMAGE_NAME):$(IMAGE_TAG)"
-	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+ew t	docker buildx build --platform linux/amd64 -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
 .PHONY: build-prod
 build-prod:
 	@echo "Building production Docker image: $(IMAGE_NAME):prod"
-	docker build -t $(IMAGE_NAME):prod .
+	docker buildx build --platform linux/amd64 -t $(IMAGE_NAME):prod .
 	@echo "Production image built successfully!"
 	@echo "To tag for deployment:"
 	@echo "  docker tag $(IMAGE_NAME):prod your-registry/$(IMAGE_NAME):prod"
@@ -185,3 +187,68 @@ setup: install
 	@echo "Create .env file with your configuration"
 	@echo "Run 'make env-check' to verify configuration"
 	@echo "Run 'make dev' to start development server"
+
+# ─── DEPLOYMENT ───────────────────────────────────────────────────────────────
+# Variables for deployment
+AWS_ACCOUNT_ID = 724843234496
+REGION = us-west-1
+STACK_NAME = helppet-api-prod
+CLUSTER_NAME = helppet-prod
+SERVICE_NAME = helppet-api-prod
+CONTAINER_IMAGE = $(AWS_ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/helppet-api:latest
+TASK_CPU = 256
+TASK_MEMORY = 512
+CONTAINER_PORT = 8000
+
+# Get RDS connection details from CloudFormation
+RDS_HOSTNAME := $(shell aws cloudformation describe-stacks --stack-name $(STACK_NAME) --region $(REGION) --query "Stacks[0].Outputs[?OutputKey=='DatabaseEndpoint'].OutputValue" --output text)
+RDS_PORT := $(shell aws cloudformation describe-stacks --stack-name $(STACK_NAME) --region $(REGION) --query "Stacks[0].Outputs[?OutputKey=='DatabasePort'].OutputValue" --output text)
+EXEC_ROLE_ARN := $(shell aws cloudformation describe-stacks --stack-name $(STACK_NAME) --region $(REGION) --query "Stacks[0].Outputs[?OutputKey=='TaskExecutionRoleArn'].OutputValue" --output text)
+
+# JWT secret from deployment config
+JWT_SECRET = dkxrBrYfY2Yy7R4I+knv0Z0kcMdaQZPHoSToOxuGy3g=
+
+# Push image to ECR
+.PHONY: push-image
+push-image:
+	@echo "🔐 Logging in to ECR..."
+	aws ecr get-login-password --region $(REGION) | docker login --username AWS --password-stdin $(AWS_ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com
+	@echo "📤 Tagging and pushing to ECR..."
+	docker tag $(IMAGE_NAME):prod $(CONTAINER_IMAGE)
+	docker push $(CONTAINER_IMAGE)
+
+# Update ECS service with new task definition
+.PHONY: update-service
+update-service: build-prod push-image
+	@echo "▶ Cluster:       $(CLUSTER_NAME)"
+	@echo "▶ Service:       $(SERVICE_NAME)" 
+	@echo "▶ RDS Host:      $(RDS_HOSTNAME)"
+	@echo "▶ Exec Role:     $(EXEC_ROLE_ARN)"
+	@echo ""
+	@echo "⟳ Registering new task-definition with RDS connection..."
+	$(eval TASK_DEF_ARN := $(shell \
+	  aws ecs register-task-definition \
+	    --family $(SERVICE_NAME) \
+	    --network-mode awsvpc \
+	    --requires-compatibilities FARGATE \
+	    --execution-role-arn "$(EXEC_ROLE_ARN)" \
+	    --cpu $(TASK_CPU) --memory $(TASK_MEMORY) \
+	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_PASSWORD","value":"$(JWT_SECRET)DB"},{"name":"JWT_SECRET_KEY","value":"$(JWT_SECRET)"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
+	    --query 'taskDefinition.taskDefinitionArn' \
+	    --output text))
+	@echo "✅ New task-definition: $(TASK_DEF_ARN)"
+	@echo ""
+	@echo "⟳ Updating ECS service to use latest task..."
+	aws ecs update-service \
+	  --cluster $(CLUSTER_NAME) \
+	  --service $(SERVICE_NAME) \
+	  --task-definition "$(TASK_DEF_ARN)" \
+	  --force-new-deployment \
+	  --region $(REGION)
+	@echo "✅ Service update completed!"
+
+# Quick deploy - build, push, and update service
+.PHONY: deploy
+deploy: update-service
+	@echo "🎉 Deployment complete!"
+	@echo "🌐 API available at: https://api.helppet.ai"

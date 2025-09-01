@@ -55,12 +55,25 @@ async def authenticate_user(session: AsyncSession, username: str, password: str)
     user = await user_repo.get_by_username(username)
     
     if not user:
+        print(f"❌ User not found: {username}")
         return None
     if not user.is_active:
-        return None
-    if not verify_password(password, user.password_hash):
+        print(f"❌ User not active: {username}")
         return None
     
+    # Debug password verification
+    try:
+        password_valid = verify_password(password, user.password_hash)
+        print(f"🔐 Password verification for {username}: {password_valid}")
+        if not password_valid:
+            print(f"   - Input password: {password}")
+            print(f"   - Stored hash starts with: {user.password_hash[:20]}...")
+            return None
+    except Exception as e:
+        print(f"❌ Password verification error for {username}: {e}")
+        return None
+    
+    print(f"✅ Authentication successful for: {username}")
     return user
 
 
