@@ -65,18 +65,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative z-10 flex flex-col justify-center items-center p-12 text-white">
           <div className="mb-8">
-            <svg width="80" height="80" viewBox="0 0 32 32" className="text-white">
-              <defs>
-                <linearGradient id="logo-gradient-large" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0.7" />
-                </linearGradient>
-              </defs>
-              <rect width="32" height="32" rx="8" fill="url(#logo-gradient-large)" />
-              <path d="M16 8c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-3 8c0-1.7 1.3-3 3-3s3 1.3 3 3H13z" fill="#667eea" opacity="0.9"/>
-              <circle cx="16" cy="13" r="1.5" fill="#667eea"/>
-              <ellipse cx="16" cy="20" rx="2" ry="1" fill="#667eea" opacity="0.7"/>
-            </svg>
+            <img 
+              src="/helppetai.png" 
+              alt="HelpPetAI Logo" 
+              width="120" 
+              height="120" 
+              className="rounded-xl"
+            />
           </div>
           <h1 className="text-4xl font-bold mb-4" style={{
             fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
@@ -114,18 +109,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden text-center">
-            <svg width="48" height="48" viewBox="0 0 32 32" className="mx-auto mb-4">
-              <defs>
-                <linearGradient id="logo-gradient-mobile" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#667eea" />
-                  <stop offset="100%" stopColor="#764ba2" />
-                </linearGradient>
-              </defs>
-              <rect width="32" height="32" rx="8" fill="url(#logo-gradient-mobile)" />
-              <path d="M16 8c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-3 8c0-1.7 1.3-3 3-3s3 1.3 3 3H13z" fill="white" opacity="0.9"/>
-              <circle cx="16" cy="13" r="1.5" fill="white"/>
-              <ellipse cx="16" cy="20" rx="2" ry="1" fill="white" opacity="0.7"/>
-            </svg>
+            <img 
+              src="/helppetai.png" 
+              alt="HelpPetAI Logo" 
+              width="64" 
+              height="64" 
+              className="mx-auto mb-4 rounded-lg"
+            />
             <h2 className="text-2xl font-bold text-gray-900" style={{
               fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
               letterSpacing: '-0.02em'
