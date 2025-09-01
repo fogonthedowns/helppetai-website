@@ -8,19 +8,41 @@ import { QuickActionsCard } from './QuickActionsCard';
 import { Clock, AlertCircle, Calendar, FileText, CheckCircle, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Inline StatsOverview component to avoid module resolution issues
-const StatsOverview: React.FC<{ stats: any }> = ({ stats }) => {
+const StatsOverview: React.FC<{ stats: any; selectedDate: Date }> = ({ stats, selectedDate }) => {
+  const formatDateLabel = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today's";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday's";
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return "Tomorrow's";
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      }) + "'s";
+    }
+  };
+
+  const dateLabel = formatDateLabel(selectedDate);
+
   const statCards = [
     {
       icon: <Calendar className="w-8 h-8 text-blue-600" />,
-      title: 'Today\'s Appointments',
+      title: `${dateLabel} Appointments`,
       value: stats.appointments_today,
       color: 'bg-blue-50 border-blue-200',
       textColor: 'text-blue-900'
     },
-
     {
       icon: <CheckCircle className="w-8 h-8 text-green-600" />,
-      title: 'Completed Visits',
+      title: `${dateLabel} Completed Visits`,
       value: stats.completed_visits,
       color: 'bg-green-50 border-green-200',
       textColor: 'text-green-900'
@@ -342,7 +364,7 @@ const VetDashboard: React.FC = () => {
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Overview */}
-        {dashboard && <StatsOverview stats={dashboard.stats} />}
+        {dashboard && <StatsOverview stats={dashboard.stats} selectedDate={selectedDate} />}
 
         {/* Main Dashboard - Just Today's Schedule */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-8">
