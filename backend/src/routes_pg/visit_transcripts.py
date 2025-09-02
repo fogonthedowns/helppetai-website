@@ -203,8 +203,10 @@ async def get_visits_by_appointment(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid appointment ID format")
     
-    # Build query for visits by appointment
-    query = select(Visit).where(Visit.appointment_id == appointment_uuid)
+    # Build query for visits by appointment (appointment_id is stored in additional_data)
+    query = select(Visit).where(
+        Visit.additional_data.op('->>')('appointment_id') == str(appointment_uuid)
+    )
     
     # Optionally filter by pet
     if pet_id:
@@ -448,27 +450,24 @@ async def initiate_audio_upload(
                 detail="Invalid appointment ID format"
             )
     
-    # Check if there's already a recording for this pet today
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = today_start + timedelta(days=1)
-    
-    existing_visit_result = await db.execute(
-        select(Visit).where(
-            and_(
-                Visit.pet_id == pet.id,
-                Visit.visit_date >= today_start,
-                Visit.visit_date < today_end,
-                Visit.audio_transcript_url.isnot(None)  # Has audio
+    # Check if there's already a recording for this specific appointment and pet combination
+    if request.appointment_id:
+        existing_visit_result = await db.execute(
+            select(Visit).where(
+                and_(
+                    Visit.additional_data.op('->>')('appointment_id') == request.appointment_id,
+                    Visit.pet_id == pet.id,
+                    Visit.audio_transcript_url.isnot(None)  # Has audio
+                )
             )
         )
-    )
-    existing_visit = existing_visit_result.scalar_one_or_none()
-    
-    if existing_visit:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Audio recording already exists for pet {pet.id} today. Visit ID: {existing_visit.id}"
-        )
+        existing_visit = existing_visit_result.scalar_one_or_none()
+        
+        if existing_visit:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Audio recording already exists for this appointment and pet. Visit ID: {existing_visit.id}"
+            )
     
     try:
         # Generate unique S3 key with appropriate extension
