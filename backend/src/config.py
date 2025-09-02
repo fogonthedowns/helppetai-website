@@ -88,12 +88,12 @@ class Settings(BaseSettings):
     openai_embed_model: str = Field(default="text-embedding-3-small", env="OPENAI_EMBED_MODEL")
     
     # AWS Configuration
-    aws_region: str = Field(default="us-east-1", env="AWS_REGION")
+    aws_region: str = Field(default="us-west-1", env="AWS_REGION")
     aws_access_key_id: Optional[str] = Field(default=None, env="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: Optional[str] = Field(default=None, env="AWS_SECRET_ACCESS_KEY")
     
     # S3 Configuration for Audio Uploads
-    s3_bucket_name: str = Field(default="helppet-audio-recordings", env="S3_BUCKET_NAME")
+    s3_bucket_name: str = Field(default="helppetai-visit-recordings", env="S3_BUCKET_NAME")
     s3_recordings_prefix: str = Field(default="recordings/", env="S3_RECORDINGS_PREFIX")
     s3_presigned_url_expiration: int = Field(default=3600, env="S3_PRESIGNED_URL_EXPIRATION")  # 1 hour
     

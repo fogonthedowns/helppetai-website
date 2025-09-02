@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { uploadAudioToS3, generateAudioFileName, isS3Configured } from '../../config/s3';
+import { uploadAudioToS3, generateAudioFileName, isS3Configured, checkExistingRecording } from '../../services/recordingService';
 import { Mic, MicOff, Square, Play, Pause, Upload, Check, AlertCircle, ArrowLeft, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { VisitTranscript, TranscriptState, TRANSCRIPT_STATE_LABELS, TRANSCRIPT_STATE_COLORS } from '../../types/visitTranscript';
 import { API_ENDPOINTS } from '../../config/api';
@@ -35,6 +35,7 @@ export const VisitTranscriptRecorder: React.FC = () => {
   const [visitTranscript, setVisitTranscript] = useState<VisitTranscript | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasExistingRecording, setHasExistingRecording] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -44,6 +45,11 @@ export const VisitTranscriptRecorder: React.FC = () => {
   useEffect(() => {
     if (visitId) {
       fetchVisitTranscript();
+      
+      // Check if visit already has a recording
+      checkExistingRecording(visitId).then(hasRecording => {
+        setHasExistingRecording(hasRecording);
+      });
     }
     
     // Cleanup on unmount
@@ -216,16 +222,22 @@ export const VisitTranscriptRecorder: React.FC = () => {
     setRecordingState(prev => ({ ...prev, uploadStatus: 'uploading' }));
 
     try {
-      // Check if S3 is configured
+      // Check if recording service is configured
       if (!isS3Configured()) {
-        throw new Error('S3 not configured. Check environment variables.');
+        throw new Error('Recording service not configured. Check environment variables.');
       }
 
       // Generate unique filename
       const fileName = generateAudioFileName(appointmentId, user?.id);
       
-      // Upload to S3
-      const uploadResult = await uploadAudioToS3(recordingState.audioBlob, fileName);
+      // Upload using the new unified recording API
+      const uploadResult = await uploadAudioToS3(
+        recordingState.audioBlob, 
+        fileName, 
+        appointmentId, 
+        undefined, // petId - not used in this flow
+        visitId     // Pass the visitId from the URL params
+      );
       
       if (!uploadResult.success) {
         throw new Error(uploadResult.error || 'Upload failed');
@@ -238,6 +250,7 @@ export const VisitTranscriptRecorder: React.FC = () => {
         data.uploaded = true;
         data.s3Url = uploadResult.url;
         data.s3Key = uploadResult.key;
+        data.recordingId = uploadResult.recordingId; // Store the new recording ID
         localStorage.setItem(recordingState.localStorageKey, JSON.stringify(data));
       }
 
@@ -397,6 +410,24 @@ export const VisitTranscriptRecorder: React.FC = () => {
           </div>
         )}
 
+        {/* Existing Recording Warning */}
+        {hasExistingRecording && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+            <div className="flex items-start">
+              <AlertCircle className="w-6 h-6 text-amber-600 mr-3 mt-0.5" />
+              <div>
+                <h3 className="text-lg font-semibold text-amber-900 mb-2">Recording Already Exists</h3>
+                <p className="text-amber-800 mb-3">
+                  This visit already has a recording. Only one recording per visit is allowed to maintain data consistency.
+                </p>
+                <p className="text-sm text-amber-700">
+                  If you need to replace the existing recording, please contact your administrator or delete the existing recording first.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           
           {/* Recording Visualization */}
@@ -431,13 +462,23 @@ export const VisitTranscriptRecorder: React.FC = () => {
 
           {/* Recording Controls */}
           <div className="flex justify-center space-x-4 mb-8">
-            {!recordingState.isRecording && !recordingState.isFinished && (
+            {!recordingState.isRecording && !recordingState.isFinished && !hasExistingRecording && (
               <button
                 onClick={startRecording}
                 className="flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
                 <Mic className="w-5 h-5 mr-2" />
                 Start Recording
+              </button>
+            )}
+
+            {hasExistingRecording && (
+              <button
+                disabled
+                className="flex items-center px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium"
+              >
+                <MicOff className="w-5 h-5 mr-2" />
+                Recording Disabled
               </button>
             )}
 

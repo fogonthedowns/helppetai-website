@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Mic, Square, Play, Pause, Upload, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
-import { uploadAudioToS3, generateAudioFileName } from '../../config/s3';
+import { uploadAudioToS3, generateAudioFileName, checkExistingRecording } from '../../services/recordingService';
 import { API_ENDPOINTS } from '../../config/api';
 
 interface Pet {
@@ -219,7 +219,15 @@ const AppointmentPetRecorder: React.FC = () => {
 
     try {
       const fileName = generateAudioFileName(appointmentId, petId);
-      const result = await uploadAudioToS3(recording.audioBlob, fileName, appointmentId, petId);
+      
+      // Use the new unified recording API
+      const result = await uploadAudioToS3(
+        recording.audioBlob, 
+        fileName, 
+        appointmentId, 
+        petId,
+        undefined // visitId - will be created by the backend
+      );
 
       if (result.success) {
         setRecordings(prev => ({

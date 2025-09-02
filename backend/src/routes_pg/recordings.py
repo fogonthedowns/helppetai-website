@@ -136,6 +136,36 @@ async def initiate_recording_upload(
                 detail="Visit not found or access denied"
             )
     
+    # Check for existing recording for this visit (enforce one recording per visit)
+    if request.visit_id:
+        existing_recording_query = select(Recording).where(
+            and_(
+                Recording.visit_id == request.visit_id,
+                Recording.recording_type == RecordingType.VISIT_AUDIO,
+                Recording.is_deleted == False
+            )
+        )
+        result = await db.execute(existing_recording_query)
+        existing_recording = result.scalar_one_or_none()
+        
+        if existing_recording:
+            # Return clear error message for existing recording
+            if existing_recording.status == RecordingStatus.UPLOADED or existing_recording.status == RecordingStatus.TRANSCRIBED:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Visit already has a completed recording. Only one recording per visit is allowed. Recording ID: {existing_recording.id}"
+                )
+            elif existing_recording.status == RecordingStatus.UPLOADING:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Upload already in progress for this visit. Recording ID: {existing_recording.id}"
+                )
+            elif existing_recording.status == RecordingStatus.PROCESSING:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Recording is being processed for this visit. Recording ID: {existing_recording.id}"
+                )
+
     try:
         # Generate S3 key for the recording
         s3_key = s3_service.generate_recording_key(

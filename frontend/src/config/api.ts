@@ -94,5 +94,11 @@ export const API_ENDPOINTS = {
   UPLOAD: {
     AUDIO: `${API_BASE_URL}/api/v1/upload/audio`,
     AUDIO_PRESIGNED_URL: (visitId: string) => `${API_BASE_URL}/api/v1/upload/audio/${visitId}/presigned-url`,
+  },
+  RECORDINGS: {
+    INITIATE: `${API_BASE_URL}/api/v1/recordings/upload/initiate`,
+    COMPLETE: (recordingId: string) => `${API_BASE_URL}/api/v1/recordings/upload/complete/${recordingId}`,
+    GET: (recordingId: string) => `${API_BASE_URL}/api/v1/recordings/${recordingId}`,
+    LIST: `${API_BASE_URL}/api/v1/recordings/`,
   }
 } as const;
