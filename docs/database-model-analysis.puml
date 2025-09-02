@@ -1,0 +1,61 @@
+@startuml Database Model - Current Issues & Solution
+!define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define PK(x) <b><color:red>PK: x</color></b>
+!define FK(x) <color:blue>FK: x</color>
+!define UK(x) <color:green>UK: x</color>
+
+title Current Database Model Issues & Proposed Solution
+
+' Current Problematic Model
+package "CURRENT MODEL (PROBLEMATIC)" {
+  TABLE(Appointment, "appointments\n----\nPK: id\nFK: practice_id\nFK: pet_owner_id\nFK: assigned_vet_user_id\n----\nappointment_date\ntitle\ndescription\nstatus")
+  
+  TABLE(AppointmentPet, "appointment_pets\n(Junction Table)\n----\nPK: id\nFK: appointment_id\nFK: pet_id\n----\nUK: (appointment_id, pet_id)")
+  
+  TABLE(Pet, "pets\n----\nPK: id\nFK: owner_id\n----\nname\nspecies\nbreed\ndate_of_birth")
+  
+  TABLE(Recording, "recordings\n----\nPK: id\nFK: visit_id (optional)\nFK: appointment_id (optional)\nFK: recorded_by_user_id\n----\nfilename\ns3_key\ntranscript_text\nstatus")
+  
+  TABLE(Visit, "visits\n----\nPK: id\nFK: pet_id\nFK: practice_id\nFK: vet_user_id\n----\nvisit_date\nfull_text\nsummary\nstate")
+  
+  ' Current relationships
+  Appointment ||--o{ AppointmentPet : "can have multiple pets"
+  Pet ||--o{ AppointmentPet : "can be in multiple appointments"
+  Recording }o--|| Appointment : "linked to appointment\n(NOT specific pet!)"
+  Recording }o--|| Visit : "linked to visit\n(specific pet)"
+  Visit }o--|| Pet : "specific to one pet"
+  
+  note top of Recording : "PROBLEM: Recording linked to\nappointment but NOT specific pet!\nHow do we know which pet's\nrecording this is?"
+  
+  note right of Appointment : "PROBLEM: One appointment\ncan have multiple pets\nbut recordings are\nappointment-level only!"
+}
+
+' Proposed Solution
+package "PROPOSED SOLUTION" {
+  TABLE(AppointmentNew, "appointments\n----\nPK: id\nFK: practice_id\nFK: pet_owner_id\nFK: assigned_vet_user_id\n----\nappointment_date\ntitle\ndescription\nstatus")
+  
+  TABLE(AppointmentPetNew, "appointment_pets\n----\nPK: id\nFK: appointment_id\nFK: pet_id\n----\nUK: (appointment_id, pet_id)\norder_in_appointment")
+  
+  TABLE(PetNew, "pets\n----\nPK: id\nFK: owner_id\n----\nname\nspecies\nbreed\ndate_of_birth")
+  
+  TABLE(RecordingNew, "recordings\n----\nPK: id\nFK: visit_id (optional)\nFK: appointment_id (optional)\nFK: pet_id (REQUIRED!)\nFK: recorded_by_user_id\n----\nfilename\ns3_key\ntranscript_text\nstatus")
+  
+  TABLE(VisitNew, "visits\n----\nPK: id\nFK: pet_id\nFK: appointment_id (NEW!)\nFK: practice_id\nFK: vet_user_id\n----\nvisit_date\nfull_text\nsummary\nstate")
+  
+  ' New relationships
+  AppointmentNew ||--o{ AppointmentPetNew : "multiple pets"
+  PetNew ||--o{ AppointmentPetNew : "multiple appointments"
+  RecordingNew }o--|| PetNew : "DIRECT pet association"
+  RecordingNew }o--|| AppointmentNew : "appointment context"
+  VisitNew }o--|| PetNew : "specific to one pet"
+  VisitNew }o--|| AppointmentNew : "linked to appointment"
+  
+  note top of RecordingNew : "SOLUTION: Recording directly\nlinked to specific pet!\nAlso maintains appointment context."
+  
+  note right of VisitNew : "SOLUTION: Visit linked to both\npet AND appointment!\nClear association chain."
+}
+
+' Data Flow Examples
+note bottom : "EXAMPLE DATA FLOW:\n\n1. Appointment created with 2 pets (Fluffy & Rex)\n2. Two recordings made:\n   - Recording A: appointment_id=123, pet_id=Fluffy\n   - Recording B: appointment_id=123, pet_id=Rex\n3. Two visits created:\n   - Visit A: appointment_id=123, pet_id=Fluffy\n   - Visit B: appointment_id=123, pet_id=Rex\n4. iOS can filter: recordings.filter { $0.petId == pet.id }"
+
+@enduml
