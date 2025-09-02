@@ -642,16 +642,9 @@ async def get_audio_playback_url(
     # Check if audio exists - support both new and old formats
     s3_key = visit.additional_data.get('s3_key') or visit.additional_data.get('audio_s3_key')
     if not s3_key or not visit.audio_transcript_url:
-        # Add debug info to understand the issue
-        debug_info = {
-            "s3_key_new": visit.additional_data.get('s3_key'),
-            "s3_key_old": visit.additional_data.get('audio_s3_key'),
-            "audio_transcript_url": visit.audio_transcript_url,
-            "additional_data_keys": list(visit.additional_data.keys()) if visit.additional_data else []
-        }
         raise HTTPException(
             status_code=404,
-            detail=f"No audio file found for this visit. Debug: {debug_info}"
+            detail="No audio file found for this visit"
         )
     
     try:
