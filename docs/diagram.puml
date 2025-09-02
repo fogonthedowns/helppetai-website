@@ -1,0 +1,77 @@
+@startuml
+title HelpPet.ai iPhone Audio Recording System Interaction
+
+actor "Veterinarian" as Vet
+participant "iPhone App" as iPhone
+participant "HelpPet API" as API
+database "PostgreSQL" as DB
+participant "AWS S3" as S3
+
+== Authentication ==
+Vet -> iPhone: Open app and login
+iPhone -> API: POST /api/v1/auth/login<br/>{username, password}
+API -> DB: Validate credentials
+DB --> API: User record
+API --> iPhone: JWT token + user info
+iPhone -> iPhone: Store auth token
+
+== Pet Selection ==
+Vet -> iPhone: Select pet for visit
+iPhone -> API: GET /api/v1/pets<br/>Authorization: Bearer {token}
+API -> DB: Query pets for user
+DB --> API: Pet list
+API --> iPhone: Available pets
+iPhone --> Vet: Display pet list
+Vet -> iPhone: Choose specific pet
+
+== Audio Recording Initiation ==
+Vet -> iPhone: Start recording
+iPhone -> API: POST /api/v1/visit-transcripts/audio/upload/initiate<br/>{pet_id, filename, content_type}
+API -> DB: Check existing recordings for pet today
+DB --> API: No conflicts found
+API -> DB: Create new Visit record (state: "new")
+DB --> API: Visit created with ID
+API -> S3: Generate presigned POST URL
+S3 --> API: Presigned upload URL + fields
+API --> iPhone: {visit_id, upload_url, upload_fields, s3_key}
+
+== Audio Recording ==
+iPhone -> iPhone: Record audio using AVAudioRecorder
+Vet -> iPhone: Stop recording
+iPhone -> iPhone: Prepare audio data
+
+== Direct S3 Upload ==
+iPhone -> S3: POST {upload_url}<br/>Form data: {upload_fields + audio_file}
+S3 --> iPhone: HTTP 204 (Success)
+
+== Upload Completion ==
+iPhone -> API: POST /api/v1/visit-transcripts/audio/upload/complete/{visit_id}<br/>{file_size, duration, device_metadata}
+API -> DB: Update Visit record<br/>- Set audio_transcript_url<br/>- Change state to "processing"<br/>- Add completion metadata
+DB --> API: Visit updated
+API --> iPhone: Complete visit transcript response
+iPhone --> Vet: "Recording uploaded successfully"
+
+== Audio Playback (Later) ==
+Vet -> iPhone: Play previous recording
+iPhone -> API: GET /api/v1/visit-transcripts/audio/playback/{visit_id}
+API -> DB: Verify visit and user access
+DB --> API: Visit record with S3 key
+API -> S3: Generate presigned GET URL (15min expiry)
+S3 --> API: Presigned download URL
+API --> iPhone: {presigned_url, expires_in}
+iPhone -> S3: GET {presigned_url}
+S3 --> iPhone: Audio stream
+iPhone -> iPhone: Play audio using AVPlayer
+
+== Error Scenarios ==
+note over iPhone, S3
+**Duplicate Recording**: If recording exists for pet today,<br/>API returns 409 Conflict with existing visit_id
+
+**Upload Timeout**: Presigned URL expires in 1 hour,<br/>iPhone must request new upload initiation
+
+**Permission Denied**: Only VET/VET_STAFF/ADMIN can initiate uploads,<br/>PET_OWNER role gets 403 Forbidden
+
+**File Too Large**: S3 enforces 100MB limit,<br/>returns 400 Bad Request if exceeded
+end note
+
+@enduml

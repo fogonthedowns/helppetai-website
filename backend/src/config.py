@@ -74,9 +74,7 @@ class Settings(BaseSettings):
             return f"postgresql+psycopg2://{self.rds_username}:{self.rds_password}@{self.rds_hostname}:{self.rds_port}/{self.rds_db_name}"
         return self.postgresql_sync_url
     
-    # MongoDB Configuration (keeping for migration)
-    mongodb_url: str = Field(default="mongodb://localhost:27017", env="MONGODB_URL")
-    database_name: str = Field(default="ai_visit_summary", env="DATABASE_NAME")
+    # MongoDB Configuration - REMOVED (using PostgreSQL only)
     
     # LLM Configuration
     anthropic_api_key: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")

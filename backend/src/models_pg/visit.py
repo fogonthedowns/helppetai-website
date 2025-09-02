@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from .pet import Pet
     from .practice import VeterinaryPractice
     from .user import User
-    from .recording import Recording
 
 
 class VisitState(str, Enum):
@@ -87,7 +86,7 @@ class Visit(Base):
     practice: Mapped["VeterinaryPractice"] = relationship("VeterinaryPractice", back_populates="visits")
     creator: Mapped[Optional["User"]] = relationship("User", foreign_keys=[created_by], back_populates="created_visits")
     veterinarian: Mapped[Optional["User"]] = relationship("User", foreign_keys=[vet_user_id], back_populates="vet_visits")
-    recordings: Mapped[List["Recording"]] = relationship("Recording", back_populates="visit", cascade="all, delete-orphan")
+
     
     def __repr__(self) -> str:
         return f"<Visit(id={self.id}, pet_id={self.pet_id}, visit_date={self.visit_date}, state={self.state})>"
