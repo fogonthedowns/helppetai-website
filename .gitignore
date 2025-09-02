@@ -30,3 +30,5 @@ yarn-error.log*
 
 pycache/
 __pycache__/
+
+rds-client-key.pem

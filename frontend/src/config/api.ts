@@ -72,6 +72,8 @@ export const API_ENDPOINTS = {
   },
   VISIT_TRANSCRIPTS: {
     BY_PET: (petUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/pet/${petUuid}`,
+    BY_APPOINTMENT: (appointmentUuid: string, petUuid?: string) => 
+      `${API_BASE_URL}/api/v1/visit-transcripts/appointments/${appointmentUuid}/visits${petUuid ? `?pet_id=${petUuid}` : ''}`,
     GET: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
     CREATE: `${API_BASE_URL}/api/v1/visit-transcripts/`,
     UPDATE: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,

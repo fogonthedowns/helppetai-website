@@ -59,19 +59,20 @@ class Settings(BaseSettings):
     rds_db_name: str = Field(default="helppet_prod", env="RDS_DB_NAME")
     rds_username: Optional[str] = Field(default=None, env="RDS_USERNAME")
     rds_password: Optional[str] = Field(default=None, env="RDS_PASSWORD")
+    rds_ssl_mode: str = Field(default="require", env="RDS_SSL_MODE")
     
     @property
     def get_postgresql_url(self) -> str:
         """Get PostgreSQL URL - use RDS if configured, otherwise fallback to POSTGRESQL_URL"""
         if self.rds_hostname and self.rds_username and self.rds_password:
-            return f"postgresql+asyncpg://{self.rds_username}:{self.rds_password}@{self.rds_hostname}:{self.rds_port}/{self.rds_db_name}"
+            return f"postgresql+asyncpg://{self.rds_username}:{self.rds_password}@{self.rds_hostname}:{self.rds_port}/{self.rds_db_name}?ssl={self.rds_ssl_mode}"
         return self.postgresql_url
     
     @property
     def get_postgresql_sync_url(self) -> str:
         """Get PostgreSQL sync URL - use RDS if configured, otherwise fallback to POSTGRESQL_SYNC_URL"""
         if self.rds_hostname and self.rds_username and self.rds_password:
-            return f"postgresql+psycopg2://{self.rds_username}:{self.rds_password}@{self.rds_hostname}:{self.rds_port}/{self.rds_db_name}"
+            return f"postgresql+psycopg2://{self.rds_username}:{self.rds_password}@{self.rds_hostname}:{self.rds_port}/{self.rds_db_name}?sslmode={self.rds_ssl_mode}"
         return self.postgresql_sync_url
     
     # MongoDB Configuration - REMOVED (using PostgreSQL only)

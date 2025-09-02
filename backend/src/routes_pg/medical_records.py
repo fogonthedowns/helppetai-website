@@ -12,7 +12,7 @@ from ..database_pg import get_db_session
 from ..models_pg.user import User
 from ..models_pg.medical_record import MedicalRecord
 from ..models_pg.pet import Pet
-from ..models.medical_record_schemas import (
+from ..schemas.medical_record_schemas import (
     MedicalRecordCreate, MedicalRecordUpdate, MedicalRecordResponse, 
     MedicalRecordWithRelationsResponse, MedicalRecordListResponse,
     MedicalRecordSearchRequest, MedicalRecordTimelineResponse

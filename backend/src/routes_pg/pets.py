@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..database_pg import get_db_session
 from ..models_pg.user import User
 from ..models_pg.pet import Pet
-from ..models.pet_schemas import (
+from ..schemas.pet_schemas import (
     PetCreate, PetUpdate, PetResponse, PetWithOwnerResponse, 
     PetListResponse, PetSearchRequest
 )

@@ -14,7 +14,7 @@ from openai import AsyncOpenAI
 from pinecone import Pinecone
 
 from ..config import settings
-from ..models.base import RAGQueryRequest, RAGResponse, SourceReference
+from ..schemas.base import RAGQueryRequest, RAGResponse, SourceReference
 
 logger = logging.getLogger(__name__)
 

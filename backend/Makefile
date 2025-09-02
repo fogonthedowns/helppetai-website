@@ -140,6 +140,22 @@ migrate-production:
 		-s --fail-with-body || (echo "❌ Migration failed!" && exit 1)
 	@echo "✅ Migration completed successfully!"
 
+.PHONY: reset-production-db
+reset-production-db:
+	@echo "⚠️  DANGER: This will DELETE ALL DATA in production database!"
+	@echo "🗑️  Calling database reset endpoint: https://api.helppet.ai/api/v1/auth/admin/reset-database"
+	@read -p "Type 'DELETE' to confirm: " confirm; \
+	if [ "$$confirm" = "DELETE" ]; then \
+		curl -X POST "https://api.helppet.ai/api/v1/auth/admin/reset-database" \
+			-H "Content-Type: application/json" \
+			-d '{"password": "HelpPetSeed2024!"}' \
+			-w "\n\n📊 Response Status: %{http_code}\n⏱️  Total Time: %{time_total}s\n" \
+			-s --fail-with-body || (echo "❌ Database reset failed!" && exit 1); \
+		echo "✅ Database reset completed successfully!"; \
+	else \
+		echo "❌ Database reset cancelled."; \
+	fi
+
 # Deployment Preparation
 .PHONY: deploy-prep
 deploy-prep: build-prod
@@ -208,8 +224,8 @@ STACK_NAME = helppet-api-prod
 CLUSTER_NAME = helppet-prod
 SERVICE_NAME = helppet-api-prod
 CONTAINER_IMAGE = $(AWS_ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/helppet-api:latest
-TASK_CPU = 256
-TASK_MEMORY = 512
+TASK_CPU = 512
+TASK_MEMORY = 1024
 CONTAINER_PORT = 8000
 
 # Get RDS connection details from CloudFormation
@@ -245,7 +261,7 @@ update-service: build-prod push-image
 	    --requires-compatibilities FARGATE \
 	    --execution-role-arn "$(EXEC_ROLE_ARN)" \
 	    --cpu $(TASK_CPU) --memory $(TASK_MEMORY) \
-	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_PASSWORD","value":"$(JWT_SECRET)DB"},{"name":"JWT_SECRET_KEY","value":"$(JWT_SECRET)"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
+	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_PASSWORD","value":"$(JWT_SECRET)DB"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"JWT_SECRET_KEY","value":"$(JWT_SECRET)"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
 	    --query 'taskDefinition.taskDefinitionArn' \
 	    --output text))
 	@echo "✅ New task-definition: $(TASK_DEF_ARN)"

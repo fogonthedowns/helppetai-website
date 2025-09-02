@@ -3,7 +3,7 @@ Visit Transcripts REST API Routes
 Based on spec in docs/0009_VisitTranscript.md
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from enum import Enum
@@ -74,6 +74,7 @@ class AudioUploadRequest(BaseModel):
     filename: str
     content_type: str = "audio/m4a"
     estimated_duration_seconds: Optional[float] = None
+    appointment_id: Optional[str] = None  # Add appointment association
 
 
 class AudioUploadResponse(BaseModel):
@@ -182,6 +183,45 @@ async def list_pet_visit_transcripts(
         .order_by(Visit.visit_date.desc())
     )
     visits = result.scalars().all()
+    
+    return [visit_to_transcript_response(visit) for visit in visits]
+
+
+@router.get("/appointments/{appointment_id}/visits")
+async def get_visits_by_appointment(
+    appointment_id: str,
+    pet_id: Optional[str] = Query(None, description="Optional pet ID to filter visits"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+) -> List[VisitTranscriptResponse]:
+    """
+    Get all visits for an appointment, optionally filtered by pet
+    Access: Admin | Vet | Pet Owner
+    """
+    try:
+        appointment_uuid = uuid.UUID(appointment_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid appointment ID format")
+    
+    # Build query for visits by appointment
+    query = select(Visit).where(Visit.appointment_id == appointment_uuid)
+    
+    # Optionally filter by pet
+    if pet_id:
+        try:
+            pet_uuid = uuid.UUID(pet_id)
+            query = query.where(Visit.pet_id == pet_uuid)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid pet ID format")
+    
+    # Order by visit date descending
+    query = query.order_by(Visit.visit_date.desc())
+    
+    result = await db.execute(query)
+    visits = result.scalars().all()
+    
+    # TODO: Add proper access control - check if user has access to this appointment
+    # For now, allow all authenticated users
     
     return [visit_to_transcript_response(visit) for visit in visits]
 
@@ -364,6 +404,51 @@ async def initiate_audio_upload(
     # Verify pet exists and user has access
     pet = await check_pet_access(request.pet_id, current_user, db)
     
+    # Handle appointment validation if provided
+    appointment = None
+    appointment_date = datetime.now()  # Default to now if no appointment
+    
+    if request.appointment_id:
+        try:
+            appointment_uuid = uuid.UUID(request.appointment_id)
+            from .appointment import Appointment
+            from .appointment import AppointmentPet
+            
+            # Get appointment
+            appointment_result = await db.execute(
+                select(Appointment).where(Appointment.id == appointment_uuid)
+            )
+            appointment = appointment_result.scalar_one_or_none()
+            
+            if not appointment:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Appointment {request.appointment_id} not found"
+                )
+            
+            # Verify this pet is part of the appointment
+            appointment_pet_result = await db.execute(
+                select(AppointmentPet).where(
+                    AppointmentPet.appointment_id == appointment_uuid,
+                    AppointmentPet.pet_id == pet.id
+                )
+            )
+            appointment_pet = appointment_pet_result.scalar_one_or_none()
+            
+            if not appointment_pet:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Pet {request.pet_id} is not associated with appointment {request.appointment_id}"
+                )
+            
+            appointment_date = appointment.appointment_date
+            
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid appointment ID format"
+            )
+    
     # Check if there's already a recording for this pet today
     today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
@@ -392,24 +477,31 @@ async def initiate_audio_upload(
         unique_id = str(uuid.uuid4())
         s3_key = f"visit-recordings/{timestamp}/pet-{pet.id}/{unique_id}.m4a"
         
+        # Create metadata with appointment info
+        metadata = {
+            "s3_key": s3_key,
+            "s3_bucket": S3_BUCKET_NAME,
+            "filename": request.filename,
+            "content_type": request.content_type,
+            "estimated_duration": request.estimated_duration_seconds,
+            "uploaded_by": str(current_user.id),
+            "upload_initiated_at": datetime.now().isoformat()
+        }
+        
+        # Add appointment_id to metadata if provided
+        if request.appointment_id:
+            metadata["appointment_id"] = request.appointment_id
+        
         # Create new visit record in NEW state
         visit = Visit(
             pet_id=pet.id,
             practice_id=current_user.practice_id if hasattr(current_user, 'practice_id') else None,
             vet_user_id=current_user.id,
-            visit_date=datetime.now(),
+            visit_date=appointment_date,  # Use appointment date, not datetime.now()
             full_text="",  # Will be populated after transcription
             audio_transcript_url=None,  # Will be set after upload completion
             state=VisitState.NEW.value,
-            additional_data={
-                "s3_key": s3_key,
-                "s3_bucket": S3_BUCKET_NAME,
-                "filename": request.filename,
-                "content_type": request.content_type,
-                "estimated_duration": request.estimated_duration_seconds,
-                "uploaded_by": str(current_user.id),
-                "upload_initiated_at": datetime.now().isoformat()
-            },
+            additional_data=metadata,
             created_by=current_user.id
         )
         

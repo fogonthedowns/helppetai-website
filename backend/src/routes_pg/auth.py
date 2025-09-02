@@ -36,7 +36,7 @@ class Token(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
-    email: str
+    email: Optional[str] = None
     full_name: str
     role: UserRole = UserRole.VET_STAFF
 
@@ -51,10 +51,14 @@ class PracticeAssociation(BaseModel):
     practice_id: str
 
 
+class AdminPasswordRequest(BaseModel):
+    password: str
+
+
 class UserResponse(BaseModel):
     id: str
     username: str
-    email: str
+    email: Optional[str] = None
     full_name: str
     role: UserRole
     is_active: bool
@@ -461,4 +465,78 @@ async def seed_test_users(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to seed users: {str(e)}"
+        )
+
+
+@router.post("/admin/reset-database")
+async def reset_database(
+    request: AdminPasswordRequest,
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    DANGER: Drop all tables and recreate from scratch with fresh migrations
+    This will delete ALL data in the database!
+    """
+    if request.password != "HelpPetSeed2024!":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin password"
+        )
+    
+    try:
+        # Import here to avoid circular imports
+        from ..database_pg import Base
+        from sqlalchemy import create_engine, MetaData
+        from sqlalchemy.pool import NullPool
+        from ..config import settings
+        import subprocess
+        import sys
+        import os
+        
+        # Get database URL without async prefix for sync operations
+        sync_db_url = settings.get_postgresql_sync_url
+        
+        # Create sync engine for DDL operations
+        sync_engine = create_engine(sync_db_url, poolclass=NullPool)
+        
+        # Drop all tables
+        metadata = MetaData()
+        metadata.reflect(bind=sync_engine)
+        metadata.drop_all(bind=sync_engine)
+        
+        # Delete alembic version table to reset migration state
+        with sync_engine.connect() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+            conn.commit()
+        
+        sync_engine.dispose()
+        
+        # Run alembic migrations from scratch
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.chdir(backend_dir)
+        
+        # Initialize alembic and run all migrations
+        result = subprocess.run([
+            sys.executable, "-m", "alembic", "upgrade", "head"
+        ], capture_output=True, text=True, cwd=backend_dir)
+        
+        if result.returncode != 0:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Migration failed: {result.stderr}"
+            )
+        
+        # Seed the database with test users
+        await seed_test_users(request, session)
+        
+        return {
+            "message": "Database reset completed successfully",
+            "migration_output": result.stdout,
+            "warning": "ALL previous data has been permanently deleted!"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database reset failed: {str(e)}"
         )

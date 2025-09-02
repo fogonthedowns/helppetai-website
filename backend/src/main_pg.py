@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from .config import settings
 from .database_pg import database_pg
@@ -147,11 +148,53 @@ async def log_requests(request, call_next):
 app.include_router(router)
 
 
+# Pydantic validation error handler
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request, exc: ValidationError):
+    """Handle Pydantic validation errors with detailed information"""
+    error_details = []
+    for error in exc.errors():
+        error_details.append({
+            "field": " -> ".join(str(loc) for loc in error["loc"]),
+            "message": error["msg"],
+            "type": error["type"],
+            "input": error.get("input")
+        })
+    
+    logger.error(f"Validation error on {request.url}: {error_details}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": error_details
+        }
+    )
+
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    """Global exception handler"""
-    logger.error(f"Global exception: {exc}", exc_info=True)
+    """Global exception handler with better error details"""
+    import traceback
+    
+    # Get the full traceback
+    tb_str = traceback.format_exc()
+    
+    # Log detailed error information
+    logger.error(f"Global exception on {request.url.path}: {type(exc).__name__}: {exc}")
+    logger.error(f"Full traceback:\n{tb_str}")
+    
+    # For development, include more details
+    if settings.debug:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Internal server error",
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+                "traceback": tb_str.split('\n')
+            }
+        )
+    
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"}

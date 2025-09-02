@@ -6,7 +6,7 @@ Provides RAG (Retrieval-Augmented Generation) functionality using Pinecone and O
 import logging
 from fastapi import APIRouter, HTTPException, status, Depends
 
-from ..models.base import (
+from ..schemas.base import (
     RAGQueryRequest,
     RAGResponse,
     ErrorResponse
