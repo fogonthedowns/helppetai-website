@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .practice import VeterinaryPractice
     from .user import User
     from .recording import Recording
+    from .appointment import Appointment
 
 
 class VisitState(str, Enum):
@@ -58,6 +59,13 @@ class Visit(Base):
         nullable=True,
         index=True
     )
+    # NEW: Link visits to appointments for full context
+    appointment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), 
+        ForeignKey("appointments.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
     
     # Visit details
     visit_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
@@ -85,6 +93,7 @@ class Visit(Base):
     # Relationships
     pet: Mapped["Pet"] = relationship("Pet", back_populates="visits")
     practice: Mapped["VeterinaryPractice"] = relationship("VeterinaryPractice", back_populates="visits")
+    appointment: Mapped[Optional["Appointment"]] = relationship("Appointment", back_populates="visits")
     creator: Mapped[Optional["User"]] = relationship("User", foreign_keys=[created_by], back_populates="created_visits")
     veterinarian: Mapped[Optional["User"]] = relationship("User", foreign_keys=[vet_user_id], back_populates="vet_visits")
     recordings: Mapped[List["Recording"]] = relationship("Recording", back_populates="visit", cascade="all, delete-orphan")

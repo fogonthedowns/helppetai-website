@@ -25,11 +25,6 @@ asyncpg
 psycopg2-binary
 greenlet
 
-# MongoDB (keeping for migration)
-motor==3.6.0
-beanie==1.26.0
-
-
 # Vector Database and AI/ML
 pinecone
 openai>=1.0.0

@@ -29,6 +29,14 @@ export interface PetSummary {
   breed?: string;
 }
 
+export interface RecordingSummary {
+  id: string;
+  pet_id: string;
+  status: string;
+  duration_seconds?: number;
+  created_at: string;
+}
+
 export interface Appointment {
   id: string;
   practice_id: string;
@@ -43,6 +51,7 @@ export interface Appointment {
   description?: string;
   notes?: string;
   pets: PetSummary[];
+  recordings: RecordingSummary[]; // NEW: Include recordings in appointment
   created_at: string;
   updated_at: string;
 }

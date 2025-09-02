@@ -50,7 +50,7 @@ class S3Service:
                              user_id: str, 
                              appointment_id: Optional[str] = None,
                              visit_id: Optional[str] = None,
-                             file_extension: str = "m4a") -> str:
+                             file_extension: str = "mp3") -> str:
         """
         Generate a unique S3 key for a recording
         
@@ -58,7 +58,7 @@ class S3Service:
             user_id: ID of the user creating the recording
             appointment_id: Optional appointment ID
             visit_id: Optional visit ID
-            file_extension: File extension (default: m4a for iOS)
+            file_extension: File extension (default: mp3)
             
         Returns:
             S3 key string
@@ -81,7 +81,7 @@ class S3Service:
     
     def generate_presigned_upload_url(self, 
                                     s3_key: str,
-                                    content_type: str = "audio/m4a",
+                                    content_type: str = "audio/mpeg",
                                     max_file_size: int = 100 * 1024 * 1024) -> Dict[str, Any]:
         """
         Generate a presigned URL for uploading a file to S3

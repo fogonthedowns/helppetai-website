@@ -4,7 +4,7 @@ Pet model for PostgreSQL - HelpPet MVP
 
 import uuid
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import String, Boolean, DateTime, Text, UUID, ForeignKey, Date, Integer, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -13,6 +13,13 @@ try:
     from ..database_pg import Base
 except ImportError:
     from database_pg import Base
+
+if TYPE_CHECKING:
+    from .pet_owner import PetOwner
+    from .medical_record import MedicalRecord
+    from .visit import Visit
+    from .appointment import AppointmentPet
+    from .recording import Recording
 
 
 class Pet(Base):
@@ -96,3 +103,4 @@ class Pet(Base):
     # Relationships
     visits: Mapped[List["Visit"]] = relationship("Visit", back_populates="pet", cascade="all, delete-orphan")
     appointment_pets: Mapped[List["AppointmentPet"]] = relationship("AppointmentPet", back_populates="pet", cascade="all, delete-orphan")
+    recordings: Mapped[List["Recording"]] = relationship("Recording", back_populates="pet", cascade="all, delete-orphan")

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .visit import Visit
     from .appointment import Appointment
     from .user import User
+    from .pet import Pet
 
 
 class RecordingStatus(str, Enum):
@@ -64,6 +65,13 @@ class Recording(Base):
     recorded_by_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), 
         ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=False,
+        index=True
+    )
+    # CRITICAL FIX: Direct pet association for recordings
+    pet_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        ForeignKey("pets.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
@@ -114,6 +122,7 @@ class Recording(Base):
     # Relationships
     visit: Mapped[Optional["Visit"]] = relationship("Visit", back_populates="recordings")
     appointment: Mapped[Optional["Appointment"]] = relationship("Appointment", back_populates="recordings")
+    pet: Mapped["Pet"] = relationship("Pet", back_populates="recordings")
     recorded_by: Mapped["User"] = relationship("User", foreign_keys=[recorded_by_user_id], back_populates="recordings")
     deleted_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[deleted_by_user_id])
     

@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from .user import User
     from .pet import Pet
     from .recording import Recording
+    from .visit import Visit
 
 
 class AppointmentType(str, Enum):
@@ -100,6 +101,7 @@ class Appointment(Base):
     created_by: Mapped["User"] = relationship("User", foreign_keys=[created_by_user_id], back_populates="created_appointments")
     appointment_pets: Mapped[List["AppointmentPet"]] = relationship("AppointmentPet", back_populates="appointment", cascade="all, delete-orphan")
     recordings: Mapped[List["Recording"]] = relationship("Recording", back_populates="appointment", cascade="all, delete-orphan")
+    visits: Mapped[List["Visit"]] = relationship("Visit", back_populates="appointment", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         return f"<Appointment(id={self.id}, title='{self.title}', date={self.appointment_date}, status={self.status})>"

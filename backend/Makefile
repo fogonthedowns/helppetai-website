@@ -5,6 +5,8 @@ IMAGE_NAME = helppet-backend
 IMAGE_TAG = latest
 CONTAINER_NAME = helppet-backend-container
 PORT = 8000
+VENV := .venv
+PYTHON := $(VENV)/bin/python
 
 # Default target
 .PHONY: help
@@ -122,12 +124,12 @@ shell:
 # Database Commands
 .PHONY: migrate
 migrate:
-	alembic upgrade head
+	$(PYTHON) -m alembic upgrade head
 
 .PHONY: migrate-create
 migrate-create:
 	@read -p "Enter migration message: " msg; \
-	alembic revision --autogenerate -m "$$msg"
+	python3 -m alembic revision --autogenerate -m "$$msg"
 
 .PHONY: migrate-production
 migrate-production:

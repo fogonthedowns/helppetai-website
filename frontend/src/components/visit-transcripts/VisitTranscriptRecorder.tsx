@@ -230,12 +230,18 @@ export const VisitTranscriptRecorder: React.FC = () => {
       // Generate unique filename
       const fileName = generateAudioFileName(appointmentId, user?.id);
       
+      // Get pet_id from the visit transcript
+      const petId = visitTranscript?.pet_id;
+      if (!petId) {
+        throw new Error('Pet ID not found in visit transcript. Cannot upload recording.');
+      }
+
       // Upload using the new unified recording API
       const uploadResult = await uploadAudioToS3(
         recordingState.audioBlob, 
         fileName, 
         appointmentId, 
-        undefined, // petId - not used in this flow
+        petId, // CRITICAL FIX: Include pet_id from visit transcript
         visitId     // Pass the visitId from the URL params
       );
       

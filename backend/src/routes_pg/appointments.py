@@ -18,6 +18,7 @@ from ..models_pg.appointment import Appointment, AppointmentPet, AppointmentType
 from ..models_pg.pet import Pet
 from ..models_pg.practice import VeterinaryPractice
 from ..models_pg.pet_owner import PetOwner
+from ..models_pg.recording import Recording
 from ..database_pg import get_db_session
 
 
@@ -57,6 +58,14 @@ class PetSummary(BaseModel):
     breed: Optional[str] = None
 
 
+class RecordingSummary(BaseModel):
+    id: str
+    pet_id: str
+    status: str
+    duration_seconds: Optional[float] = None
+    created_at: datetime
+
+
 class AppointmentResponse(BaseModel):
     id: str
     practice_id: str
@@ -71,6 +80,7 @@ class AppointmentResponse(BaseModel):
     description: Optional[str] = None
     notes: Optional[str] = None
     pets: List[PetSummary]
+    recordings: List[RecordingSummary] = []  # NEW: Include recordings
     created_at: datetime
     updated_at: datetime
 
@@ -141,6 +151,18 @@ def appointment_to_response(appointment: Appointment) -> AppointmentResponse:
         for ap in appointment.appointment_pets
     ]
     
+    # Include recordings for this appointment
+    recordings = [
+        RecordingSummary(
+            id=str(recording.id),
+            pet_id=str(recording.pet_id),
+            status=recording.status,
+            duration_seconds=recording.duration_seconds,
+            created_at=recording.created_at
+        )
+        for recording in appointment.recordings
+    ]
+    
     return AppointmentResponse(
         id=str(appointment.id),
         practice_id=str(appointment.practice_id),
@@ -155,6 +177,7 @@ def appointment_to_response(appointment: Appointment) -> AppointmentResponse:
         description=appointment.description,
         notes=appointment.notes,
         pets=pets,
+        recordings=recordings,  # NEW: Include recordings
         created_at=appointment.created_at,
         updated_at=appointment.updated_at
     )
@@ -172,10 +195,13 @@ async def list_practice_appointments(
     """
     practice = await check_practice_access(practice_uuid, current_user, db)
     
-    # Get appointments with pets loaded
+    # Get appointments with pets and recordings loaded
     result = await db.execute(
         select(Appointment)
-        .options(selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet))
+        .options(
+            selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet),
+            selectinload(Appointment.recordings)
+        )
         .where(Appointment.practice_id == practice.id)
         .order_by(Appointment.appointment_date.desc())
     )
@@ -196,10 +222,13 @@ async def list_pet_owner_appointments(
     """
     pet_owner = await check_pet_owner_access(owner_uuid, current_user, db)
     
-    # Get appointments with pets loaded
+    # Get appointments with pets and recordings loaded
     result = await db.execute(
         select(Appointment)
-        .options(selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet))
+        .options(
+            selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet),
+            selectinload(Appointment.recordings)
+        )
         .where(Appointment.pet_owner_id == pet_owner.id)
         .order_by(Appointment.appointment_date.desc())
     )
@@ -223,10 +252,13 @@ async def get_appointment(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid appointment ID format")
     
-    # Get appointment with pets loaded
+    # Get appointment with pets and recordings loaded
     result = await db.execute(
         select(Appointment)
-        .options(selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet))
+        .options(
+            selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet),
+            selectinload(Appointment.recordings)
+        )
         .where(Appointment.id == appointment_id)
     )
     appointment = result.scalar_one_or_none()
@@ -320,10 +352,13 @@ async def create_appointment(
     
     await db.commit()
     
-    # Reload with pets
+    # Reload with pets and recordings
     result = await db.execute(
         select(Appointment)
-        .options(selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet))
+        .options(
+            selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet),
+            selectinload(Appointment.recordings)
+        )
         .where(Appointment.id == appointment.id)
     )
     appointment = result.scalar_one()
@@ -438,10 +473,13 @@ async def update_appointment(
     appointment.updated_at = datetime.utcnow()
     await db.commit()
     
-    # Reload with pets
+    # Reload with pets and recordings
     result = await db.execute(
         select(Appointment)
-        .options(selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet))
+        .options(
+            selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet),
+            selectinload(Appointment.recordings)
+        )
         .where(Appointment.id == appointment.id)
     )
     appointment = result.scalar_one()

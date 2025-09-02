@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Mic, Square, Play, Pause, Upload, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
+import { Mic, Square, Play, Pause, Upload, CheckCircle, Clock, XCircle, Eye, Volume2 } from 'lucide-react';
 import { uploadAudioToS3, generateAudioFileName, checkExistingRecording } from '../../services/recordingService';
 import { API_ENDPOINTS } from '../../config/api';
 
@@ -31,6 +31,11 @@ interface RecordingState {
     state: string;
     created_at: string;
   };
+  // Audio playback state
+  localAudioUrl?: string;  // For preview before upload
+  s3AudioUrl?: string;     // For playback after upload
+  isPlaying?: boolean;
+  audioElement?: HTMLAudioElement;
 }
 
 const AppointmentPetRecorder: React.FC = () => {
@@ -52,6 +57,21 @@ const AppointmentPetRecorder: React.FC = () => {
       fetchAppointmentDetails();
     }
   }, [appointmentId]);
+
+  // Cleanup audio elements when component unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(recordings).forEach(recording => {
+        if (recording.audioElement) {
+          recording.audioElement.pause();
+          recording.audioElement.src = '';
+        }
+        if (recording.localAudioUrl) {
+          URL.revokeObjectURL(recording.localAudioUrl);
+        }
+      });
+    };
+  }, [recordings]);
 
   const fetchAppointmentDetails = async () => {
     if (!appointmentId) return;
@@ -139,7 +159,25 @@ const AppointmentPetRecorder: React.FC = () => {
   const startRecording = async (petId: string) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      
+      // Use WebM for recording (most compatible) - backend will convert to MP3
+      let recorder: MediaRecorder;
+      let selectedMimeType = 'audio/webm';
+      
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+        selectedMimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        selectedMimeType = 'audio/webm';
+      } else {
+        // Fallback to default
+        recorder = new MediaRecorder(stream);
+        selectedMimeType = recorder.mimeType || 'audio/webm';
+      }
+      
+      console.log('Recording with format:', selectedMimeType);
+      
       const chunks: Blob[] = [];
 
       recorder.ondataavailable = (event) => {
@@ -149,12 +187,22 @@ const AppointmentPetRecorder: React.FC = () => {
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        // Create blob with recorded audio
+        const audioBlob = new Blob(chunks, { type: selectedMimeType });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        console.log('Recording stopped:', {
+          mimeType: selectedMimeType,
+          blobSize: audioBlob.size,
+          audioUrl
+        });
+        
         setRecordings(prev => ({
           ...prev,
           [petId]: {
             ...prev[petId],
             audioBlob,
+            localAudioUrl: audioUrl,
             isRecording: false,
             isPaused: false
           }
@@ -236,7 +284,8 @@ const AppointmentPetRecorder: React.FC = () => {
             ...prev[petId],
             isUploading: false,
             uploadSuccess: true,
-            visitId: result.visitId
+            visitId: result.visitId,
+            s3AudioUrl: result.url  // Store S3 URL for playback
           }
         }));
       } else {
@@ -256,6 +305,109 @@ const AppointmentPetRecorder: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const togglePlayback = async (petId: string) => {
+    // TEMPORARILY DISABLE AUDIO PLAYBACK to stop the console errors
+    console.log('Audio playback temporarily disabled for pet', petId);
+    alert('Audio playback is temporarily disabled to prevent errors. Recording upload still works.');
+    return;
+    
+    const recording = recordings[petId];
+    
+    if (recording.audioElement) {
+      // Audio element exists, toggle play/pause
+      if (recording.isPlaying) {
+        recording.audioElement.pause();
+        setRecordings(prev => ({
+          ...prev,
+          [petId]: { ...prev[petId], isPlaying: false }
+        }));
+      } else {
+        recording.audioElement.play().catch(error => {
+          console.error('Error playing audio:', error);
+        });
+        setRecordings(prev => ({
+          ...prev,
+          [petId]: { ...prev[petId], isPlaying: true }
+        }));
+      }
+    } else {
+      // Determine audio URL to use
+      let audioUrl: string | undefined;
+      
+      if (recording.uploadSuccess && recording.visitId) {
+        // For uploaded recordings, get presigned URL from backend
+        try {
+          const response = await fetch(API_ENDPOINTS.UPLOAD.AUDIO_PRESIGNED_URL(recording.visitId), {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.presigned_url) {
+              audioUrl = data.presigned_url;
+            } else {
+              console.error('Invalid presigned URL response:', data);
+              return;
+            }
+          } else {
+            console.error('Failed to get presigned URL:', response.status, response.statusText);
+            return;
+          }
+        } catch (error) {
+          console.error('Error getting presigned URL:', error);
+          return;
+        }
+      } else if (recording.localAudioUrl) {
+        // For preview before upload, use local blob URL
+        audioUrl = recording.localAudioUrl;
+      }
+      
+      if (!audioUrl) {
+        console.error('No audio URL available for playback');
+        return;
+      }
+
+      // Create new audio element
+      const audio = new Audio(audioUrl);
+      
+      audio.addEventListener('ended', () => {
+        setRecordings(prev => ({
+          ...prev,
+          [petId]: { ...prev[petId], isPlaying: false }
+        }));
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('Audio playback error for pet', petId, ':', e);
+        console.error('Audio URL:', audioUrl);
+        console.error('Audio error details:', audio.error);
+        setRecordings(prev => ({
+          ...prev,
+          [petId]: { ...prev[petId], isPlaying: false }
+        }));
+      });
+
+      setRecordings(prev => ({
+        ...prev,
+        [petId]: { 
+          ...prev[petId], 
+          audioElement: audio,
+          isPlaying: true
+        }
+      }));
+
+      audio.play().catch(error => {
+        console.error('Error starting playback:', error);
+        setRecordings(prev => ({
+          ...prev,
+          [petId]: { ...prev[petId], isPlaying: false }
+        }));
+      });
+    }
   };
 
   if (loading) {
@@ -379,13 +531,37 @@ const AppointmentPetRecorder: React.FC = () => {
                       )}
 
                       {recording.audioBlob && !recording.uploadSuccess && (
+                        <>
+                          <button
+                            onClick={() => uploadRecording(pet.id)}
+                            disabled={recording.isUploading}
+                            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                          >
+                            <Upload className="w-5 h-5 mr-2" />
+                            {recording.isUploading ? 'Uploading...' : 'Upload Recording'}
+                          </button>
+                          
+                          {/* Preview button for recorded audio (before upload) - TEMPORARILY DISABLED */}
+                          <button
+                            onClick={() => alert('Audio preview temporarily disabled')}
+                            disabled
+                            className="flex items-center bg-gray-400 text-white px-4 py-2 rounded-md cursor-not-allowed transition-colors"
+                          >
+                            <Play className="w-5 h-5 mr-2" />
+                            Preview Disabled
+                          </button>
+                        </>
+                      )}
+
+                      {/* After successful upload - TEMPORARILY DISABLED */}
+                      {recording.uploadSuccess && (
                         <button
-                          onClick={() => uploadRecording(pet.id)}
-                          disabled={recording.isUploading}
-                          className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                          onClick={() => alert('Audio playback temporarily disabled')}
+                          disabled
+                          className="flex items-center bg-gray-400 text-white px-4 py-2 rounded-md cursor-not-allowed transition-colors"
                         >
-                          <Upload className="w-5 h-5 mr-2" />
-                          {recording.isUploading ? 'Uploading...' : 'Upload Recording'}
+                          <Volume2 className="w-5 h-5 mr-2" />
+                          Playback Disabled
                         </button>
                       )}
 

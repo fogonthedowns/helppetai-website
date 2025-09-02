@@ -13,8 +13,9 @@ from pydantic import BaseModel, Field
 
 from ..database_pg import get_db_session
 from ..models_pg.recording import Recording, RecordingStatus, RecordingType
-from ..models_pg.visit import Visit
-from ..models_pg.appointment import Appointment
+from ..models_pg.visit import Visit, VisitState
+from ..models_pg.appointment import Appointment, AppointmentPet
+from ..models_pg.pet import Pet
 from ..models_pg.user import User
 from ..auth.jwt_auth_pg import get_current_user
 from ..services.s3_service import s3_service
@@ -22,14 +23,89 @@ from ..services.s3_service import s3_service
 router = APIRouter(prefix="/recordings", tags=["recordings"])
 
 
+# Temporarily disabled due to async session conflicts
+# TODO: Fix this function to properly handle database sessions
+async def create_visit_from_recording_disabled(recording: Recording, current_user: User, original_db: AsyncSession) -> Optional[str]:
+    """
+    Create a visit record from a completed recording for an appointment.
+    Returns the visit ID if created, None if not applicable.
+    Uses a new database session to avoid transaction conflicts.
+    """
+    if not recording.appointment_id:
+        return None
+    
+    # Create a new database session to avoid transaction conflicts
+    from ..database_pg import database_pg
+    
+    async for db in database_pg.get_session():
+        try:
+            # Get the appointment details
+            appointment_query = select(Appointment).where(Appointment.id == recording.appointment_id)
+            appointment_result = await db.execute(appointment_query)
+            appointment = appointment_result.scalar_one_or_none()
+            
+            if not appointment:
+                print(f"Warning: Appointment {recording.appointment_id} not found for recording {recording.id}")
+                return None
+            
+            # Check if a visit already exists for this appointment
+            existing_visit_query = select(Visit).where(
+                and_(
+                    Visit.additional_data.op('->>')('appointment_id') == str(appointment.id),
+                    Visit.additional_data.op('->>')('recording_id') == str(recording.id)
+                )
+            )
+            existing_visit_result = await db.execute(existing_visit_query)
+            existing_visit = existing_visit_result.scalar_one_or_none()
+            
+            if existing_visit:
+                print(f"Visit already exists for appointment {appointment.id} and recording {recording.id}")
+                return str(existing_visit.id)
+            
+            # Create a new visit record
+            visit = Visit(
+                pet_id=appointment.pet_id,  # Get pet from appointment
+                practice_id=appointment.practice_id,
+                vet_user_id=current_user.id,
+                visit_date=appointment.appointment_date,
+                full_text="",  # Will be populated when transcription is processed
+                audio_transcript_url=recording.s3_url,
+                state=VisitState.NEW.value,
+                additional_data={
+                    "appointment_id": str(appointment.id),
+                    "recording_id": str(recording.id),
+                    "audio_s3_key": recording.s3_key,
+                    "audio_filename": recording.original_filename or recording.filename,
+                    "recorded_by": str(current_user.id),
+                    "file_size": recording.file_size_bytes,
+                    "duration_seconds": recording.duration_seconds
+                },
+                created_by=current_user.id
+            )
+            
+            db.add(visit)
+            await db.commit()
+            await db.refresh(visit)
+            
+            visit_id = str(visit.id)
+            print(f"Created visit {visit_id} for appointment {appointment.id} and recording {recording.id}")
+            return visit_id
+            
+        except Exception as e:
+            print(f"Error creating visit from recording {recording.id}: {str(e)}")
+            await db.rollback()
+            return None
+
+
 # Pydantic schemas
 class RecordingUploadRequest(BaseModel):
     """Request to initiate a recording upload"""
     appointment_id: Optional[uuid.UUID] = None
     visit_id: Optional[uuid.UUID] = None
+    pet_id: uuid.UUID = Field(..., description="Pet ID - REQUIRED for all recordings")
     recording_type: RecordingType = RecordingType.VISIT_AUDIO
     filename: str = Field(..., max_length=255, description="Original filename")
-    content_type: str = Field(default="audio/m4a", description="MIME type of the audio file")
+    content_type: str = Field(default="audio/mpeg", description="MIME type of the audio file")
     estimated_duration_seconds: Optional[float] = Field(None, ge=0, description="Estimated duration in seconds")
 
 
@@ -56,6 +132,7 @@ class RecordingResponse(BaseModel):
     id: uuid.UUID
     visit_id: Optional[uuid.UUID]
     appointment_id: Optional[uuid.UUID]
+    pet_id: uuid.UUID  # CRITICAL FIX: Include pet_id in response
     recording_type: str
     status: str
     filename: str
@@ -97,6 +174,17 @@ async def initiate_recording_upload(
             detail="Either appointment_id or visit_id must be provided"
         )
     
+    # Validate pet exists
+    pet_query = select(Pet).where(Pet.id == request.pet_id)
+    pet_result = await db.execute(pet_query)
+    pet = pet_result.scalar_one_or_none()
+    
+    if not pet:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pet not found"
+        )
+    
     # Validate appointment or visit exists and user has access
     if request.appointment_id:
         appointment_query = select(Appointment).where(
@@ -116,6 +204,22 @@ async def initiate_recording_upload(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Appointment not found or access denied"
             )
+        
+        # Validate pet belongs to appointment
+        appointment_pet_query = select(AppointmentPet).where(
+            and_(
+                AppointmentPet.appointment_id == request.appointment_id,
+                AppointmentPet.pet_id == request.pet_id
+            )
+        )
+        appointment_pet_result = await db.execute(appointment_pet_query)
+        appointment_pet = appointment_pet_result.scalar_one_or_none()
+        
+        if not appointment_pet:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Pet is not associated with this appointment"
+            )
     
     if request.visit_id:
         visit_query = select(Visit).where(
@@ -134,6 +238,13 @@ async def initiate_recording_upload(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Visit not found or access denied"
+            )
+        
+        # Validate pet belongs to visit
+        if visit.pet_id != request.pet_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Pet does not match the visit's pet"
             )
     
     # Check for existing recording for this visit (enforce one recording per visit)
@@ -185,6 +296,7 @@ async def initiate_recording_upload(
         recording = Recording(
             visit_id=request.visit_id,
             appointment_id=request.appointment_id,
+            pet_id=request.pet_id,  # CRITICAL FIX: Include pet_id
             recorded_by_user_id=current_user.id,
             recording_type=request.recording_type.value,
             status=RecordingStatus.UPLOADING.value,
@@ -277,10 +389,23 @@ async def complete_recording_upload(
         await db.commit()
         await db.refresh(recording)
         
+        # TODO: Create visit record if this recording is for an appointment
+        # Temporarily disabled due to async session conflicts
+        visit_id = None
+        # if recording.appointment_id:
+        #     try:
+        #         visit_id = await create_visit_from_recording(recording, current_user, db)
+        #     except Exception as e:
+        #         print(f"Warning: Failed to create visit record for recording {recording.id}: {str(e)}")
+        
         # TODO: Trigger transcription process here
         # This could be done via a background task, SQS queue, or direct API call
         
-        return {"message": "Recording upload completed successfully", "recording_id": recording.id}
+        return {
+            "message": "Recording upload completed successfully", 
+            "recording_id": recording.id,
+            "visit_id": visit_id
+        }
         
     except HTTPException:
         raise
@@ -327,6 +452,7 @@ async def get_recordings(
             id=recording.id,
             visit_id=recording.visit_id,
             appointment_id=recording.appointment_id,
+            pet_id=recording.pet_id,  # CRITICAL FIX: Include pet_id in response
             recording_type=recording.recording_type,
             status=recording.status,
             filename=recording.filename,
@@ -375,6 +501,7 @@ async def get_recording(
         id=recording.id,
         visit_id=recording.visit_id,
         appointment_id=recording.appointment_id,
+        pet_id=recording.pet_id,  # CRITICAL FIX: Include pet_id in response
         recording_type=recording.recording_type,
         status=recording.status,
         filename=recording.filename,
