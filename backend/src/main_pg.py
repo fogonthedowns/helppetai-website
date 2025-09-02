@@ -22,12 +22,25 @@ logger = logging.getLogger(__name__)
 
 
 class CustomJSONResponse(JSONResponse):
-    """Custom JSON response with additional headers"""
+    """Custom JSON response with mobile-optimized headers"""
     
     def __init__(self, content=None, status_code: int = 200, **kwargs):
         super().__init__(content, status_code, **kwargs)
+        
+        # API metadata
         self.headers["X-API-Version"] = settings.app_version
         self.headers["X-Process-Time"] = "0.000s"  # Will be updated by middleware
+        
+        # Mobile-optimized caching (prevent stale data in iOS)
+        self.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        self.headers["Pragma"] = "no-cache"
+        self.headers["Expires"] = "0"
+        
+        # CORS exposure for mobile apps
+        self.headers["Access-Control-Expose-Headers"] = "X-API-Version, X-Process-Time"
+        
+        # Mobile optimization
+        self.headers["Vary"] = "Accept, Authorization, Origin"
 
 
 @asynccontextmanager

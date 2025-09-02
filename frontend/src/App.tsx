@@ -9,6 +9,7 @@ import VetsContact from './components/VetsContact';
 import AboutUs from './components/AboutUs';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
+import VetSignup from './components/auth/VetSignup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PracticesList from './components/practices/PracticesList';
 import PracticeDetail from './components/practices/PracticeDetail';
@@ -47,6 +48,7 @@ const App = () => {
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/vet-signup" element={<VetSignup />} />
             
             {/* Dashboard Routes */}
             <Route path="/dashboard/vet" element={

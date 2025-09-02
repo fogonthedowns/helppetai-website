@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     
     # Security Configuration
     cors_origins: str = Field(
-        default="http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://host.docker.internal:3000,https://helppet.ai,https://www.helppet.ai", 
+        default="http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://host.docker.internal:3000,https://helppet.ai,https://www.helppet.ai,null,file://", 
         env="CORS_ORIGINS"
     )
     cors_methods: str = Field(default="GET,POST,PUT,DELETE,OPTIONS", env="CORS_METHODS")
@@ -87,8 +87,17 @@ class Settings(BaseSettings):
     pinecone_index_name: str = Field(default="1536", env="PINECONE_INDEX_NAME")
     openai_embed_model: str = Field(default="text-embedding-3-small", env="OPENAI_EMBED_MODEL")
     
-    # DynamoDB Configuration for RAG
+    # AWS Configuration
     aws_region: str = Field(default="us-east-1", env="AWS_REGION")
+    aws_access_key_id: Optional[str] = Field(default=None, env="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: Optional[str] = Field(default=None, env="AWS_SECRET_ACCESS_KEY")
+    
+    # S3 Configuration for Audio Uploads
+    s3_bucket_name: str = Field(default="helppet-audio-recordings", env="S3_BUCKET_NAME")
+    s3_recordings_prefix: str = Field(default="recordings/", env="S3_RECORDINGS_PREFIX")
+    s3_presigned_url_expiration: int = Field(default=3600, env="S3_PRESIGNED_URL_EXPIRATION")  # 1 hour
+    
+    # DynamoDB Configuration for RAG
     dynamodb_vector_table: str = Field(default="rag_vector_index", env="DYNAMODB_VECTOR_TABLE")
     rag_sources_table: str = Field(default="rag_content_sources", env="RAG_SOURCES_TABLE")
     

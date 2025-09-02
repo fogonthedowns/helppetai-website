@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Mic, Square, Play, Pause, Upload, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
 import { uploadAudioToS3, generateAudioFileName } from '../../config/s3';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface Pet {
   id: string;
@@ -53,8 +54,10 @@ const AppointmentPetRecorder: React.FC = () => {
   }, [appointmentId]);
 
   const fetchAppointmentDetails = async () => {
+    if (!appointmentId) return;
+    
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/appointments/${appointmentId}`, {
+      const response = await fetch(API_ENDPOINTS.APPOINTMENTS.GET(appointmentId), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -100,7 +103,7 @@ const AppointmentPetRecorder: React.FC = () => {
   const checkExistingVisit = async (petId: string) => {
     try {
       // Get all visits for this pet and check if any match this appointment
-      const response = await fetch(`http://localhost:8000/api/v1/visit-transcripts/pet/${petId}`, {
+      const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.BY_PET(petId), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

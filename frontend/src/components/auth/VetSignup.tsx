@@ -10,7 +10,7 @@ interface Practice {
   state?: string;
 }
 
-const Signup: React.FC = () => {
+const VetSignup: React.FC = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -75,25 +75,21 @@ const Signup: React.FC = () => {
       return;
     }
 
-    if (!formData.full_name.trim()) {
-      setError('Please enter your full name');
-      setLoading(false);
-      return;
-    }
-
     try {
+      const signupData = {
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        full_name: formData.full_name,
+        role: 'VET_STAFF'
+      };
+
       const response = await fetch(API_ENDPOINTS.AUTH.SIGNUP, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-          email: formData.email,
-          full_name: formData.full_name,
-          role: 'PET_OWNER'
-        }),
+        body: JSON.stringify(signupData),
       });
 
       if (!response.ok) {
@@ -105,7 +101,7 @@ const Signup: React.FC = () => {
       setTimeout(() => {
         navigate('/login', { 
           state: { 
-            message: 'Account created successfully! Please log in.',
+            message: 'Veterinary account created successfully! Please log in.',
             practiceId: formData.practice_id 
           }
         });
@@ -119,25 +115,25 @@ const Signup: React.FC = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 mb-6">
+            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 mb-6">
               <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to HelpPetAI! 🎉</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to HelpPetAI! 🩺</h2>
             <p className="text-gray-600 mb-2">
-              Your account has been created successfully.
+              Your veterinary account has been created successfully.
             </p>
             {formData.practice_id && (
-              <p className="text-sm text-blue-600 mb-4">
+              <p className="text-sm text-emerald-600 mb-4">
                 You can complete your practice association after logging in.
               </p>
             )}
             <div className="flex items-center justify-center text-sm text-gray-500">
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -150,7 +146,7 @@ const Signup: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-lg w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -163,18 +159,18 @@ const Signup: React.FC = () => {
                 height="64" 
                 className="rounded-2xl shadow-lg"
               />
-              <div className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
                 <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
               </div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
-            Join HelpPetAI
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent mb-3">
+            Join as a Veterinarian
           </h1>
           <p className="text-lg text-gray-600 max-w-md mx-auto">
-            Connect with your veterinarian and access AI-powered pet care insights
+            Access advanced AI tools and connect with pet owners in your practice
           </p>
         </div>
 
@@ -196,15 +192,15 @@ const Signup: React.FC = () => {
               </div>
             )}
 
-            {/* Personal Information */}
+            {/* Professional Information */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <div className="h-8 w-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                   <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Professional Information</h3>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
@@ -219,15 +215,15 @@ const Signup: React.FC = () => {
                     required
                     value={formData.full_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Enter your full name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Dr. Sarah Johnson"
                     disabled={loading}
                   />
                 </div>
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                    Professional Email
                   </label>
                   <input
                     id="email"
@@ -236,8 +232,8 @@ const Signup: React.FC = () => {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="your.email@example.com"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                    placeholder="dr.johnson@vetclinic.com"
                     disabled={loading}
                   />
                 </div>
@@ -247,7 +243,7 @@ const Signup: React.FC = () => {
             {/* Account Information */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="h-8 w-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="h-8 w-8 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
                   <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2a2 2 0 00-2 2m0 0a2 2 0 01-2 2m2-2a2 2 0 012 2M9 5a2 2 0 012 2v0a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h2z" />
                   </svg>
@@ -267,7 +263,7 @@ const Signup: React.FC = () => {
                     required
                     value={formData.username}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                     placeholder="Choose a unique username"
                     disabled={loading}
                   />
@@ -285,7 +281,7 @@ const Signup: React.FC = () => {
                       required
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                       placeholder="Min 6 characters"
                       disabled={loading}
                     />
@@ -302,7 +298,7 @@ const Signup: React.FC = () => {
                       required
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                       placeholder="Confirm password"
                       disabled={loading}
                     />
@@ -311,17 +307,17 @@ const Signup: React.FC = () => {
               </div>
             </div>
 
-            {/* Veterinary Practice */}
+            {/* Practice Association */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="h-8 w-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                <div className="h-8 w-8 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h10M7 11h10M7 15h10" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Your Veterinary Practice</h3>
-                  <p className="text-sm text-gray-500">Connect with your vet (optional)</p>
+                  <h3 className="text-lg font-semibold text-gray-900">Practice Association</h3>
+                  <p className="text-sm text-gray-500">Associate with your veterinary practice (optional)</p>
                 </div>
               </div>
 
@@ -340,10 +336,10 @@ const Signup: React.FC = () => {
                     name="practice_id"
                     value={formData.practice_id}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                     disabled={loading}
                   >
-                    <option value="">🏥 Select your vet's practice (optional)</option>
+                    <option value="">🏥 Select your practice (optional)</option>
                     {practices.map((practice) => (
                       <option key={practice.uuid} value={practice.uuid}>
                         {practice.name}
@@ -356,7 +352,7 @@ const Signup: React.FC = () => {
                   <svg className="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Don't see your vet's practice? You can add it later or ask your vet to join HelpPetAI.
+                  Don't see your practice? You can add it later or contact support to add your practice.
                 </p>
               </div>
             </div>
@@ -366,7 +362,7 @@ const Signup: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl text-base font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+                className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl text-base font-medium text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg"
               >
                 {loading ? (
                   <>
@@ -374,14 +370,14 @@ const Signup: React.FC = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Creating your account...
+                    Creating your veterinary account...
                   </>
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Create My Account
+                    Create Veterinary Account
                   </>
                 )}
               </button>
@@ -392,7 +388,7 @@ const Signup: React.FC = () => {
           <div className="mt-8 text-center space-y-3">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+              <Link to="/login" className="font-medium text-emerald-600 hover:text-emerald-500 transition-colors">
                 Sign in here
               </Link>
             </p>
@@ -405,9 +401,9 @@ const Signup: React.FC = () => {
               </div>
             </div>
             <p className="text-sm text-gray-600">
-              Are you a veterinarian?{' '}
-              <Link to="/vet-signup" className="font-medium bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent hover:from-emerald-700 hover:to-teal-700 transition-all">
-                Join as a vet →
+              Are you a pet owner?{' '}
+              <Link to="/signup" className="font-medium bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-indigo-700 transition-all">
+                Create pet owner account →
               </Link>
             </p>
           </div>
@@ -417,4 +413,4 @@ const Signup: React.FC = () => {
   );
 };
 
-export default Signup;
+export default VetSignup;

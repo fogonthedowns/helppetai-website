@@ -22,7 +22,7 @@ from config import settings
 config = context.config
 
 # Set the database URL from our settings (use sync URL for migrations)
-config.set_main_option("sqlalchemy.url", settings.postgresql_sync_url)
+config.set_main_option("sqlalchemy.url", settings.get_postgresql_sync_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

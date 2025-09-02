@@ -3,6 +3,8 @@
  * No AWS credentials stored in frontend!
  */
 
+import { API_ENDPOINTS } from './api';
+
 export interface S3UploadResult {
   success: boolean;
   url?: string;
@@ -38,7 +40,7 @@ export const uploadAudioToS3 = async (
     }
 
     // Upload to backend endpoint that handles S3 upload securely
-    const response = await fetch('http://localhost:8000/api/v1/upload/audio', {
+    const response = await fetch(API_ENDPOINTS.UPLOAD.AUDIO, {
       method: 'POST',
       body: formData,
       headers: {

@@ -26,8 +26,9 @@ help:
 	@echo "  make env-check      - Check environment file setup"
 	@echo ""
 	@echo "Database:"
-	@echo "  make migrate        - Run database migrations"
-	@echo "  make migrate-create - Create new migration"
+	@echo "  make migrate             - Run database migrations (local)"
+	@echo "  make migrate-create      - Create new migration"
+	@echo "  make migrate-production  - Run migrations in production via API"
 	@echo ""
 	@echo "Production:"
 	@echo "  make build-prod     - Build production Docker image"
@@ -52,7 +53,7 @@ test:
 .PHONY: build
 build:
 	@echo "Building Docker image: $(IMAGE_NAME):$(IMAGE_TAG)"
-ew t	docker buildx build --platform linux/amd64 -t $(IMAGE_NAME):$(IMAGE_TAG) .
+	docker buildx build --platform linux/amd64 -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
 .PHONY: build-prod
 build-prod:
@@ -127,6 +128,17 @@ migrate:
 migrate-create:
 	@read -p "Enter migration message: " msg; \
 	alembic revision --autogenerate -m "$$msg"
+
+.PHONY: migrate-production
+migrate-production:
+	@echo "🚀 Running database migration in production..."
+	@echo "📡 Calling migration endpoint: https://api.helppet.ai/api/v1/auth/admin/migrate"
+	@curl -X POST "https://api.helppet.ai/api/v1/auth/admin/migrate" \
+		-H "Content-Type: application/json" \
+		-d '{"password": "HelpPetSeed2024!"}' \
+		-w "\n\n📊 Response Status: %{http_code}\n⏱️  Total Time: %{time_total}s\n" \
+		-s --fail-with-body || (echo "❌ Migration failed!" && exit 1)
+	@echo "✅ Migration completed successfully!"
 
 # Deployment Preparation
 .PHONY: deploy-prep

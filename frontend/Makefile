@@ -3,18 +3,25 @@
 
 BUCKET_NAME := helppet.ai
 DISTRIBUTION_ID := # Add your CloudFront distribution ID here after setup
+AWS_PROFILE=default
+export AWS_PROFILE
 
 help: ## Show available commands
 	@echo "Available commands:"
-	@echo "  help     Show this help message"
-	@echo "  build    Build the application for production"
-	@echo "  run      Start the development server"
-	@echo "  test     Run the test suite"
-	@echo "  deploy   Build and deploy to AWS S3 + CloudFront"
+	@echo "  help       Show this help message"
+	@echo "  build      Build the application for production"
+	@echo "  build-prod Build with explicit production API URL"
+	@echo "  run        Start the development server"
+	@echo "  test       Run the test suite"
+	@echo "  deploy     Build and deploy to AWS S3 + CloudFront"
 
 build: ## Build the application for production
-	@echo "Building the application..."
-	yarn build
+	@echo "Building the application for production..."
+	NODE_ENV=production yarn build
+
+build-prod: ## Build with explicit production API URL
+	@echo "Building for production with explicit API URL..."
+	NODE_ENV=production REACT_APP_API_URL=https://api.helppet.ai yarn build
 
 run: ## Start the development server
 	@echo "Starting development server..."
@@ -24,7 +31,7 @@ test: ## Run the test suite
 	@echo "Running tests..."
 	yarn test
 
-deploy: build ## Build and deploy to AWS S3 + CloudFront
+deploy: build-prod ## Build and deploy to AWS S3 + CloudFront
 	@echo "🚀 Deploying helppet.ai to AWS..."
 	
 	@echo "📁 Setting up SPA routing structure..."

@@ -16,6 +16,7 @@ from .visit_transcripts import router as visit_transcripts_router
 from .appointments import router as appointments_router
 from .dashboard import router as dashboard_router
 from .upload import router as upload_router
+from .recordings import router as recordings_router
 
 # Create main router
 router = APIRouter()
@@ -35,6 +36,7 @@ router.include_router(medical_records_router, tags=["medical-records"])  # medic
 router.include_router(visit_transcripts_router, tags=["visit-transcripts"])  # visit transcripts router already has prefix
 router.include_router(appointments_router, tags=["appointments"])  # appointments router already has prefix
 router.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["vet-dashboard"])
+router.include_router(recordings_router, prefix="/api/v1", tags=["recordings"])
 router.include_router(upload_router, prefix="/api/v1/upload", tags=["file-upload"])
 router.include_router(rag_router, prefix="/api/v1/rag", tags=["rag-search"])
 
