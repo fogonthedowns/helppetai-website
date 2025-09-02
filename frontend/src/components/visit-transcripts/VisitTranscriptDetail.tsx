@@ -135,7 +135,7 @@ const VisitTranscriptDetail: React.FC = () => {
     if (!audioElement) {
       try {
         // Get presigned URL for secure audio access
-        const response = await fetch(API_ENDPOINTS.UPLOAD.AUDIO_PRESIGNED_URL(transcriptId), {
+        const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.AUDIO_PLAYBACK(transcriptId), {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -147,7 +147,7 @@ const VisitTranscriptDetail: React.FC = () => {
 
         const data = await response.json();
         
-        if (!data.success || !data.presigned_url) {
+        if (!data.presigned_url) {
           throw new Error('Invalid audio access response');
         }
 

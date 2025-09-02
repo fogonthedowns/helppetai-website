@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Mic, Square, Play, Pause, Upload, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
-import { uploadAudioToS3, generateAudioFileName } from '../../config/s3';
+import { uploadAudioToS3 } from '../../config/s3';
+import { createOptimalMediaRecorder, prepareAudioForUpload } from '../../utils/audioConverter';
 import { API_ENDPOINTS } from '../../config/api';
 
 interface Pet {
@@ -139,7 +140,7 @@ const AppointmentPetRecorder: React.FC = () => {
   const startRecording = async (petId: string) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const recorder = createOptimalMediaRecorder(stream);
       const chunks: Blob[] = [];
 
       recorder.ondataavailable = (event) => {
@@ -149,7 +150,7 @@ const AppointmentPetRecorder: React.FC = () => {
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(chunks, { type: recorder.mimeType });
         setRecordings(prev => ({
           ...prev,
           [petId]: {
@@ -218,8 +219,8 @@ const AppointmentPetRecorder: React.FC = () => {
     }));
 
     try {
-      const fileName = generateAudioFileName(appointmentId, petId);
-      const result = await uploadAudioToS3(recording.audioBlob, fileName, appointmentId, petId);
+      const audioData = prepareAudioForUpload(recording.audioBlob, appointmentId, petId);
+      const result = await uploadAudioToS3(audioData.blob, audioData.filename, appointmentId, petId);
 
       if (result.success) {
         setRecordings(prev => ({

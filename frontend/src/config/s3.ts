@@ -83,7 +83,7 @@ export const generateAudioFileName = (appointmentId?: string, userId?: string): 
   const prefix = appointmentId ? `appointment-${appointmentId}` : 'visit';
   const userSuffix = userId ? `-${userId.slice(0, 8)}` : '';
   
-  return `${prefix}${userSuffix}-${timestamp}.webm`;
+  return `${prefix}${userSuffix}-${timestamp}.m4a`;
 };
 
 /**

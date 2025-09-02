@@ -78,6 +78,9 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/v1/visit-transcripts/`,
     UPDATE: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
     DELETE: (transcriptUuid: string) => `${API_BASE_URL}/api/v1/visit-transcripts/${transcriptUuid}`,
+    AUDIO_PLAYBACK: (visitId: string) => `${API_BASE_URL}/api/v1/visit-transcripts/audio/playback/${visitId}`,
+    AUDIO_UPLOAD_INITIATE: `${API_BASE_URL}/api/v1/visit-transcripts/audio/upload/initiate`,
+    AUDIO_UPLOAD_COMPLETE: (visitId: string) => `${API_BASE_URL}/api/v1/visit-transcripts/audio/upload/complete/${visitId}`,
   },
   APPOINTMENTS: {
     LIST_BY_PRACTICE: (practiceUuid: string) => `${API_BASE_URL}/api/v1/appointments/practice/${practiceUuid}`,

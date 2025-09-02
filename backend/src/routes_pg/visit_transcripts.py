@@ -72,7 +72,7 @@ class VisitTranscriptResponse(BaseModel):
 class AudioUploadRequest(BaseModel):
     pet_id: str
     filename: str
-    content_type: str = "audio/m4a"
+    content_type: str = "audio/m4a"  # Default to M4A, but accept WebM too
     estimated_duration_seconds: Optional[float] = None
     appointment_id: Optional[str] = None  # Add appointment association
 
@@ -411,8 +411,7 @@ async def initiate_audio_upload(
     if request.appointment_id:
         try:
             appointment_uuid = uuid.UUID(request.appointment_id)
-            from .appointment import Appointment
-            from .appointment import AppointmentPet
+            from ..models_pg.appointment import Appointment, AppointmentPet
             
             # Get appointment
             appointment_result = await db.execute(
@@ -472,10 +471,20 @@ async def initiate_audio_upload(
         )
     
     try:
-        # Generate unique S3 key
+        # Generate unique S3 key with appropriate extension
         timestamp = datetime.now().strftime('%Y/%m/%d')
         unique_id = str(uuid.uuid4())
-        s3_key = f"visit-recordings/{timestamp}/pet-{pet.id}/{unique_id}.m4a"
+        
+        # Determine file extension from content type
+        file_extension = "m4a"  # default
+        if "webm" in request.content_type.lower():
+            file_extension = "webm"
+        elif "mp4" in request.content_type.lower():
+            file_extension = "m4a"
+        elif "mpeg" in request.content_type.lower() or "mp3" in request.content_type.lower():
+            file_extension = "mp3"
+        
+        s3_key = f"visit-recordings/{timestamp}/pet-{pet.id}/{unique_id}.{file_extension}"
         
         # Create metadata with appointment info
         metadata = {
@@ -630,12 +639,19 @@ async def get_audio_playback_url(
     # Check access to the pet
     await check_pet_access(str(visit.pet_id), current_user, db)
     
-    # Check if audio exists
-    s3_key = visit.additional_data.get('s3_key')
+    # Check if audio exists - support both new and old formats
+    s3_key = visit.additional_data.get('s3_key') or visit.additional_data.get('audio_s3_key')
     if not s3_key or not visit.audio_transcript_url:
+        # Add debug info to understand the issue
+        debug_info = {
+            "s3_key_new": visit.additional_data.get('s3_key'),
+            "s3_key_old": visit.additional_data.get('audio_s3_key'),
+            "audio_transcript_url": visit.audio_transcript_url,
+            "additional_data_keys": list(visit.additional_data.keys()) if visit.additional_data else []
+        }
         raise HTTPException(
             status_code=404,
-            detail="No audio file found for this visit"
+            detail=f"No audio file found for this visit. Debug: {debug_info}"
         )
     
     try:
@@ -655,7 +671,7 @@ async def get_audio_playback_url(
             presigned_url=presigned_url,
             expires_in=900,
             visit_id=str(visit.id),
-            filename=visit.additional_data.get('filename', 'recording.m4a')
+            filename=visit.additional_data.get('filename') or visit.additional_data.get('audio_filename', 'recording.m4a')
         )
         
     except ClientError as e:

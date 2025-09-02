@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { uploadAudioToS3, generateAudioFileName, isS3Configured } from '../../config/s3';
+import { uploadAudioToS3, isS3Configured } from '../../config/s3';
+import { createOptimalMediaRecorder, prepareAudioForUpload } from '../../utils/audioConverter';
 import { Mic, MicOff, Square, Play, Pause, Upload, Check, AlertCircle, ArrowLeft, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { VisitTranscript, TranscriptState, TRANSCRIPT_STATE_LABELS, TRANSCRIPT_STATE_COLORS } from '../../types/visitTranscript';
 import { API_ENDPOINTS } from '../../config/api';
@@ -93,9 +94,7 @@ export const VisitTranscriptRecorder: React.FC = () => {
       
       streamRef.current = stream;
       
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      const mediaRecorder = createOptimalMediaRecorder(stream);
       
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -107,7 +106,7 @@ export const VisitTranscriptRecorder: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
         const localKey = saveToLocalStorage(audioBlob);
         
         setRecordingState(prev => ({
@@ -221,11 +220,11 @@ export const VisitTranscriptRecorder: React.FC = () => {
         throw new Error('S3 not configured. Check environment variables.');
       }
 
-      // Generate unique filename
-      const fileName = generateAudioFileName(appointmentId, user?.id);
+      // Prepare audio with optimal format and filename
+      const audioData = prepareAudioForUpload(recordingState.audioBlob, appointmentId, user?.id);
       
       // Upload to S3
-      const uploadResult = await uploadAudioToS3(recordingState.audioBlob, fileName);
+      const uploadResult = await uploadAudioToS3(audioData.blob, audioData.filename);
       
       if (!uploadResult.success) {
         throw new Error(uploadResult.error || 'Upload failed');
