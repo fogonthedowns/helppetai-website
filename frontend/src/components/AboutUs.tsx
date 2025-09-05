@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Users, Shield, Award, Stethoscope, Brain } from 'lucide-react';
+import Footer from './Footer';
 
 // Import founder images from public folder
 const JustinImage = '/justin.png';
@@ -18,7 +19,7 @@ const AboutUs = () => {
             About HelpPetAI
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          We're revolutionizing pet healthcare by making expert veterinary knowledge instantly accessible to the world.
+          We're transforming veterinary practice management by streamlining visit documentation with iPhone recording and AI-powered transcription.
           </p>
         </div>
       </section>
@@ -34,10 +35,16 @@ const AboutUs = () => {
                 Our Mission
               </h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                Every pet deserves quality healthcare, but traditional veterinary care can be expensive and inaccessible. We believe that technology can bridge this gap by providing intelligent triage, connecting pet parents with the right level of care, and making veterinary expertise available when you need it most.
+                Veterinary documentation has been stuck in the past handwritten notes, missed details, and fragmented records across multiple practices. We believe technology can revolutionize how veterinarians document visits, ensuring complete, accurate, and shareable medical records.
               </p>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Our AI-powered platform ensures your pet gets the appropriate care for their condition - from simple home treatments to specialist referrals - saving you time, money, and stress.
+                Our iPhone recording platform with AI transcription ensures every conversation is captured, transcribed, and securely stored creating comprehensive documentation that follows pets across their entire healthcare journey.
+              </p>
+
+              <br />
+              
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+              But we go beyond just recording what happened. Our AI identifies patterns, behavioral changes, and subtle health indicators that might otherwise be overlooked.
               </p>
             </div>
             <div className="flex justify-center">
@@ -129,9 +136,9 @@ const AboutUs = () => {
                     <Stethoscope className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Licensed Veterinarians</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">iPhone Recording Technology</h3>
                     <p className="text-gray-600">
-                      Our network includes over 200 licensed veterinarians across all 50 states, each with expertise in different specialties.
+                      Seamless audio recording directly from iPhone to secure cloud storage with presigned URLs and automatic transcription processing.
                     </p>
                   </div>
                 </div>
@@ -141,9 +148,9 @@ const AboutUs = () => {
                     <Users className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">AI Development Team</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">AI Insights - Qualitative & Quantitative</h3>
                     <p className="text-gray-600">
-                      Our engineers and data scientists have trained our AI on millions of veterinary cases to provide accurate triage and treatment recommendations.
+                      Beyond transcription, our AI analyzes patterns, behavioral changes, and health indicators to provide actionable insights from visit conversations.
                     </p>
                   </div>
                 </div>
@@ -153,9 +160,9 @@ const AboutUs = () => {
                     <Award className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Expert Knowledge Base</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Multi-Practice Record Sharing</h3>
                     <p className="text-gray-600">
-                    Trained on comprehensive veterinary literature, clinical studies, and expert protocols to provide evidence-based pet healthcare guidance.
+                    Secure, SOC 2 Type 2 compliant platform enabling seamless sharing of pet medical records and visit transcripts across veterinary practices.
                     </p>
                   </div>
                 </div>
@@ -165,10 +172,10 @@ const AboutUs = () => {
             <div className="flex justify-center">
               <div className="w-96 h-96 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center">
                 <div className="text-center text-white">
-                  <div className="text-6xl font-bold mb-2">85%</div>
-                  <div className="text-xl font-light">Cut your vet bills</div>
-                  <div className="text-4xl font-bold mt-6 mb-2">15k+</div>
-                  <div className="text-xl font-light">Hours saved</div>
+                  <div className="text-6xl font-bold mb-2">100%</div>
+                  <div className="text-xl font-light">Visit documentation</div>
+                  <div className="text-4xl font-bold mt-6 mb-2">SOC 2 Type 2</div>
+                  <div className="text-xl font-light">Compliant & secure</div>
                 </div>
               </div>
             </div>
@@ -180,16 +187,18 @@ const AboutUs = () => {
       <section className="bg-blue-600 py-16">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to get started?
+            Ready to streamline your documentation?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of pet parents who trust HelpPetAI for their pet's healthcare needs.
+            Join veterinary practices using HelpPet.ai to transform their visit documentation workflow.
           </p>
           <Link to="/vets" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors">
-            Start your pet's assessment
+            Start documenting visits
           </Link>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };

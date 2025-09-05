@@ -214,14 +214,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
-            <div className="text-center">
-              <span className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-                  Sign up here
-                </Link>
-              </span>
-            </div>
           </form>
         </div>
       </div>

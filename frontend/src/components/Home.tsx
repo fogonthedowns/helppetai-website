@@ -2,30 +2,31 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Brain, DollarSign, Clock, Stethoscope } from 'lucide-react';
 import TransformSection from './TransformSection';
+import Footer from './Footer';
 
 const Home = () => {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const faqs = [
     {
-      question: 'How does HelpPetAI determine if my pet needs a vet visit?',
-      answer: 'Our Expert AI analyzes symptoms against our veterinary library to provide instant triage recommendations.'
+      question: 'How does iPhone recording work during vet visits?',
+      answer: 'Simply open the HelpPet.ai app on your iPhone, select the pet, and start recording. Audio uploads directly to secure cloud storage with automatic transcription.'
     },
     {
-      question: 'What types of conditions can HelpPetAI treat remotely?',
-      answer: 'We guide on common issues like digestive upset, skin problems, and behavior. Serious conditions require in-person care.'
+      question: 'Is the recorded audio secure and SOC 2 Type 2 compliant?',
+      answer: 'Yes, all recordings use encrypted transmission to AWS S3 with role-based access controls. Only authorized veterinary staff and pet owners can access visit records.'
     },
     {
-      question: 'Are the veterinarians licensed in my state?',
-      answer: 'Yes, we connect you with licensed veterinary professionals who meet all local regulatory requirements.'
+      question: 'Can multiple veterinary practices access the same pet records?',
+      answer: 'Yes, pet owners can connect with multiple practices (primary care, specialists, emergency clinics) to share complete medical histories and visit transcripts.'
     },
     {
-      question: 'How much money can I actually save?',
-      answer: 'Pet owners avoid $200-500+ emergency visits. Practices reduce intake costs and optimize patient time through efficient AI triage.'
+      question: 'How does the AI transcription help with documentation?',
+      answer: 'AI automatically converts visit recordings into searchable text transcripts, reducing manual note-taking and ensuring complete visit documentation for compliance.'
     },
     {
-      question: 'What happens in emergency situations?',
-      answer: 'For life-threatening symptoms, seek emergency veterinary care immediately.'
+      question: 'What happens to the visit recordings and transcripts?',
+      answer: 'All recordings and transcripts are stored securely and become part of the permanent medical record, accessible to authorized users across connected practices.'
     }
   ];
 
@@ -36,24 +37,24 @@ const Home = () => {
         <div className="w-full max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="lg:pr-8">
-              <h1 className="text-7xl lg:text-8xl font-bold leading-tight mb-8" style={{
+              <h1 className="text-6xl lg:text-7xl font-bold leading-tight mb-8" style={{
                 fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
               }}>
-                Vet care works better here.
+                Streamline vet visit documentation.
               </h1>
               
               <div className="flex items-center space-x-8 mb-8">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-blue-600" />
+                    <Stethoscope className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <div className="font-bold text-gray-900">Save 85% on vet bills*</div>
-                    <div className="text-sm text-gray-600">with AI triage and expert routing</div>
+                    <div className="font-bold text-gray-900">iPhone Recording</div>
+                    <div className="text-sm text-gray-600">Direct cloud upload & transcription</div>
                   </div>
                 </div>
                 
@@ -62,8 +63,8 @@ const Home = () => {
                     <Brain className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <div className="font-bold text-gray-900">Expert System</div>
-                    <div className="text-sm text-gray-600">from simple to complex</div>
+                    <div className="font-bold text-gray-900">AI Documentation</div>
+                    <div className="text-sm text-gray-600">Automated transcripts & compliance</div>
                   </div>
                 </div>
               </div>
@@ -75,11 +76,11 @@ const Home = () => {
                 
                 <Link to="/rag" className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2">
                   <Brain className="w-4 h-4" />
-                  Expert AI Search
+                  Veterinary Knowledge Search
                 </Link>
               </div>
               
-              <p className="text-xs text-gray-500">*Rate subject to case complexity</p>
+              <p className="text-xs text-gray-500">Secure, SOC-compliant documentation platform</p>
             </div>
             {/* Phone Mockup - Exact Wealthfront Style */}
             <div className="flex justify-center lg:justify-end">
@@ -99,33 +100,33 @@ const Home = () => {
                     {/* Phone Content */}
                     <div className="p-6 space-y-4">
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <div className="text-xs font-medium text-blue-800 mb-1">Patient Info</div>
-                        <div className="text-lg font-bold">Golden Retriever • 4 yrs</div>
-                        <div className="text-xs text-gray-500">Weight: 28.5 kg | Spayed Female</div>
+                        <div className="text-xs font-medium text-blue-800 mb-1">Recording Session</div>
+                        <div className="text-lg font-bold">Amira • Golden Retriever</div>
+                        <div className="text-xs text-gray-500">Visit: Annual Wellness • Dr. Smith</div>
                       </div>
                       
                       <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <Clock className="w-4 h-4 text-orange-600" />
-                          <span className="text-xs font-medium text-orange-800">Triage Priority</span>
+                          <span className="text-xs font-medium text-orange-800">Recording Status</span>
                         </div>
-                        <div className="text-lg font-bold text-orange-700">MODERATE</div>
-                        <div className="text-xs text-orange-600">24h observation recommended</div>
+                        <div className="text-lg font-bold text-orange-700">ACTIVE</div>
+                        <div className="text-xs text-orange-600">12:34 duration • Auto-uploading</div>
                       </div>
                       
-                      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                        <div className="text-xs font-medium text-red-800 mb-1">Primary Symptoms</div>
-                        <div className="text-sm font-semibold text-red-700">Emesis • Lethargy</div>
-                        <div className="text-xs text-gray-500">Duration: 8 hours • Frequency: 3x</div>
+                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                        <div className="text-xs font-medium text-purple-800 mb-1">AI Transcription</div>
+                        <div className="text-sm font-semibold text-purple-700">Processing...</div>
+                        <div className="text-xs text-gray-500">Converting speech to text</div>
                       </div>
                       
                       <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800">Case Status</span>
+                          <span className="text-xs font-medium text-green-800">Documentation</span>
                         </div>
-                        <div className="text-sm font-bold text-green-700">Treatment Plan Active</div>
-                        <div className="text-xs text-green-600">DVM consultation scheduled</div>
+                        <div className="text-sm font-bold text-green-700">Auto-saved</div>
+                        <div className="text-xs text-green-600">Shared across practices</div>
                       </div>
                     </div>
                   </div>
@@ -150,8 +151,8 @@ const Home = () => {
                 <h2 className="text-4xl font-light leading-tight mb-4" style={{
                   fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
                 }}>
-                  9 ways to improve<br />
-                  pet wellness
+                  iPhone recording<br />
+                  made simple
                 </h2>
               </div>
               <Link to="/vets" className="bg-white text-red-500 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
@@ -165,8 +166,8 @@ const Home = () => {
                 <h2 className="text-4xl font-light leading-tight mb-4" style={{
                   fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
                 }}>
-                  Emergency pet<br />
-                  care guide
+                  AI transcription<br />
+                  & compliance
                 </h2>
               </div>
               <Link to="/vets" className="bg-white text-orange-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
@@ -180,8 +181,8 @@ const Home = () => {
                 <h2 className="text-4xl font-light leading-tight mb-4" style={{
                   fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
                 }}>
-                  Find veterinary<br />
-                  practices
+                  Multi-practice<br />
+                  record sharing
                 </h2>
               </div>
               <Link to="/practices" className="bg-white text-blue-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
@@ -193,20 +194,20 @@ const Home = () => {
           {/* Second Row - Four Clean Condition Boxes */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Skin Allergies</h3>
-              <p className="text-purple-100 text-sm font-medium">Better comfort</p>
+              <h3 className="text-lg font-light mb-2">Visit Recording</h3>
+              <p className="text-purple-100 text-sm font-medium">iPhone to cloud</p>
             </div>
             <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Ear Infections</h3>
-              <p className="text-orange-100 text-sm font-medium">Pain relief</p>
+              <h3 className="text-lg font-light mb-2">Auto Transcription</h3>
+              <p className="text-orange-100 text-sm font-medium">AI-powered text</p>
             </div>
             <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Digestive Issues</h3>
-              <p className="text-purple-100 text-sm font-medium">Better digestion</p>
+              <h3 className="text-lg font-light mb-2">Record Management</h3>
+              <p className="text-purple-100 text-sm font-medium">Cross-practice sharing</p>
             </div>
             <div className="bg-gradient-to-br from-amber-600 to-orange-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Parasite Control</h3>
-              <p className="text-orange-100 text-sm font-medium">Protection</p>
+              <h3 className="text-lg font-light mb-2">Compliance Ready</h3>
+              <p className="text-orange-100 text-sm font-medium">SOC 2 Type 2 secure</p>
             </div>
           </div>
         </div>
@@ -217,16 +218,16 @@ const Home = () => {
         <div className="w-full px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
-              Stop overpaying for<br />
-              simple pet problems
+              Transform your vet visit<br />
+              documentation workflow
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              Join 500,000+ pet parents saving money with smarter vet care
+              Join veterinary practices streamlining documentation with iPhone recording and AI transcription
             </p>
             <Link to="/vets" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors">
-              Start free assessment
+              Start documenting visits
             </Link>
-            <p className="text-sm text-blue-200 mt-4">No subscription required • Licensed vets available 24/7</p>
+            <p className="text-sm text-blue-200 mt-4">SOC 2 Type 2 compliant • Secure cloud storage • Multi-practice sharing</p>
           </div>
         </div>
       </section>
@@ -272,6 +273,7 @@ const Home = () => {
         </div>
       </section>
       
+      <Footer />
     </div>
   );
 };
