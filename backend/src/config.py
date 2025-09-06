@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     openai_embed_model: str = Field(default="text-embedding-3-small", env="OPENAI_EMBED_MODEL")
     
     # AWS Configuration
-    aws_region: str = Field(default="us-east-1", env="AWS_REGION")
+    aws_region: str = Field(default="us-west-1", env="AWS_REGION")
     aws_access_key_id: Optional[str] = Field(default=None, env="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: Optional[str] = Field(default=None, env="AWS_SECRET_ACCESS_KEY")
     

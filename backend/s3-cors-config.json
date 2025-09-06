@@ -1,0 +1,50 @@
+{
+    "CORSRules": [
+        {
+            "ID": "AllowAudioPlayback",
+            "AllowedHeaders": [
+                "*"
+            ],
+            "AllowedMethods": [
+                "GET",
+                "HEAD"
+            ],
+            "AllowedOrigins": [
+                "http://localhost:3000",
+                "http://localhost:3001", 
+                "http://127.0.0.1:3000",
+                "https://helppet.ai",
+                "https://www.helppet.ai",
+                "*"
+            ],
+            "ExposeHeaders": [
+                "Content-Length",
+                "Content-Type",
+                "Content-Range",
+                "Accept-Ranges"
+            ],
+            "MaxAgeSeconds": 3000
+        },
+        {
+            "ID": "AllowAudioUpload",
+            "AllowedHeaders": [
+                "*"
+            ],
+            "AllowedMethods": [
+                "POST",
+                "PUT"
+            ],
+            "AllowedOrigins": [
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3000", 
+                "https://helppet.ai",
+                "https://www.helppet.ai"
+            ],
+            "ExposeHeaders": [
+                "ETag"
+            ],
+            "MaxAgeSeconds": 3000
+        }
+    ]
+}

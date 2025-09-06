@@ -15,7 +15,7 @@ The Visit Transcript Recording feature allows veterinarians to record audio duri
 ### 1. Create S3 Bucket
 ```bash
 # Using AWS CLI
-aws s3 mb s3://helppetai-visit-recordings --region us-east-1
+aws s3 mb s3://helppetai-visit-recordings --region us-west-1
 ```
 
 ### 2. Configure Bucket Policy
@@ -53,7 +53,7 @@ aws iam create-access-key --user-name helppetai-upload-user
 **Backend (.env)**:
 ```bash
 S3_BUCKET_NAME=helppetai-visit-recordings
-S3_REGION=us-east-1
+S3_REGION=us-west-1
 AWS_ACCESS_KEY_ID=your_access_key_here
 AWS_SECRET_ACCESS_KEY=your_secret_key_here
 ```
@@ -61,7 +61,7 @@ AWS_SECRET_ACCESS_KEY=your_secret_key_here
 **Frontend (.env.local)**:
 ```bash
 REACT_APP_S3_BUCKET_NAME=helppetai-visit-recordings
-REACT_APP_S3_REGION=us-east-1
+REACT_APP_S3_REGION=us-west-1
 REACT_APP_API_URL=http://localhost:8000
 ```
 

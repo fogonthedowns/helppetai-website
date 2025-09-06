@@ -289,7 +289,7 @@ func completeUpload(recordingId: UUID) {
 
 1. **Create S3 Bucket:**
 ```bash
-aws s3 mb s3://helppet-audio-recordings --region us-east-1
+aws s3 mb s3://helppet-audio-recordings --region us-west-1
 ```
 
 2. **Configure CORS:**
@@ -364,7 +364,7 @@ Add to your `.env` file:
 
 ```bash
 # AWS Configuration
-AWS_REGION=us-east-1
+AWS_REGION=us-west-1
 AWS_ACCESS_KEY_ID=your_aws_access_key_id
 AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
 

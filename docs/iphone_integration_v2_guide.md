@@ -107,7 +107,7 @@ struct AudioUploadRequest: Codable {
     "key": "visit-recordings/2024/12/19/pet-a-uuid/unique-id.m4a",
     "Content-Type": "audio/m4a",
     "policy": "eyJleHBpcmF0aW9uIjoi...",
-    "x-amz-credential": "AKIA.../20241219/us-east-1/s3/aws4_request",
+    "x-amz-credential": "AKIA.../20241219/us-west-1/s3/aws4_request",
     "x-amz-algorithm": "AWS4-HMAC-SHA256",
     "x-amz-date": "20241219T143022Z",
     "x-amz-signature": "abc123..."

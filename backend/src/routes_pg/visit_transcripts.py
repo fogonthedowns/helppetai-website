@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/v1/visit-transcripts", tags=["visit-transcripts"
 
 # S3 Configuration
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 'helppetai-visit-recordings')
-S3_REGION = os.getenv('S3_REGION', 'us-east-1')
+S3_REGION = os.getenv('S3_REGION', 'us-west-1')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
@@ -226,6 +226,63 @@ async def get_visits_by_appointment(
     # For now, allow all authenticated users
     
     return [visit_to_transcript_response(visit) for visit in visits]
+
+
+@router.get("/debug/{visit_id}")
+async def debug_visit_audio(
+    visit_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+) -> dict:
+    """
+    Debug endpoint to check visit audio configuration
+    """
+    try:
+        visit_uuid = uuid.UUID(visit_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid visit ID format")
+    
+    # Get visit from database
+    result = await db.execute(select(Visit).where(Visit.id == visit_uuid))
+    visit = result.scalar_one_or_none()
+    
+    if not visit:
+        raise HTTPException(status_code=404, detail="Visit not found")
+    
+    # Check access to the pet
+    await check_pet_access(str(visit.pet_id), current_user, db)
+    
+    debug_info = {
+        "visit_id": str(visit.id),
+        "visit_state": visit.state,
+        "audio_transcript_url": visit.audio_transcript_url,
+        "additional_data": visit.additional_data,
+        "s3_key": visit.additional_data.get('s3_key'),
+        "audio_s3_key": visit.additional_data.get('audio_s3_key'),
+        "filename": visit.additional_data.get('filename'),
+        "audio_filename": visit.additional_data.get('audio_filename'),
+        "content_type": visit.additional_data.get('content_type'),
+        "s3_bucket": S3_BUCKET_NAME
+    }
+    
+    # Check if file exists in S3
+    s3_key = visit.additional_data.get('s3_key') or visit.additional_data.get('audio_s3_key')
+    if s3_key:
+        try:
+            s3_client = get_s3_client()
+            response = s3_client.head_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+            debug_info["s3_file_exists"] = True
+            debug_info["s3_file_size"] = response.get('ContentLength')
+            debug_info["s3_content_type"] = response.get('ContentType')
+            debug_info["s3_last_modified"] = response.get('LastModified').isoformat() if response.get('LastModified') else None
+        except ClientError as e:
+            debug_info["s3_file_exists"] = False
+            debug_info["s3_error"] = e.response['Error']['Code']
+    else:
+        debug_info["s3_file_exists"] = False
+        debug_info["s3_error"] = "No S3 key found"
+    
+    return debug_info
 
 
 @router.get("/{transcript_uuid}")
@@ -640,21 +697,50 @@ async def get_audio_playback_url(
     
     # Check if audio exists - support both new and old formats
     s3_key = visit.additional_data.get('s3_key') or visit.additional_data.get('audio_s3_key')
-    if not s3_key or not visit.audio_transcript_url:
+    if not s3_key:
         raise HTTPException(
             status_code=404,
-            detail="No audio file found for this visit"
+            detail="No S3 key found for this visit's audio file"
         )
+    
+    # Verify the file exists in S3 before generating presigned URL
+    s3_client = get_s3_client()
+    try:
+        s3_client.head_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'NoSuchKey' or error_code == '404':
+            raise HTTPException(
+                status_code=404,
+                detail=f"Audio file not found in storage at key: {s3_key}"
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to verify audio file existence: {error_code}"
+            )
     
     try:
         # Generate presigned URL for download
         s3_client = get_s3_client()
         
+        # Determine content type based on file extension
+        filename = visit.additional_data.get('filename') or visit.additional_data.get('audio_filename', 'recording.m4a')
+        content_type = 'audio/mp4'  # M4A files should use audio/mp4 MIME type
+        if filename.lower().endswith('.mp3'):
+            content_type = 'audio/mpeg'
+        elif filename.lower().endswith('.wav'):
+            content_type = 'audio/wav'
+        elif filename.lower().endswith('.m4a'):
+            content_type = 'audio/mp4'
+        
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': S3_BUCKET_NAME,
-                'Key': s3_key
+                'Key': s3_key,
+                'ResponseContentType': content_type,
+                'ResponseContentDisposition': f'inline; filename="{filename}"'
             },
             ExpiresIn=900  # 15 minutes for playback
         )
@@ -663,7 +749,7 @@ async def get_audio_playback_url(
             presigned_url=presigned_url,
             expires_in=900,
             visit_id=str(visit.id),
-            filename=visit.additional_data.get('filename') or visit.additional_data.get('audio_filename', 'recording.m4a')
+            filename=filename
         )
         
     except ClientError as e:
@@ -671,7 +757,7 @@ async def get_audio_playback_url(
         if error_code == 'NoSuchKey':
             raise HTTPException(
                 status_code=404,
-                detail="Audio file not found in storage"
+                detail=f"Audio file not found in storage at key: {s3_key}"
             )
         else:
             raise HTTPException(

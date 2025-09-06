@@ -262,7 +262,7 @@ DATABASE_URL_SYNC=postgresql://user:pass@localhost/helppet
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key  
 S3_BUCKET_NAME=helppetai-visit-recordings
-S3_REGION=us-east-1
+S3_REGION=us-west-1
 
 # JWT
 JWT_SECRET_KEY=your-secret-key

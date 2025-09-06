@@ -12,7 +12,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 import { 
   VisitTranscript, 
@@ -33,9 +34,13 @@ const VisitTranscriptDetail: React.FC = () => {
   const [pet, setPet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
 
   useEffect(() => {
     if (transcriptId && petId) {
@@ -50,6 +55,7 @@ const VisitTranscriptDetail: React.FC = () => {
       if (audioElement) {
         audioElement.pause();
         audioElement.src = '';
+        setAudioElement(null);
       }
     };
   }, [audioElement]);
@@ -129,50 +135,218 @@ const VisitTranscriptDetail: React.FC = () => {
     }
   };
 
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
+  };
+
   const toggleAudio = async () => {
     if (!transcript?.audio_transcript_url || !transcriptId) return;
 
-    if (!audioElement) {
-      try {
-        // Get presigned URL for secure audio access
-        const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.AUDIO_PLAYBACK(transcriptId), {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+    // Clear previous audio errors
+    setAudioError(null);
 
-        if (!response.ok) {
-          throw new Error('Failed to get audio access');
-        }
-
-        const data = await response.json();
-        
-        if (!data.presigned_url) {
-          throw new Error('Invalid audio access response');
-        }
-
-        const audio = new Audio(data.presigned_url);
-        audio.addEventListener('ended', () => setIsPlaying(false));
-        audio.addEventListener('error', () => {
-          setError('Failed to load audio file');
-          setIsPlaying(false);
-        });
-        setAudioElement(audio);
-        audio.play();
-        setIsPlaying(true);
-      } catch (err) {
-        console.error('Error loading audio:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load audio');
-        setIsPlaying(false);
-      }
-    } else {
+    // If audio element exists, just toggle play/pause
+    if (audioElement) {
       if (isPlaying) {
         audioElement.pause();
         setIsPlaying(false);
       } else {
-        audioElement.play();
-        setIsPlaying(true);
+        try {
+          await audioElement.play();
+          setIsPlaying(true);
+        } catch (playError) {
+          console.error('Resume play failed:', playError);
+          setAudioError(`Playback failed: ${getErrorMessage(playError)}`);
+          setIsPlaying(false);
+        }
       }
+      return;
+    }
+
+    // Create new audio element
+    try {
+      setAudioLoading(true);
+      
+      // Get presigned URL for secure audio access
+      const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.AUDIO_PLAYBACK(transcriptId), {
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Audio access failed:', response.status, errorText);
+        throw new Error(`Failed to get audio access: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Audio playback response:', data);
+      
+      if (!data.presigned_url) {
+        throw new Error('Invalid audio access response - no presigned URL');
+      }
+
+      // Create and configure audio element
+      const audio = new Audio();
+      
+      // Set up event listeners
+      audio.addEventListener('loadstart', () => {
+        console.log('Audio loading started');
+      });
+      
+      audio.addEventListener('loadedmetadata', () => {
+        console.log('Audio metadata loaded');
+      });
+      
+      audio.addEventListener('canplay', () => {
+        console.log('Audio can start playing');
+      });
+      
+      audio.addEventListener('ended', () => {
+        console.log('Audio playback ended');
+        setIsPlaying(false);
+      });
+      
+      audio.addEventListener('error', (e) => {
+        console.error('Audio error event:', e);
+        console.error('Audio error details:', {
+          error: audio.error,
+          errorCode: audio.error?.code,
+          errorMessage: audio.error?.message,
+          networkState: audio.networkState,
+          readyState: audio.readyState,
+          src: audio.src
+        });
+        
+        let errorMessage = 'Failed to load audio file';
+        
+        if (audio.error) {
+          switch (audio.error.code) {
+            case MediaError.MEDIA_ERR_ABORTED:
+              errorMessage = 'Audio loading was aborted';
+              break;
+            case MediaError.MEDIA_ERR_NETWORK:
+              errorMessage = 'Network error while loading audio. The URL may have expired. Click Play again to get a fresh URL.';
+              // Clear the audio element so next play will get a fresh URL
+              setAudioElement(null);
+              break;
+            case MediaError.MEDIA_ERR_DECODE:
+              errorMessage = 'Audio file is corrupted or malformed. This recording may need to be re-uploaded.';
+              break;
+            case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+              errorMessage = 'Audio format not supported by this browser. Try downloading the file or use a different browser.';
+              break;
+            default:
+              errorMessage = `Audio error: ${audio.error.message || 'Unknown error'}`;
+          }
+        }
+        
+        setAudioError(errorMessage);
+        setIsPlaying(false);
+        setAudioLoading(false);
+      });
+
+      // Check browser format support
+      const canPlayM4A = audio.canPlayType('audio/mp4; codecs="mp4a.40.2"');
+      const canPlayM4AAlt = audio.canPlayType('audio/m4a');
+      
+      console.log('Browser M4A support:', {
+        'audio/mp4': canPlayM4A,
+        'audio/m4a': canPlayM4AAlt,
+        userAgent: navigator.userAgent
+      });
+      
+      // If browser doesn't support M4A, show error immediately
+      if (!canPlayM4A && !canPlayM4AAlt) {
+        throw new Error('Your browser does not support M4A audio files. Please download the file or try a different browser.');
+      }
+      
+      // Set the source and load
+      audio.src = data.presigned_url;
+      audio.load();
+      
+      setAudioElement(audio);
+      
+      // Try to play
+      try {
+        await audio.play();
+        setIsPlaying(true);
+        console.log('Audio started playing successfully');
+      } catch (playError) {
+        console.error('Play failed:', playError);
+        
+        // Handle different play errors with proper type checking
+        let errorMessage = `Playback failed: ${getErrorMessage(playError)}`;
+        
+        if (playError instanceof Error) {
+          if (playError.name === 'NotAllowedError') {
+            errorMessage = 'Browser blocked autoplay. Click Play again to start audio.';
+          } else if (playError.name === 'NotSupportedError') {
+            errorMessage = 'Audio format not supported. Try downloading the file.';
+          }
+        }
+        
+        setAudioError(errorMessage);
+        setIsPlaying(false);
+      }
+        
+    } catch (err) {
+      console.error('Error loading audio:', err);
+      setAudioError(getErrorMessage(err));
+      setIsPlaying(false);
+    } finally {
+      setAudioLoading(false);
+    }
+  };
+
+  const downloadAudio = async () => {
+    if (!transcriptId) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.AUDIO_PLAYBACK(transcriptId), {
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get download URL');
+      }
+
+      const data = await response.json();
+      
+      if (data.presigned_url) {
+        // Create a temporary link to trigger download
+        const link = document.createElement('a');
+        link.href = data.presigned_url;
+        link.download = data.filename || 'recording.m4a';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (err) {
+      console.error('Error downloading audio:', err);
+      setAudioError('Failed to download audio file');
+    }
+  };
+
+  const fetchDebugInfo = async () => {
+    if (!transcriptId) return;
+    
+    try {
+      const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.DEBUG(transcriptId), {
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDebugInfo(data);
+        console.log('Debug info:', data);
+      } else {
+        console.error('Failed to fetch debug info:', response.status);
+      }
+    } catch (err) {
+      console.error('Error fetching debug info:', err);
     }
   };
 
@@ -316,23 +490,98 @@ const VisitTranscriptDetail: React.FC = () => {
               <Volume2 className="w-5 h-5 text-blue-600" />
               <span className="font-medium text-blue-900">Audio Recording</span>
             </div>
-            <button
-              onClick={toggleAudio}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200"
-            >
-              {isPlaying ? (
-                <>
-                  <Pause className="w-4 h-4 mr-2" />
-                  Pause
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 mr-2" />
-                  Play
-                </>
-              )}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={toggleAudio}
+                disabled={audioLoading}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-md transition-colors duration-200"
+              >
+                {audioLoading ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : isPlaying ? (
+                  <>
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Play
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={downloadAudio}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors duration-200"
+                title="Download audio file"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </button>
+              
+              <button
+                onClick={() => {
+                  fetchDebugInfo();
+                  setShowDebug(!showDebug);
+                }}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
+              >
+                Debug
+              </button>
+            </div>
           </div>
+          
+          {/* Audio Error Display */}
+          {audioError && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+              <div className="flex items-start">
+                <AlertCircle className="w-4 h-4 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+                <p className="text-red-700 text-sm">{audioError}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Debug Information */}
+      {showDebug && debugInfo && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+          <h3 className="font-medium text-gray-900 mb-3">Debug Information</h3>
+          <div className="space-y-2 text-sm">
+            <div><strong>Visit ID:</strong> {debugInfo.visit_id}</div>
+            <div><strong>Visit State:</strong> {debugInfo.visit_state}</div>
+            <div><strong>S3 Key:</strong> {debugInfo.s3_key || debugInfo.audio_s3_key || 'Not found'}</div>
+            <div><strong>S3 Bucket:</strong> {debugInfo.s3_bucket}</div>
+            <div><strong>Filename:</strong> {debugInfo.filename || debugInfo.audio_filename || 'Not found'}</div>
+            <div><strong>Content Type:</strong> {debugInfo.content_type || 'Not found'}</div>
+            <div><strong>File Exists in S3:</strong> 
+              <span className={debugInfo.s3_file_exists ? 'text-green-600' : 'text-red-600'}>
+                {debugInfo.s3_file_exists ? ' Yes' : ' No'}
+              </span>
+            </div>
+            {debugInfo.s3_error && (
+              <div><strong>S3 Error:</strong> <span className="text-red-600">{debugInfo.s3_error}</span></div>
+            )}
+            {debugInfo.s3_file_size && (
+              <div><strong>File Size:</strong> {(debugInfo.s3_file_size / 1024 / 1024).toFixed(2)} MB</div>
+            )}
+            {debugInfo.s3_content_type && (
+              <div><strong>S3 Content Type:</strong> {debugInfo.s3_content_type}</div>
+            )}
+            {debugInfo.s3_last_modified && (
+              <div><strong>Last Modified:</strong> {new Date(debugInfo.s3_last_modified).toLocaleString()}</div>
+            )}
+          </div>
+          <details className="mt-4">
+            <summary className="cursor-pointer font-medium text-gray-700">Raw Data</summary>
+            <pre className="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto">
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+          </details>
         </div>
       )}
 
