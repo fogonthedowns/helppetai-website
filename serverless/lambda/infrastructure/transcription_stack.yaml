@@ -1,60 +1,29 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Audio transcription service with S3 trigger and webhook notification'
+Description: 'HelpPet AI - Audio transcription service with existing S3 bucket integration'
 
 Parameters:
-  AudioBucketName:
+  ExistingBucketName:
     Type: String
-    Description: Name for the S3 bucket that will store audio files
-    Default: my-audio-transcription-bucket
+    Description: Name of the existing S3 bucket for audio files
+    Default: helppetai-visit-recordings
     
   WebhookEndpointUrl:
     Type: String
     Description: URL endpoint to POST transcription results
-    Default: https://your-api.com/webhook/transcription
+    Default: https://api.helppet.ai/api/v1/webhook/transcription/complete/by-s3-key
     
-  WebhookAuthHeader:
+  WebhookSecretToken:
     Type: String
-    Description: Optional authentication header name (e.g., Authorization, X-API-Key)
-    Default: ""
-    
-  WebhookAuthValue:
-    Type: String
-    Description: Optional authentication header value
-    Default: ""
+    Description: Secret token for webhook authentication
+    Default: HelpPetWebhook2024!
     NoEcho: true
 
 Resources:
-  # S3 Bucket for audio files
-  AudioBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Ref AudioBucketName
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt AudioProcessorFunction.Arn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: suffix
-                    Value: .m4a
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt AudioProcessorFunction.Arn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: suffix
-                    Value: .mp3
-      PublicReadPolicy: false
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-
   # IAM Role for Audio Processor Lambda
   AudioProcessorRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: helppet-audio-processor-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -74,12 +43,12 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                 Resource:
-                  - !Sub '${AudioBucket}/*'
+                  - !Sub 'arn:aws:s3:::${ExistingBucketName}/*'
               - Effect: Allow
                 Action:
                   - s3:ListBucket
                 Resource:
-                  - !Ref AudioBucket
+                  - !Sub 'arn:aws:s3:::${ExistingBucketName}'
         - PolicyName: TranscribeAccessPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -96,6 +65,7 @@ Resources:
   TranscriptionCompleteRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: helppet-transcription-complete-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -122,279 +92,66 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
+                Resource: 
+                  - 'arn:aws:s3:::aws-transcribe-*/*'
+                  - !Sub 'arn:aws:s3:::${ExistingBucketName}/*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: 
+                  - 'arn:aws:s3:::aws-transcribe-*'
+                  - !Sub 'arn:aws:s3:::${ExistingBucketName}'
+        - PolicyName: STSAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
                 Resource: '*'
 
   # Lambda function for processing audio files
   AudioProcessorFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: audio-transcription-processor
+      FunctionName: helppet-audio-transcription-processor
       Runtime: python3.9
-      Handler: index.lambda_handler
+      Handler: audio_processor.lambda_handler
       Role: !GetAtt AudioProcessorRole.Arn
       Timeout: 300
+      MemorySize: 256
       Environment:
         Variables:
-          TRANSCRIPTION_OUTPUT_BUCKET: !Ref AudioBucket
+          TRANSCRIPTION_OUTPUT_BUCKET: !Ref ExistingBucketName
       Code:
         ZipFile: |
-          # Paste the first Lambda function code here
           import json
-          import boto3
-          import urllib.parse
-          import os
-          import uuid
-          from datetime import datetime
-
-          s3_client = boto3.client('s3')
-          transcribe_client = boto3.client('transcribe')
-
           def lambda_handler(event, context):
-              try:
-                  for record in event['Records']:
-                      bucket = record['s3']['bucket']['name']
-                      key = urllib.parse.unquote_plus(record['s3']['object']['key'], encoding='utf-8')
-                      
-                      print(f"Processing file: {key} from bucket: {bucket}")
-                      
-                      if not is_supported_audio_format(key):
-                          print(f"Unsupported file format: {key}")
-                          continue
-                      
-                      job_name = create_transcription_job(bucket, key)
-                      
-                      if job_name:
-                          print(f"Started transcription job: {job_name}")
-                      else:
-                          print(f"Failed to start transcription for: {key}")
-                  
-                  return {
-                      'statusCode': 200,
-                      'body': json.dumps('Processing completed successfully')
-                  }
-                  
-              except Exception as e:
-                  print(f"Error processing event: {str(e)}")
-                  return {
-                      'statusCode': 500,
-                      'body': json.dumps(f'Error: {str(e)}')
-                  }
-
-          def is_supported_audio_format(file_key):
-              supported_formats = ['.m4a', '.mp3', '.wav', '.flac']
-              return any(file_key.lower().endswith(fmt) for fmt in supported_formats)
-
-          def create_transcription_job(bucket, key):
-              try:
-                  timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                  file_name = key.split('/')[-1].split('.')[0]
-                  job_name = f"transcribe_{file_name}_{timestamp}_{str(uuid.uuid4())[:8]}"
-                  
-                  media_uri = f"s3://{bucket}/{key}"
-                  
-                  if key.lower().endswith('.m4a'):
-                      media_format = 'm4a'
-                  elif key.lower().endswith('.mp3'):
-                      media_format = 'mp3'
-                  elif key.lower().endswith('.wav'):
-                      media_format = 'wav'
-                  elif key.lower().endswith('.flac'):
-                      media_format = 'flac'
-                  else:
-                      media_format = 'mp3'
-                  
-                  output_bucket = os.environ.get('TRANSCRIPTION_OUTPUT_BUCKET', bucket)
-                  output_key = f"transcriptions/{file_name}_{timestamp}.json"
-                  
-                  response = transcribe_client.start_transcription_job(
-                      TranscriptionJobName=job_name,
-                      Media={'MediaFileUri': media_uri},
-                      MediaFormat=media_format,
-                      LanguageCode='en-US',
-                      OutputBucketName=output_bucket,
-                      OutputKey=output_key,
-                      Settings={
-                          'ShowSpeakerLabels': True,
-                          'MaxSpeakerLabels': 10,
-                          'ShowAlternatives': True,
-                          'MaxAlternatives': 3
-                      },
-                      Tags=[
-                          {
-                              'Key': 'OriginalFileKey',
-                              'Value': key
-                          },
-                          {
-                              'Key': 'OriginalBucket',
-                              'Value': bucket
-                          }
-                      ]
-                  )
-                  
-                  return job_name
-                  
-              except Exception as e:
-                  print(f"Error creating transcription job: {str(e)}")
-                  return None
+              return {'statusCode': 200, 'body': json.dumps('Placeholder - deploy with actual code')}
 
   # Lambda function for handling transcription completion
   TranscriptionCompleteFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: transcription-complete-handler
+      FunctionName: helppet-transcription-complete-handler
       Runtime: python3.9
-      Handler: index.lambda_handler
+      Handler: transcription_complete_handler.lambda_handler
       Role: !GetAtt TranscriptionCompleteRole.Arn
       Timeout: 300
+      MemorySize: 256
       Environment:
         Variables:
           WEBHOOK_ENDPOINT_URL: !Ref WebhookEndpointUrl
-          WEBHOOK_AUTH_HEADER: !Ref WebhookAuthHeader
-          WEBHOOK_AUTH_VALUE: !Ref WebhookAuthValue
+          WEBHOOK_SECRET_TOKEN: !Ref WebhookSecretToken
       Layers:
-        - arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p39-requests:5  # requests layer
+        - arn:aws:lambda:us-west-1:770693421928:layer:Klayers-p39-requests:19  # requests layer for us-west-1
       Code:
         ZipFile: |
-          # Paste the second Lambda function code here
           import json
-          import boto3
-          import requests
-          import os
-          from urllib.parse import urlparse
-
-          transcribe_client = boto3.client('transcribe')
-          s3_client = boto3.client('s3')
-
           def lambda_handler(event, context):
-              try:
-                  detail = event.get('detail', {})
-                  job_name = detail.get('TranscriptionJobName')
-                  job_status = detail.get('TranscriptionJobStatus')
-                  
-                  print(f"Processing transcription job: {job_name}, Status: {job_status}")
-                  
-                  if job_status != 'COMPLETED':
-                      print(f"Job not completed successfully: {job_status}")
-                      return {
-                          'statusCode': 200,
-                          'body': json.dumps(f'Job status: {job_status}')
-                      }
-                  
-                  job_response = transcribe_client.get_transcription_job(
-                      TranscriptionJobName=job_name
-                  )
-                  
-                  job_info = job_response['TranscriptionJob']
-                  transcript_uri = job_info['Transcript']['TranscriptFileUri']
-                  
-                  original_file_key = None
-                  original_bucket = None
-                  
-                  tags_response = transcribe_client.list_tags_for_resource(
-                      ResourceArn=job_info['TranscriptionJobArn']
-                  )
-                  
-                  for tag in tags_response.get('Tags', []):
-                      if tag['Key'] == 'OriginalFileKey':
-                          original_file_key = tag['Value']
-                      elif tag['Key'] == 'OriginalBucket':
-                          original_bucket = tag['Value']
-                  
-                  transcript_content = download_transcript(transcript_uri)
-                  
-                  if transcript_content:
-                      webhook_success = post_to_webhook(
-                          original_file_key, 
-                          original_bucket,
-                          transcript_content,
-                          job_name
-                      )
-                      
-                      if webhook_success:
-                          print(f"Successfully posted results for job: {job_name}")
-                      else:
-                          print(f"Failed to post webhook for job: {job_name}")
-                  
-                  return {
-                      'statusCode': 200,
-                      'body': json.dumps('Transcription processing completed')
-                  }
-                  
-              except Exception as e:
-                  print(f"Error processing transcription completion: {str(e)}")
-                  return {
-                      'statusCode': 500,
-                      'body': json.dumps(f'Error: {str(e)}')
-                  }
+              return {'statusCode': 200, 'body': json.dumps('Placeholder - deploy with actual code')}
 
-          def download_transcript(transcript_uri):
-              try:
-                  parsed_uri = urlparse(transcript_uri)
-                  bucket = parsed_uri.netloc
-                  key = parsed_uri.path.lstrip('/')
-                  
-                  response = s3_client.get_object(Bucket=bucket, Key=key)
-                  transcript_json = json.loads(response['Body'].read().decode('utf-8'))
-                  
-                  return transcript_json
-                  
-              except Exception as e:
-                  print(f"Error downloading transcript: {str(e)}")
-                  return None
-
-          def post_to_webhook(original_file_key, original_bucket, transcript_content, job_name):
-              try:
-                  webhook_url = os.environ.get('WEBHOOK_ENDPOINT_URL')
-                  
-                  if not webhook_url:
-                      print("No webhook URL configured")
-                      return False
-                  
-                  transcript_text = ""
-                  if 'results' in transcript_content and 'transcripts' in transcript_content['results']:
-                      transcripts = transcript_content['results']['transcripts']
-                      if transcripts:
-                          transcript_text = transcripts[0].get('transcript', '')
-                  
-                  payload = {
-                      'originalFileKey': original_file_key,
-                      'originalBucket': original_bucket,
-                      'jobName': job_name,
-                      'transcriptText': transcript_text,
-                      'fullTranscriptData': transcript_content,
-                      'timestamp': transcript_content.get('jobName', ''),
-                      'status': 'completed'
-                  }
-                  
-                  headers = {
-                      'Content-Type': 'application/json'
-                  }
-                  
-                  webhook_auth_header = os.environ.get('WEBHOOK_AUTH_HEADER')
-                  webhook_auth_value = os.environ.get('WEBHOOK_AUTH_VALUE')
-                  
-                  if webhook_auth_header and webhook_auth_value:
-                      headers[webhook_auth_header] = webhook_auth_value
-                  
-                  response = requests.post(
-                      webhook_url,
-                      json=payload,
-                      headers=headers,
-                      timeout=30
-                  )
-                  
-                  if response.status_code == 200:
-                      print(f"Webhook POST successful: {response.status_code}")
-                      return True
-                  else:
-                      print(f"Webhook POST failed: {response.status_code}, {response.text}")
-                      return False
-                      
-              except Exception as e:
-                  print(f"Error posting to webhook: {str(e)}")
-                  return False
-
-  # Permission for S3 to invoke Lambda
+  # Permission for existing S3 bucket to invoke Lambda
   S3InvokeLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -402,13 +159,165 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
       SourceAccount: !Ref 'AWS::AccountId'
-      SourceArn: !Sub '${AudioBucket}/*'
+      SourceArn: !Sub 'arn:aws:s3:::${ExistingBucketName}'
+
+  # Custom resource to add notification configuration to existing S3 bucket
+  S3NotificationConfiguration:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt S3NotificationLambda.Arn
+      BucketName: !Ref ExistingBucketName
+      LambdaFunctionArn: !GetAtt AudioProcessorFunction.Arn
+      
+  # Lambda function to configure S3 notification on existing bucket
+  S3NotificationLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3NotificationPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketNotification
+                  - s3:PutBucketNotification
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${ExistingBucketName}'
+
+  S3NotificationLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: helppet-s3-notification-configurator
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt S3NotificationLambdaRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          import logging
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          s3 = boto3.client('s3')
+          
+          def lambda_handler(event, context):
+              logger.info(f"Event: {json.dumps(event)}")
+              
+              try:
+                  bucket_name = event['ResourceProperties']['BucketName']
+                  lambda_arn = event['ResourceProperties']['LambdaFunctionArn']
+                  
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      # Get existing notification configuration
+                      try:
+                          response = s3.get_bucket_notification_configuration(Bucket=bucket_name)
+                          existing_config = response
+                      except s3.exceptions.NoSuchBucket:
+                          logger.error(f"Bucket {bucket_name} not found")
+                          cfnresponse.send(event, context, cfnresponse.FAILED, {}, "Bucket not found")
+                          return
+                      except Exception as e:
+                          if 'NoSuchConfiguration' in str(e):
+                              existing_config = {}
+                          else:
+                              raise
+                      
+                      # Add Lambda configuration
+                      lambda_configs = existing_config.get('LambdaFunctionConfigurations', [])
+                      
+                      # Remove any existing configuration for our Lambda to avoid duplicates
+                      lambda_configs = [config for config in lambda_configs if config.get('LambdaFunctionArn') != lambda_arn]
+                      
+                      # Add our Lambda configuration
+                      lambda_configs.append({
+                          'Id': 'helppet-audio-transcription-trigger',
+                          'LambdaFunctionArn': lambda_arn,
+                          'Events': ['s3:ObjectCreated:*'],
+                          'Filter': {
+                              'Key': {
+                                  'FilterRules': [
+                                      {
+                                          'Name': 'prefix',
+                                          'Value': 'visit-recordings/'
+                                      }
+                                  ]
+                              }
+                          }
+                      })
+                      
+                      # Update notification configuration
+                      notification_config = {
+                          'LambdaFunctionConfigurations': lambda_configs
+                      }
+                      
+                      # Preserve existing configurations
+                      if 'TopicConfigurations' in existing_config:
+                          notification_config['TopicConfigurations'] = existing_config['TopicConfigurations']
+                      if 'QueueConfigurations' in existing_config:
+                          notification_config['QueueConfigurations'] = existing_config['QueueConfigurations']
+                      
+                      s3.put_bucket_notification_configuration(
+                          Bucket=bucket_name,
+                          NotificationConfiguration=notification_config
+                      )
+                      
+                      logger.info(f"Successfully configured S3 notification for bucket {bucket_name}")
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, "Configuration updated")
+                      
+                  elif event['RequestType'] == 'Delete':
+                      # Remove our Lambda configuration on stack deletion
+                      try:
+                          response = s3.get_bucket_notification_configuration(Bucket=bucket_name)
+                          existing_config = response
+                          
+                          # Remove our Lambda configuration
+                          lambda_configs = existing_config.get('LambdaFunctionConfigurations', [])
+                          lambda_configs = [config for config in lambda_configs if config.get('LambdaFunctionArn') != lambda_arn]
+                          
+                          notification_config = {}
+                          if lambda_configs:
+                              notification_config['LambdaFunctionConfigurations'] = lambda_configs
+                          if 'TopicConfigurations' in existing_config:
+                              notification_config['TopicConfigurations'] = existing_config['TopicConfigurations']
+                          if 'QueueConfigurations' in existing_config:
+                              notification_config['QueueConfigurations'] = existing_config['QueueConfigurations']
+                          
+                          s3.put_bucket_notification_configuration(
+                              Bucket=bucket_name,
+                              NotificationConfiguration=notification_config
+                          )
+                          
+                          logger.info(f"Successfully removed S3 notification for bucket {bucket_name}")
+                      except Exception as e:
+                          logger.error(f"Error removing notification: {e}")
+                          # Don't fail deletion if we can't clean up
+                      
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, "Configuration removed")
+                      
+              except Exception as e:
+                  logger.error(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, str(e))
 
   # EventBridge Rule for Transcribe job completion
   TranscribeJobCompleteRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: 'Capture AWS Transcribe job completion events'
+      Name: helppet-transcribe-job-complete-rule
+      Description: 'Capture AWS Transcribe job completion events for HelpPet'
       EventPattern:
         source:
           - aws.transcribe
@@ -418,10 +327,13 @@ Resources:
           TranscriptionJobStatus:
             - COMPLETED
             - FAILED
+          # Optional: filter by job name pattern if needed
+          # TranscriptionJobName:
+          #   - prefix: "helppet-transcribe-"
       State: ENABLED
       Targets:
         - Arn: !GetAtt TranscriptionCompleteFunction.Arn
-          Id: TranscriptionCompleteTarget
+          Id: HelpPetTranscriptionCompleteTarget
 
   # Permission for EventBridge to invoke Lambda
   EventBridgeInvokeLambdaPermission:
@@ -433,14 +345,26 @@ Resources:
       SourceArn: !GetAtt TranscribeJobCompleteRule.Arn
 
 Outputs:
-  AudioBucketName:
-    Description: Name of the S3 bucket for audio files
-    Value: !Ref AudioBucket
-    
   AudioProcessorFunctionArn:
     Description: ARN of the audio processor Lambda function
     Value: !GetAtt AudioProcessorFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-AudioProcessorArn"
     
   TranscriptionCompleteFunctionArn:
     Description: ARN of the transcription complete handler Lambda function
     Value: !GetAtt TranscriptionCompleteFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-TranscriptionCompleteArn"
+  
+  EventBridgeRuleArn:
+    Description: ARN of the EventBridge rule for transcription completion
+    Value: !GetAtt TranscribeJobCompleteRule.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EventBridgeRuleArn"
+      
+  WebhookEndpoint:
+    Description: Webhook endpoint URL for transcription results
+    Value: !Ref WebhookEndpointUrl
+    Export:
+      Name: !Sub "${AWS::StackName}-WebhookEndpoint"

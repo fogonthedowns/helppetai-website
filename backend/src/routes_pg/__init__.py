@@ -16,6 +16,7 @@ from .visit_transcripts import router as visit_transcripts_router
 from .appointments import router as appointments_router
 from .dashboard import router as dashboard_router
 from .upload import router as upload_router
+from .webhook import router as webhook_router
 
 
 # Create main router
@@ -39,5 +40,6 @@ router.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["vet-d
 
 router.include_router(upload_router, prefix="/api/v1/upload", tags=["file-upload"])
 router.include_router(rag_router, prefix="/api/v1/rag", tags=["rag-search"])
+router.include_router(webhook_router, prefix="/api/v1/webhook", tags=["webhook"])
 
 __all__ = ["router"]
