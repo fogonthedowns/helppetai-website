@@ -9,7 +9,7 @@ node_modules/
 .venv
 .env
 
-
+frontend/build
 
 # testing
 /coverage
