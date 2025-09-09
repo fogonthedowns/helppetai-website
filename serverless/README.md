@@ -59,7 +59,7 @@ aws cloudformation deploy \
   --parameter-overrides \
     ExistingBucketName=helppetai-visit-recordings \
     WebhookEndpointUrl=https://api.helppet.ai/api/v1/webhook/transcription/complete/by-s3-key \
-    WebhookSecretToken=HelpPetWebhook2024! \
+    WebhookSecretToken=HelpPetWebhook2024 \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
@@ -77,7 +77,7 @@ aws cloudformation deploy \
 ### Webhook Authentication
 
 The webhook uses a simple secret token in the `X-Webhook-Token` header:
-- **Default Token**: `HelpPetWebhook2024!`
+- **Default Token**: `HelpPetWebhook2024`
 - **Backend Configuration**: Set `webhook_secret_token` in backend settings
 
 ## Data Flow

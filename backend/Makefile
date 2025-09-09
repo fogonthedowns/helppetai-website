@@ -232,6 +232,8 @@ CONTAINER_PORT = 8000
 RDS_HOSTNAME := $(shell aws cloudformation describe-stacks --stack-name $(STACK_NAME) --region $(REGION) --query "Stacks[0].Outputs[?OutputKey=='DatabaseEndpoint'].OutputValue" --output text)
 RDS_PORT := $(shell aws cloudformation describe-stacks --stack-name $(STACK_NAME) --region $(REGION) --query "Stacks[0].Outputs[?OutputKey=='DatabasePort'].OutputValue" --output text)
 EXEC_ROLE_ARN := $(shell aws cloudformation describe-stacks --stack-name $(STACK_NAME) --region $(REGION) --query "Stacks[0].Outputs[?OutputKey=='TaskExecutionRoleArn'].OutputValue" --output text)
+TASK_ROLE_ARN := arn:aws:iam::724843234496:role/helppet-api-prod-TaskRole-09am3AGqERAX
+SECRETS_ARN := $(shell aws secretsmanager describe-secret --secret-id helppet-prod/database-password --region $(REGION) --query 'ARN' --output text)
 
 # JWT secret - should be set as environment variable or retrieved from AWS Secrets Manager
 JWT_SECRET ?= $(shell echo "$$JWT_SECRET_KEY")
@@ -260,8 +262,9 @@ update-service: build-prod push-image
 	    --network-mode awsvpc \
 	    --requires-compatibilities FARGATE \
 	    --execution-role-arn "$(EXEC_ROLE_ARN)" \
+	    --task-role-arn "$(TASK_ROLE_ARN)" \
 	    --cpu $(TASK_CPU) --memory $(TASK_MEMORY) \
-	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_PASSWORD","value":"$(JWT_SECRET)DB"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"JWT_SECRET_KEY","value":"$(JWT_SECRET)"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"},{"name":"AWS_ACCESS_KEY_ID","value":"$(AWS_ACCESS_KEY_ID)"},{"name":"AWS_SECRET_ACCESS_KEY","value":"$(AWS_SECRET_ACCESS_KEY)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
+	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"}],"secrets":[{"name":"RDS_PASSWORD","valueFrom":"$(SECRETS_ARN)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
 	    --query 'taskDefinition.taskDefinitionArn' \
 	    --output text))
 	@echo "✅ New task-definition: $(TASK_DEF_ARN)"

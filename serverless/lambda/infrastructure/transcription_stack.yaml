@@ -15,7 +15,7 @@ Parameters:
   WebhookSecretToken:
     Type: String
     Description: Secret token for webhook authentication
-    Default: HelpPetWebhook2024!
+    Default: HelpPetWebhook2024
     NoEcho: true
     
   AnthropicApiKey:

@@ -326,24 +326,26 @@ def flatten_soap_data(extracted_data: dict) -> dict:
     return flattened
 
 
-def call_webhook_endpoint(visit_uuid: str, metadata: dict) -> dict:
-    """Call the webhook endpoint to update visit metadata"""
+def call_webhook_endpoint(s3_key: str, metadata: dict) -> dict:
+    """Call the webhook endpoint to update visit metadata using S3 key"""
     api_base_url = os.getenv('API_BASE_URL', 'https://api.helppet.ai')
     webhook_token = os.getenv('API_TOKEN')
     
     if not webhook_token:
         raise ValueError("API_TOKEN environment variable not set")
     
-    url = f"{api_base_url}/api/v1/webhook/visit-metadata/{visit_uuid}"
+    # Use simple URL path and pass S3 key in header to avoid URL encoding issues
+    url = f"{api_base_url}/api/v1/webhook/visit-metadata/s3-lookup"
     
     headers = {
         'X-Webhook-Token': webhook_token,
+        'X-S3-Key': s3_key,  # Pass S3 key in header instead of URL
         'Content-Type': 'application/json'
     }
     
     # Webhook payload format
     payload = {
-        "visit_id": visit_uuid,
+        "visit_id": "s3-lookup",  # Simple placeholder since we're using header
         "metadata": metadata,
         "extraction_info": {
             "source": "lambda_soap_extractor",
@@ -352,6 +354,7 @@ def call_webhook_endpoint(visit_uuid: str, metadata: dict) -> dict:
     }
     
     logger.info(f"Calling webhook: PUT {url}")
+    logger.info(f"Using S3 key from header: {s3_key}")
     logger.info(f"Updating metadata with {len(metadata)} key/value pairs")
     
     response = requests.put(url, json=payload, headers=headers)

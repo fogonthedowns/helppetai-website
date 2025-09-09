@@ -31,7 +31,7 @@ STACK_NAME="helppet-transcription-service"
 REGION="us-west-1"
 S3_BUCKET="helppetai-visit-recordings"
 WEBHOOK_URL="https://api.helppet.ai/api/v1/webhook/transcription/complete/by-s3-key"
-WEBHOOK_SECRET="HelpPetWebhook2024!"
+WEBHOOK_SECRET="HelpPetWebhook2024"
 
 # Check for required environment variables
 if [ -z "$ANTHROPIC_API_KEY" ]; then

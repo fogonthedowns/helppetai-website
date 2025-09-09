@@ -34,7 +34,12 @@ class TranscriptionWebhookPayload(BaseModel):
 
 def verify_webhook_token(x_webhook_token: Optional[str] = Header(None)):
     """Verify webhook authentication token"""
-    expected_token = getattr(settings, 'webhook_secret_token', None) or "HelpPetWebhook2024!"
+    expected_token = getattr(settings, 'webhook_secret_token', None) or "HelpPetWebhook2024"
+    
+    # Debug logging
+    logger.info(f"Webhook auth debug - Expected: '{expected_token}' (len={len(expected_token)})")
+    logger.info(f"Webhook auth debug - Received: '{x_webhook_token}' (len={len(x_webhook_token) if x_webhook_token else 0})")
+    logger.info(f"Webhook auth debug - Equal: {x_webhook_token == expected_token}")
     
     if not x_webhook_token:
         logger.warning("Webhook request missing X-Webhook-Token header")
@@ -44,7 +49,7 @@ def verify_webhook_token(x_webhook_token: Optional[str] = Header(None)):
         )
     
     if x_webhook_token != expected_token:
-        logger.warning(f"Invalid webhook token provided: {x_webhook_token[:10]}...")
+        logger.warning(f"Invalid webhook token provided: '{x_webhook_token}' vs expected '{expected_token}'")
         raise HTTPException(
             status_code=401,
             detail="Invalid webhook authentication token"
@@ -331,6 +336,7 @@ async def update_visit_metadata(
     payload: SOAPMetadataUpdatePayload,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
+    x_s3_key: Optional[str] = Header(None),
     _: bool = Depends(verify_webhook_token)
 ):
     """
@@ -346,26 +352,17 @@ async def update_visit_metadata(
     try:
         logger.info(f"Received authenticated metadata update webhook for visit: {visit_id}")
         
-        # Try to parse as UUID first, if that fails, treat as S3 key
         visit = None
-        try:
-            visit_uuid = UUID(visit_id)
-            # Find the visit record by UUID
-            result = await db.execute(
-                select(Visit).where(Visit.id == visit_uuid)
-            )
-            visit = result.scalar_one_or_none()
-            logger.info(f"Looked up visit by UUID: {visit_id}")
-        except ValueError:
-            # Not a UUID, treat as S3 key and look up by audio_transcript_url
-            logger.info(f"Visit ID not a UUID, treating as S3 key: {visit_id}")
+        visit_uuid = None
+        
+        # Prioritize X-S3-Key header if provided
+        if x_s3_key:
+            logger.info(f"Using S3 key from header: {x_s3_key}")
             
-            # Try different S3 URL formats
-            s3_key = visit_id
-            bucket_name = "helppetai-visit-recordings"  # From your CloudFormation template
+            bucket_name = "helppetai-visit-recordings"
             
             # Format 1: https://bucket.s3.region.amazonaws.com/key
-            https_url = f"https://{bucket_name}.s3.us-west-1.amazonaws.com/{s3_key}"
+            https_url = f"https://{bucket_name}.s3.us-west-1.amazonaws.com/{x_s3_key}"
             result = await db.execute(
                 select(Visit).where(Visit.audio_transcript_url == https_url)
             )
@@ -373,7 +370,7 @@ async def update_visit_metadata(
             
             if not visit:
                 # Format 2: s3://bucket/key
-                s3_url = f"s3://{bucket_name}/{s3_key}"
+                s3_url = f"s3://{bucket_name}/{x_s3_key}"
                 result = await db.execute(
                     select(Visit).where(Visit.audio_transcript_url == s3_url)
                 )
@@ -381,11 +378,62 @@ async def update_visit_metadata(
             
             if not visit:
                 # Format 3: https://bucket.s3.amazonaws.com/key (without region)
-                simple_https_url = f"https://{bucket_name}.s3.amazonaws.com/{s3_key}"
+                simple_https_url = f"https://{bucket_name}.s3.amazonaws.com/{x_s3_key}"
                 result = await db.execute(
                     select(Visit).where(Visit.audio_transcript_url == simple_https_url)
                 )
                 visit = result.scalar_one_or_none()
+                
+            if visit:
+                visit_uuid = visit.id
+                logger.info(f"Found visit by S3 key: {visit.id}")
+        
+        # Fallback to UUID lookup if no S3 key header or S3 lookup failed
+        if not visit:
+            try:
+                visit_uuid = UUID(visit_id)
+                # Find the visit record by UUID
+                result = await db.execute(
+                    select(Visit).where(Visit.id == visit_uuid)
+                )
+                visit = result.scalar_one_or_none()
+                logger.info(f"Looked up visit by UUID: {visit_id}")
+            except ValueError:
+                # Not a UUID, treat as S3 key and look up by audio_transcript_url
+                logger.info(f"Visit ID not a UUID, treating as S3 key: {visit_id}")
+                
+                # URL decode the S3 key in case it was encoded
+                import urllib.parse
+                s3_key = urllib.parse.unquote(visit_id)
+                logger.info(f"Decoded S3 key: {s3_key}")
+                
+                bucket_name = "helppetai-visit-recordings"  # From your CloudFormation template
+                
+                # Format 1: https://bucket.s3.region.amazonaws.com/key
+                https_url = f"https://{bucket_name}.s3.us-west-1.amazonaws.com/{s3_key}"
+                result = await db.execute(
+                    select(Visit).where(Visit.audio_transcript_url == https_url)
+                )
+                visit = result.scalar_one_or_none()
+                
+                if not visit:
+                    # Format 2: s3://bucket/key
+                    s3_url = f"s3://{bucket_name}/{s3_key}"
+                    result = await db.execute(
+                        select(Visit).where(Visit.audio_transcript_url == s3_url)
+                    )
+                    visit = result.scalar_one_or_none()
+                
+                if not visit:
+                    # Format 3: https://bucket.s3.amazonaws.com/key (without region)
+                    simple_https_url = f"https://{bucket_name}.s3.amazonaws.com/{s3_key}"
+                    result = await db.execute(
+                        select(Visit).where(Visit.audio_transcript_url == simple_https_url)
+                    )
+                    visit = result.scalar_one_or_none()
+                    
+                if visit:
+                    visit_uuid = visit.id
         
         if not visit:
             logger.error(f"Visit not found for ID/S3 key: {visit_id}")
