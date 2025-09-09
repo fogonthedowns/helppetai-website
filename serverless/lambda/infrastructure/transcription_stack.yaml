@@ -17,6 +17,16 @@ Parameters:
     Description: Secret token for webhook authentication
     Default: HelpPetWebhook2024!
     NoEcho: true
+    
+  AnthropicApiKey:
+    Type: String
+    Description: Anthropic API key for SOAP extraction
+    NoEcho: true
+    
+  ApiToken:
+    Type: String
+    Description: API token for calling HelpPet API
+    NoEcho: true
 
 Resources:
   # IAM Role for Audio Processor Lambda
@@ -110,6 +120,53 @@ Resources:
                   - sts:GetCallerIdentity
                 Resource: '*'
 
+  # IAM Role for Transcript Processor Lambda
+  TranscriptProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: helppet-transcript-processor-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub 'arn:aws:s3:::${ExistingBucketName}/transcripts/*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${ExistingBucketName}'
+        - PolicyName: TranscribeAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - transcribe:GetTranscriptionJob
+                  - transcribe:ListTagsForResource
+                Resource: '*'
+        - PolicyName: STSAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                Resource: '*'
+
   # Lambda function for processing audio files
   AudioProcessorFunction:
     Type: AWS::Lambda::Function
@@ -151,11 +208,42 @@ Resources:
           def lambda_handler(event, context):
               return {'statusCode': 200, 'body': json.dumps('Placeholder - deploy with actual code')}
 
+  # Lambda function for processing transcript files and extracting SOAP data
+  TranscriptProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: helppet-transcript-processor
+      Runtime: python3.9
+      Handler: transcript_processor.lambda_handler
+      Role: !GetAtt TranscriptProcessorRole.Arn
+      Timeout: 600  # 10 minutes for Anthropic API calls
+      MemorySize: 512
+      Environment:
+        Variables:
+          ANTHROPIC_API_KEY: !Ref AnthropicApiKey
+          API_TOKEN: !Ref ApiToken
+          API_BASE_URL: https://api.helppet.ai
+      Code:
+        ZipFile: |
+          import json
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': json.dumps('Placeholder - deploy with actual code')}
+
   # Permission for existing S3 bucket to invoke Lambda
   S3InvokeLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref AudioProcessorFunction
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub 'arn:aws:s3:::${ExistingBucketName}'
+
+  # Permission for S3 bucket to invoke Transcript Processor Lambda
+  S3InvokeTranscriptProcessorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TranscriptProcessorFunction
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
       SourceAccount: !Ref 'AWS::AccountId'
@@ -167,7 +255,8 @@ Resources:
     Properties:
       ServiceToken: !GetAtt S3NotificationLambda.Arn
       BucketName: !Ref ExistingBucketName
-      LambdaFunctionArn: !GetAtt AudioProcessorFunction.Arn
+      AudioProcessorLambdaArn: !GetAtt AudioProcessorFunction.Arn
+      TranscriptProcessorLambdaArn: !GetAtt TranscriptProcessorFunction.Arn
       
   # Lambda function to configure S3 notification on existing bucket
   S3NotificationLambdaRole:
@@ -219,7 +308,8 @@ Resources:
               
               try:
                   bucket_name = event['ResourceProperties']['BucketName']
-                  lambda_arn = event['ResourceProperties']['LambdaFunctionArn']
+                  audio_processor_arn = event['ResourceProperties']['AudioProcessorLambdaArn']
+                  transcript_processor_arn = event['ResourceProperties']['TranscriptProcessorLambdaArn']
                   
                   if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
                       # Get existing notification configuration
@@ -239,13 +329,13 @@ Resources:
                       # Add Lambda configuration
                       lambda_configs = existing_config.get('LambdaFunctionConfigurations', [])
                       
-                      # Remove any existing configuration for our Lambda to avoid duplicates
-                      lambda_configs = [config for config in lambda_configs if config.get('LambdaFunctionArn') != lambda_arn]
+                      # Remove any existing configuration for our Lambdas to avoid duplicates
+                      lambda_configs = [config for config in lambda_configs if config.get('LambdaFunctionArn') not in [audio_processor_arn, transcript_processor_arn]]
                       
-                      # Add our Lambda configuration
+                      # Add audio processor Lambda configuration
                       lambda_configs.append({
                           'Id': 'helppet-audio-transcription-trigger',
-                          'LambdaFunctionArn': lambda_arn,
+                          'LambdaFunctionArn': audio_processor_arn,
                           'Events': ['s3:ObjectCreated:*'],
                           'Filter': {
                               'Key': {
@@ -253,6 +343,27 @@ Resources:
                                       {
                                           'Name': 'prefix',
                                           'Value': 'visit-recordings/'
+                                      }
+                                  ]
+                              }
+                          }
+                      })
+                      
+                      # Add transcript processor Lambda configuration
+                      lambda_configs.append({
+                          'Id': 'helppet-transcript-processor-trigger',
+                          'LambdaFunctionArn': transcript_processor_arn,
+                          'Events': ['s3:ObjectCreated:*'],
+                          'Filter': {
+                              'Key': {
+                                  'FilterRules': [
+                                      {
+                                          'Name': 'prefix',
+                                          'Value': 'transcripts/'
+                                      },
+                                      {
+                                          'Name': 'suffix',
+                                          'Value': '.json'
                                       }
                                   ]
                               }
@@ -284,9 +395,9 @@ Resources:
                           response = s3.get_bucket_notification_configuration(Bucket=bucket_name)
                           existing_config = response
                           
-                          # Remove our Lambda configuration
+                          # Remove our Lambda configurations
                           lambda_configs = existing_config.get('LambdaFunctionConfigurations', [])
-                          lambda_configs = [config for config in lambda_configs if config.get('LambdaFunctionArn') != lambda_arn]
+                          lambda_configs = [config for config in lambda_configs if config.get('LambdaFunctionArn') not in [audio_processor_arn, transcript_processor_arn]]
                           
                           notification_config = {}
                           if lambda_configs:
@@ -356,6 +467,12 @@ Outputs:
     Value: !GetAtt TranscriptionCompleteFunction.Arn
     Export:
       Name: !Sub "${AWS::StackName}-TranscriptionCompleteArn"
+      
+  TranscriptProcessorFunctionArn:
+    Description: ARN of the transcript processor Lambda function
+    Value: !GetAtt TranscriptProcessorFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-TranscriptProcessorArn"
   
   EventBridgeRuleArn:
     Description: ARN of the EventBridge rule for transcription completion

@@ -14,6 +14,7 @@ from sqlalchemy import select, update
 from ..database_pg import get_db_session
 from ..models_pg.visit import Visit, VisitState
 from ..config import settings
+from ..utils.error_handling import log_endpoint_errors
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ def verify_webhook_token(x_webhook_token: Optional[str] = Header(None)):
 
 
 @router.post("/transcription/complete")
+@log_endpoint_errors("webhook_transcription_complete")
 async def handle_transcription_complete(
     payload: TranscriptionWebhookPayload,
     request: Request,
@@ -200,6 +202,7 @@ def extract_visit_id_from_s3_key(s3_key: str) -> Optional[UUID]:
 
 
 @router.post("/transcription/complete/by-s3-key")
+@log_endpoint_errors("webhook_transcription_complete_s3")
 async def handle_transcription_complete_by_s3_key(
     payload: TranscriptionWebhookPayload,
     request: Request,
@@ -307,6 +310,127 @@ async def handle_transcription_complete_by_s3_key(
         raise
     except Exception as e:
         logger.error(f"Error processing transcription webhook: {str(e)}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+class SOAPMetadataUpdatePayload(BaseModel):
+    """Payload structure for SOAP metadata updates from Lambda"""
+    visit_id: str = Field(..., description="Visit UUID to update")
+    metadata: Dict[str, Any] = Field(..., description="SOAP metadata to merge with existing metadata")
+    extraction_info: Optional[Dict[str, Any]] = Field(None, description="Information about the extraction process")
+
+
+@router.put("/visit-metadata/{visit_id}")
+@log_endpoint_errors("webhook_visit_metadata_update")
+async def update_visit_metadata(
+    visit_id: str,
+    payload: SOAPMetadataUpdatePayload,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    _: bool = Depends(verify_webhook_token)
+):
+    """
+    Webhook endpoint to update visit metadata (e.g., extracted SOAP data)
+    
+    Requires X-Webhook-Token header for authentication
+    
+    This endpoint:
+    1. Receives metadata updates from external services (e.g., Lambda SOAP extractor)
+    2. Finds the corresponding Visit record by UUID
+    3. Merges the new metadata with existing additional_data
+    """
+    try:
+        logger.info(f"Received authenticated metadata update webhook for visit: {visit_id}")
+        
+        # Try to parse as UUID first, if that fails, treat as S3 key
+        visit = None
+        try:
+            visit_uuid = UUID(visit_id)
+            # Find the visit record by UUID
+            result = await db.execute(
+                select(Visit).where(Visit.id == visit_uuid)
+            )
+            visit = result.scalar_one_or_none()
+            logger.info(f"Looked up visit by UUID: {visit_id}")
+        except ValueError:
+            # Not a UUID, treat as S3 key and look up by audio_transcript_url
+            logger.info(f"Visit ID not a UUID, treating as S3 key: {visit_id}")
+            
+            # Try different S3 URL formats
+            s3_key = visit_id
+            bucket_name = "helppetai-visit-recordings"  # From your CloudFormation template
+            
+            # Format 1: https://bucket.s3.region.amazonaws.com/key
+            https_url = f"https://{bucket_name}.s3.us-west-1.amazonaws.com/{s3_key}"
+            result = await db.execute(
+                select(Visit).where(Visit.audio_transcript_url == https_url)
+            )
+            visit = result.scalar_one_or_none()
+            
+            if not visit:
+                # Format 2: s3://bucket/key
+                s3_url = f"s3://{bucket_name}/{s3_key}"
+                result = await db.execute(
+                    select(Visit).where(Visit.audio_transcript_url == s3_url)
+                )
+                visit = result.scalar_one_or_none()
+            
+            if not visit:
+                # Format 3: https://bucket.s3.amazonaws.com/key (without region)
+                simple_https_url = f"https://{bucket_name}.s3.amazonaws.com/{s3_key}"
+                result = await db.execute(
+                    select(Visit).where(Visit.audio_transcript_url == simple_https_url)
+                )
+                visit = result.scalar_one_or_none()
+        
+        if not visit:
+            logger.error(f"Visit not found for ID/S3 key: {visit_id}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Visit not found for ID: {visit_id}"
+            )
+        
+        # Merge the new metadata with existing additional_data
+        existing_data = visit.additional_data or {}
+        updated_metadata = {**existing_data, **payload.metadata}
+        
+        # Add extraction information if provided
+        if payload.extraction_info:
+            updated_metadata["extraction_info"] = payload.extraction_info
+        
+        # Add timestamp for this metadata update
+        updated_metadata["metadata_last_updated"] = datetime.utcnow().isoformat()
+        
+        # Update the visit record
+        await db.execute(
+            update(Visit)
+            .where(Visit.id == visit_uuid)
+            .values(
+                additional_data=updated_metadata,
+                updated_at=datetime.utcnow()
+            )
+        )
+        
+        await db.commit()
+        
+        logger.info(f"Successfully updated visit {visit_id} metadata with {len(payload.metadata)} fields")
+        
+        return {
+            "status": "success",
+            "visit_id": str(visit_uuid),
+            "message": "Metadata updated successfully",
+            "updated_fields": list(payload.metadata.keys()),
+            "total_metadata_fields": len(updated_metadata)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing metadata update webhook: {str(e)}")
         await db.rollback()
         raise HTTPException(
             status_code=500,

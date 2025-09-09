@@ -23,22 +23,44 @@ async def health_check():
 
 @router.get("/health/db")
 async def database_health_check(session: AsyncSession = Depends(get_db_session)):
-    """Database connectivity health check"""
+    """Database connectivity health check with detailed connection info"""
     try:
-        # Test database connection
-        result = await session.execute(text("SELECT 1"))
-        result.scalar()
+        # Test database connection with multiple queries
+        result = await session.execute(text("SELECT 1 as test"))
+        test_value = result.scalar()
+        
+        # Get database version
+        version_result = await session.execute(text("SELECT version()"))
+        db_version = version_result.scalar()
+        
+        # Test a simple table count (this will fail if tables don't exist)
+        try:
+            tables_result = await session.execute(text("""
+                SELECT count(*) 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+            """))
+            table_count = tables_result.scalar()
+        except Exception:
+            table_count = "unknown"
         
         return {
             "status": "healthy",
             "database": "postgresql",
             "connection": "active",
+            "test_query": f"SELECT 1 returned {test_value}",
+            "version": db_version.split('\n')[0] if db_version else "unknown",
+            "public_tables": table_count,
             "message": "Database connection is working"
         }
     except Exception as e:
+        import traceback
         return {
             "status": "unhealthy",
             "database": "postgresql", 
             "connection": "failed",
-            "error": str(e)
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc(),
+            "message": "Database connection failed"
         }

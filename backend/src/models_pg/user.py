@@ -67,11 +67,6 @@ class User(Base):
         return self.role == UserRole.PET_OWNER
     
     @property
-    def is_vet_staff(self) -> bool:
-        """Check if user is vet staff (includes admin)"""
-        return self.role in [UserRole.VET_STAFF, UserRole.ADMIN]
-    
-    @property
     def is_admin(self) -> bool:
         """Check if user is an admin"""
         return self.role == UserRole.ADMIN

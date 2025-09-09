@@ -3,16 +3,6 @@
 # HelpPet AI - Serverless Transcription Service Deployment Script
 set -e
 
-# Configuration
-STACK_NAME="helppet-transcription-service"
-REGION="us-west-1"
-S3_BUCKET="helppetai-visit-recordings"
-WEBHOOK_URL="https://api.helppet.ai/api/v1/webhook/transcription/complete/by-s3-key"
-WEBHOOK_SECRET="HelpPetWebhook2024!"
-
-# Get the directory of this script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -35,6 +25,27 @@ print_warning() {
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
+
+# Configuration
+STACK_NAME="helppet-transcription-service"
+REGION="us-west-1"
+S3_BUCKET="helppetai-visit-recordings"
+WEBHOOK_URL="https://api.helppet.ai/api/v1/webhook/transcription/complete/by-s3-key"
+WEBHOOK_SECRET="HelpPetWebhook2024!"
+
+# Check for required environment variables
+if [ -z "$ANTHROPIC_API_KEY" ]; then
+    print_error "ANTHROPIC_API_KEY environment variable is required"
+    exit 1
+fi
+
+if [ -z "$API_TOKEN" ]; then
+    print_error "API_TOKEN environment variable is required"
+    exit 1
+fi
+
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Check if AWS CLI is configured
 print_step "Checking AWS CLI configuration..."
@@ -70,6 +81,32 @@ zip audio_processor.zip audio_processor.py
 cp "$SCRIPT_DIR/lambda/src/transcription_complete_handler.py" .
 zip transcription_complete.zip transcription_complete_handler.py
 
+# Package transcript processor with dependencies
+print_step "Installing transcript processor dependencies..."
+if command -v docker >/dev/null 2>&1; then
+    print_step "Using Docker for Linux-compatible dependency build..."
+    # Use official AWS Lambda Python image that matches the runtime
+    docker run --rm --platform linux/amd64 --entrypoint="" -v "$SCRIPT_DIR/lambda/src:/var/task" public.ecr.aws/lambda/python:3.9 bash -c "
+        yum install -y zip && 
+        cd /var/task && 
+        pip install -r requirements.txt -t /tmp/lambda-package && 
+        cp transcript_processor.py /tmp/lambda-package/ && 
+        cd /tmp/lambda-package && 
+        zip -r /var/task/transcript_processor.zip .
+    "
+    mv "$SCRIPT_DIR/lambda/src/transcript_processor.zip" .
+else
+    print_warning "Docker not available, falling back to local pip install"
+    mkdir transcript_processor_pkg
+    cd transcript_processor_pkg
+    cp "$SCRIPT_DIR/lambda/src/transcript_processor.py" .
+    cp "$SCRIPT_DIR/lambda/src/requirements.txt" .
+    pip install -r requirements.txt -t .
+    zip -r ../transcript_processor.zip .
+    cd ..
+    rm -rf transcript_processor_pkg
+fi
+
 print_success "Lambda packages created"
 
 # Create S3 bucket for Lambda code (if doesn't exist)
@@ -84,6 +121,7 @@ fi
 print_step "Uploading Lambda packages to S3..."
 aws s3 cp audio_processor.zip "s3://$LAMBDA_BUCKET/audio_processor.zip"
 aws s3 cp transcription_complete.zip "s3://$LAMBDA_BUCKET/transcription_complete.zip"
+aws s3 cp transcript_processor.zip "s3://$LAMBDA_BUCKET/transcript_processor.zip"
 print_success "Lambda packages uploaded"
 
 # Deploy CloudFormation stack
@@ -97,6 +135,8 @@ aws cloudformation deploy \
         ExistingBucketName="$S3_BUCKET" \
         WebhookEndpointUrl="$WEBHOOK_URL" \
         WebhookSecretToken="$WEBHOOK_SECRET" \
+        AnthropicApiKey="$ANTHROPIC_API_KEY" \
+        ApiToken="$API_TOKEN" \
     --capabilities CAPABILITY_NAMED_IAM \
     --no-fail-on-empty-changeset
 
@@ -116,8 +156,15 @@ TRANSCRIPTION_COMPLETE_ARN=$(aws cloudformation describe-stacks \
     --query "Stacks[0].Outputs[?OutputKey=='TranscriptionCompleteFunctionArn'].OutputValue" \
     --output text)
 
+TRANSCRIPT_PROCESSOR_ARN=$(aws cloudformation describe-stacks \
+    --stack-name "$STACK_NAME" \
+    --region "$REGION" \
+    --query "Stacks[0].Outputs[?OutputKey=='TranscriptProcessorFunctionArn'].OutputValue" \
+    --output text)
+
 print_success "Audio Processor ARN: $AUDIO_PROCESSOR_ARN"
 print_success "Transcription Complete ARN: $TRANSCRIPTION_COMPLETE_ARN"
+print_success "Transcript Processor ARN: $TRANSCRIPT_PROCESSOR_ARN"
 
 # Update Lambda function code
 print_step "Updating Lambda function code..."
@@ -132,6 +179,12 @@ aws lambda update-function-code \
     --function-name "$TRANSCRIPTION_COMPLETE_ARN" \
     --s3-bucket "$LAMBDA_BUCKET" \
     --s3-key "transcription_complete.zip" \
+    --region "$REGION" > /dev/null
+
+aws lambda update-function-code \
+    --function-name "$TRANSCRIPT_PROCESSOR_ARN" \
+    --s3-bucket "$LAMBDA_BUCKET" \
+    --s3-key "transcript_processor.zip" \
     --region "$REGION" > /dev/null
 
 print_success "Lambda function code updated"
@@ -157,10 +210,12 @@ echo "  S3 Bucket: $S3_BUCKET"
 echo "  Webhook URL: $WEBHOOK_URL"
 echo "  Audio Processor: $AUDIO_PROCESSOR_ARN"
 echo "  Transcription Handler: $TRANSCRIPTION_COMPLETE_ARN"
+echo "  Transcript Processor: $TRANSCRIPT_PROCESSOR_ARN"
 echo ""
 echo "Next steps:"
-echo "1. Upload an audio file (.m4a or .mp3) to the S3 bucket"
-echo "2. Check CloudWatch logs for the Lambda functions"
-echo "3. Verify transcription results are posted to the webhook"
+echo "1. Upload an audio file (.m4a or .mp3) to s3://$S3_BUCKET/visit-recordings/"
+echo "2. Wait for transcription to complete (creates file in s3://$S3_BUCKET/transcripts/)"
+echo "3. The transcript processor will automatically extract SOAP data and update the visit"
+echo "4. Check CloudWatch logs for all Lambda functions"
 echo ""
 print_success "Ready to process audio files!"

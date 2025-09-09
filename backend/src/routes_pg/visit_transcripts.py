@@ -101,19 +101,24 @@ class AudioPlaybackResponse(BaseModel):
 
 # Helper functions
 def get_s3_client():
-    """Get configured S3 client"""
-    if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="S3 credentials not configured"
+    """Get configured S3 client using IAM role or explicit credentials"""
+    try:
+        # Try to use IAM role first (recommended for ECS/EC2)
+        return boto3.client('s3', region_name=S3_REGION)
+    except NoCredentialsError:
+        # Fallback to explicit credentials if IAM role not available
+        if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="S3 credentials not configured and IAM role not available"
+            )
+        
+        return boto3.client(
+            's3',
+            region_name=S3_REGION,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY
         )
-    
-    return boto3.client(
-        's3',
-        region_name=S3_REGION,
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-    )
 
 
 async def check_pet_access(pet_id: str, user: User, db: AsyncSession) -> Pet:

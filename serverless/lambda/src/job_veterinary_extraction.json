@@ -1,0 +1,70 @@
+{
+  "visit": {
+    "chief_complaint": "Ear scratching",
+    "subjective": {
+      "history_of_present_illness": "Scratching mostly left ear",
+      "owner_observations": "Dog swims frequently",
+      "duration_of_symptoms": "Two weeks",
+      "previous_treatment": "None",
+      "behavior_changes": "Not mentioned",
+      "appetite_changes": "Not mentioned",
+      "elimination_changes": "Not mentioned"
+    },
+    "objective": {
+      "vital_signs": {
+        "temperature": "101.5°F",
+        "heart_rate": "96 bpm",
+        "respiratory_rate": "22 rpm",
+        "blood_pressure": "Not mentioned",
+        "mucous_membrane": "Pink, moist",
+        "capillary_refill_time": "<2 seconds"
+      },
+      "physical_exam": {
+        "weight": "65.2 lbs",
+        "body_condition_score": "Not mentioned",
+        "pain_score": "Not mentioned",
+        "hydration_status": "Not mentioned",
+        "eyes": "Clear",
+        "ears": "Left ear: dark brown debris, waxy, slight odor, redness. Right ear: some material present, minimal pain on palpation",
+        "oral_cavity": "Some tartar present",
+        "skin_coat": "Nice coat",
+        "musculoskeletal": "Not mentioned",
+        "cardiovascular": "Normal heart sounds, no murmurs, no arrhythmias",
+        "respiratory": "Lungs clear bilaterally, no crackles",
+        "gastrointestinal": "Abdomen soft, non-painful, no organomegaly",
+        "neurological": "Bright and alert",
+        "lymph_nodes": "Not mentioned"
+      },
+      "diagnostic_tests": "Cytology recommended but not performed",
+      "test_results": "Not mentioned"
+    },
+    "assessment": {
+      "primary_diagnosis": "Otitis externa",
+      "differential_diagnoses": "Yeast infection, ear mites, bacterial infection",
+      "prognosis": "Good"
+    },
+    "plan": {
+      "treatment": "Clean ears with mild otic cleanser before medication application, keep ears dry after swimming",
+      "medications": [
+        {
+          "name": "Tresaderm drops",
+          "dosage": "2 drops per ear",
+          "frequency": "twice daily",
+          "duration": "10 days",
+          "route": "Otic"
+        }
+      ],
+      "follow_up": "Recheck in 2 weeks if not cleared, return sooner if condition worsens",
+      "client_education": "Clean ears before medication, keep ears dry after swimming"
+    }
+  },
+  "notes": "Patient is a 4-year-old neutered male Golden Retriever. Vaccines (rabies, DHPP) current until 2026. Dental cleaning recommended within the year.",
+  "extraction_metadata": {
+    "extracted_at": "2025-09-08T18:24:04.230168",
+    "model_used": "claude-3-5-sonnet-latest",
+    "transcript_length": 2247,
+    "input_tokens": 1230,
+    "output_tokens": 618,
+    "api_call_cost_usd": 0.01296
+  }
+}
