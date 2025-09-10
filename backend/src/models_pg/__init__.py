@@ -10,6 +10,7 @@ from .pet import Pet
 from .medical_record import MedicalRecord
 from .visit import Visit
 from .appointment import Appointment, AppointmentPet
+from .contact_form import ContactForm
 
 __all__ = [
     "User",
@@ -20,5 +21,6 @@ __all__ = [
     "MedicalRecord",
     "Visit",
     "Appointment",
-    "AppointmentPet"
+    "AppointmentPet",
+    "ContactForm"
 ]

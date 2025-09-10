@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from uuid import uuid4, UUID
 import subprocess
 import os
+import boto3
 from typing import Optional
 
 from ..database_pg import get_db_session
@@ -306,6 +307,11 @@ async def run_migrations(request: AdminRequest):
         )
     
     try:
+        # Get password from AWS Secrets Manager
+        secrets_client = boto3.client('secretsmanager', region_name='us-west-1')
+        password_response = secrets_client.get_secret_value(SecretId='helppet-prod/database-password')
+        rds_password = password_response['SecretString']
+        
         # Set RDS environment variables for alembic
         env = os.environ.copy()
         env.update({
@@ -313,7 +319,7 @@ async def run_migrations(request: AdminRequest):
             "RDS_PORT": "5432", 
             "RDS_DB_NAME": "postgres",
             "RDS_USERNAME": "helppetadmin",
-            "RDS_PASSWORD": "dkxrBrYfY2Yy7R4I+knv0Z0kcMdaQZPHoSToOxuGy3g=DB"
+            "RDS_PASSWORD": rds_password
         })
         
         # Run alembic upgrade

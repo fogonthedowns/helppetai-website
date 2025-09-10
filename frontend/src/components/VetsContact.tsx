@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Stethoscope, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 const VetsContact = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    practiceName: '',
+    practice_name: '',
     message: ''
   });
 
@@ -27,7 +28,7 @@ const VetsContact = () => {
     setSubmitStatus('idle');
 
     try {
-      const response = await fetch('https://example.com/api/vet-contact', {
+      const response = await fetch(API_ENDPOINTS.VET_CONTACT.SUBMIT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,7 +42,7 @@ const VetsContact = () => {
           name: '',
           email: '',
           phone: '',
-          practiceName: '',
+          practice_name: '',
           message: ''
         });
       } else {
@@ -145,15 +146,15 @@ const VetsContact = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="practiceName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="practice_name" className="block text-sm font-medium text-gray-700 mb-2">
                     Practice Name *
                   </label>
                   <input
                     type="text"
-                    id="practiceName"
-                    name="practiceName"
+                    id="practice_name"
+                    name="practice_name"
                     required
-                    value={formData.practiceName}
+                    value={formData.practice_name}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Your practice's name"

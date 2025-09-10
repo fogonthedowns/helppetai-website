@@ -75,7 +75,7 @@ class MedicalRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
-    pet: Mapped["Pet"] = relationship("Pet", foreign_keys=[pet_id])
+    pet: Mapped["Pet"] = relationship("Pet", foreign_keys=[pet_id], overlaps="medical_records")
     created_by: Mapped["User"] = relationship("User", foreign_keys=[created_by_user_id])
     
     def __repr__(self) -> str:

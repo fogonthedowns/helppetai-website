@@ -5,20 +5,53 @@ Health check routes for PostgreSQL version
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from datetime import datetime
+import time
+import os
 
 from ..database_pg import get_db_session
+from ..config import settings
 
 router = APIRouter()
 
 
 @router.get("/health")
-async def health_check():
-    """Basic health check"""
-    return {
-        "status": "healthy",
-        "database": "postgresql",
-        "message": "HelpPet API is running with PostgreSQL"
-    }
+async def health_check(session: AsyncSession = Depends(get_db_session)):
+    """Enhanced health check with version information"""
+    try:
+        # Get Alembic migration version
+        try:
+            migration_result = await session.execute(text("SELECT version_num FROM alembic_version ORDER BY version_num DESC LIMIT 1"))
+            current_migration = migration_result.scalar()
+        except Exception:
+            current_migration = "unknown"
+        
+        return {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "app_name": settings.app_name,
+            "app_version": settings.app_version,
+            "environment": settings.environment,
+            "database": "postgresql",
+            "migration_version": current_migration,
+            "build_info": {
+                "version": settings.app_version,
+                "environment": settings.environment,
+                "build_timestamp": os.getenv("BUILD_TIMESTAMP", "unknown")
+            },
+            "message": "HelpPet API is running with PostgreSQL"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "app_name": settings.app_name,
+            "app_version": settings.app_version,
+            "environment": settings.environment,
+            "database": "postgresql",
+            "error": str(e),
+            "message": "Health check failed"
+        }
 
 
 @router.get("/health/db")
@@ -44,6 +77,25 @@ async def database_health_check(session: AsyncSession = Depends(get_db_session))
         except Exception:
             table_count = "unknown"
         
+        # Get migration version and history
+        try:
+            migration_result = await session.execute(text("SELECT version_num FROM alembic_version ORDER BY version_num DESC LIMIT 1"))
+            current_migration = migration_result.scalar()
+            
+            # Check if contact_forms table exists (our newest table)
+            contact_table_result = await session.execute(text("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'contact_forms'
+                )
+            """))
+            contact_table_exists = contact_table_result.scalar()
+            
+        except Exception as e:
+            current_migration = "unknown"
+            contact_table_exists = False
+        
         return {
             "status": "healthy",
             "database": "postgresql",
@@ -51,6 +103,16 @@ async def database_health_check(session: AsyncSession = Depends(get_db_session))
             "test_query": f"SELECT 1 returned {test_value}",
             "version": db_version.split('\n')[0] if db_version else "unknown",
             "public_tables": table_count,
+            "migration_info": {
+                "current_version": current_migration,
+                "contact_forms_table_exists": contact_table_exists,
+                "latest_migration": "a1b2c3d4e5f6_add_contact_forms_table"
+            },
+            "app_info": {
+                "version": settings.app_version,
+                "environment": settings.environment,
+                "name": settings.app_name
+            },
             "message": "Database connection is working"
         }
     except Exception as e:

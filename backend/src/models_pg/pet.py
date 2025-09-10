@@ -61,7 +61,7 @@ class Pet(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
-    owner: Mapped["PetOwner"] = relationship("PetOwner", foreign_keys=[owner_id])
+    owner: Mapped["PetOwner"] = relationship("PetOwner", foreign_keys=[owner_id], overlaps="pets")
     medical_records: Mapped[List["MedicalRecord"]] = relationship(
         "MedicalRecord", 
         foreign_keys="MedicalRecord.pet_id",

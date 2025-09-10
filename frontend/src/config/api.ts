@@ -100,5 +100,8 @@ export const API_ENDPOINTS = {
   UPLOAD: {
     AUDIO: `${API_BASE_URL}/api/v1/upload/audio`,
     AUDIO_PRESIGNED_URL: (visitId: string) => `${API_BASE_URL}/api/v1/upload/audio/${visitId}/presigned-url`,
+  },
+  VET_CONTACT: {
+    SUBMIT: `${API_BASE_URL}/api/v1/vets/contact`,
   }
 } as const;
