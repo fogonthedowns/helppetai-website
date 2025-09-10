@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 
 BUCKET_NAME := helppet.ai
-DISTRIBUTION_ID := # Add your CloudFront distribution ID here after setup
+DISTRIBUTION_ID := E2VN7ITPTEP957 # Add your CloudFront distribution ID here after setup
 AWS_PROFILE=default
 export AWS_PROFILE
 

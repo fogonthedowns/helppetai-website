@@ -41,6 +41,25 @@ const VisitTranscriptDetail: React.FC = () => {
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('main');
+
+  // Extract structured data from metadata
+  const extractedData = transcript?.metadata ? {
+    chiefComplaint: transcript.metadata?.chief_complaint || '',
+    subjectiveHistory: transcript.metadata?.subjective_history || '',
+    subjectiveOwnerObservations: transcript.metadata?.subjective_owner_observations || '',
+    subjectivePreviousTreatment: transcript.metadata?.subjective_previous_treatment || '',
+    subjectiveAppetiteChanges: transcript.metadata?.subjective_appetite_changes || '',
+    vitalSignsTemperature: transcript.metadata?.vital_signs_temperature || '',
+    vitalSignsHeartRate: transcript.metadata?.vital_signs_heart_rate || '',
+    vitalSignsRespiratoryRate: transcript.metadata?.vital_signs_respiratory_rate || '',
+    vitalSignsMucousMembrane: transcript.metadata?.vital_signs_mucous_membrane || '',
+    vitalSignsCapillaryRefill: transcript.metadata?.vital_signs_capillary_refill || '',
+    physicalExamWeight: transcript.metadata?.physical_exam_weight || '',
+    physicalExamHydration: transcript.metadata?.physical_exam_hydration || '',
+    physicalExamCardiovascular: transcript.metadata?.physical_exam_cardiovascular || '',
+    physicalExamRespiratory: transcript.metadata?.physical_exam_respiratory || ''
+  } : null;
 
   useEffect(() => {
     if (transcriptId && petId) {
@@ -102,7 +121,6 @@ const VisitTranscriptDetail: React.FC = () => {
       }
     } catch (err) {
       console.error('Error fetching pet:', err);
-      // Don't set error for pet fetch failure, just log it
     }
   };
 
@@ -145,10 +163,8 @@ const VisitTranscriptDetail: React.FC = () => {
   const toggleAudio = async () => {
     if (!transcript?.audio_transcript_url || !transcriptId) return;
 
-    // Clear previous audio errors
     setAudioError(null);
 
-    // If audio element exists, just toggle play/pause
     if (audioElement) {
       if (isPlaying) {
         audioElement.pause();
@@ -166,11 +182,9 @@ const VisitTranscriptDetail: React.FC = () => {
       return;
     }
 
-    // Create new audio element
     try {
       setAudioLoading(true);
       
-      // Get presigned URL for secure audio access
       const response = await fetch(API_ENDPOINTS.VISIT_TRANSCRIPTS.AUDIO_PLAYBACK(transcriptId), {
         headers: getAuthHeaders()
       });
@@ -182,43 +196,19 @@ const VisitTranscriptDetail: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('Audio playback response:', data);
       
       if (!data.presigned_url) {
         throw new Error('Invalid audio access response - no presigned URL');
       }
 
-      // Create and configure audio element
       const audio = new Audio();
       
-      // Set up event listeners
-      audio.addEventListener('loadstart', () => {
-        console.log('Audio loading started');
-      });
-      
-      audio.addEventListener('loadedmetadata', () => {
-        console.log('Audio metadata loaded');
-      });
-      
-      audio.addEventListener('canplay', () => {
-        console.log('Audio can start playing');
-      });
-      
       audio.addEventListener('ended', () => {
-        console.log('Audio playback ended');
         setIsPlaying(false);
       });
       
       audio.addEventListener('error', (e) => {
         console.error('Audio error event:', e);
-        console.error('Audio error details:', {
-          error: audio.error,
-          errorCode: audio.error?.code,
-          errorMessage: audio.error?.message,
-          networkState: audio.networkState,
-          readyState: audio.readyState,
-          src: audio.src
-        });
         
         let errorMessage = 'Failed to load audio file';
         
@@ -229,7 +219,6 @@ const VisitTranscriptDetail: React.FC = () => {
               break;
             case MediaError.MEDIA_ERR_NETWORK:
               errorMessage = 'Network error while loading audio. The URL may have expired. Click Play again to get a fresh URL.';
-              // Clear the audio element so next play will get a fresh URL
               setAudioElement(null);
               break;
             case MediaError.MEDIA_ERR_DECODE:
@@ -248,36 +237,24 @@ const VisitTranscriptDetail: React.FC = () => {
         setAudioLoading(false);
       });
 
-      // Check browser format support
       const canPlayM4A = audio.canPlayType('audio/mp4; codecs="mp4a.40.2"');
       const canPlayM4AAlt = audio.canPlayType('audio/m4a');
       
-      console.log('Browser M4A support:', {
-        'audio/mp4': canPlayM4A,
-        'audio/m4a': canPlayM4AAlt,
-        userAgent: navigator.userAgent
-      });
-      
-      // If browser doesn't support M4A, show error immediately
       if (!canPlayM4A && !canPlayM4AAlt) {
         throw new Error('Your browser does not support M4A audio files. Please download the file or try a different browser.');
       }
       
-      // Set the source and load
       audio.src = data.presigned_url;
       audio.load();
       
       setAudioElement(audio);
       
-      // Try to play
       try {
         await audio.play();
         setIsPlaying(true);
-        console.log('Audio started playing successfully');
       } catch (playError) {
         console.error('Play failed:', playError);
         
-        // Handle different play errors with proper type checking
         let errorMessage = `Playback failed: ${getErrorMessage(playError)}`;
         
         if (playError instanceof Error) {
@@ -316,7 +293,6 @@ const VisitTranscriptDetail: React.FC = () => {
       const data = await response.json();
       
       if (data.presigned_url) {
-        // Create a temporary link to trigger download
         const link = document.createElement('a');
         link.href = data.presigned_url;
         link.download = data.filename || 'recording.m4a';
@@ -377,7 +353,7 @@ const VisitTranscriptDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="bg-gray-200 h-64 rounded-lg mb-6"></div>
@@ -392,7 +368,7 @@ const VisitTranscriptDetail: React.FC = () => {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <div className="flex items-center">
             <AlertCircle className="w-6 h-6 text-red-400 mr-3" />
@@ -411,7 +387,7 @@ const VisitTranscriptDetail: React.FC = () => {
 
   if (!transcript) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         <div className="text-center py-12">
           <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900">Visit transcript not found</h3>
@@ -421,23 +397,30 @@ const VisitTranscriptDetail: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        {/* Breadcrumb Navigation */}
         {pet && (
           <Breadcrumb
             items={[
               { label: 'Pet Owners', href: '/pet_owners' },
               { label: pet.owner?.full_name || 'Owner', href: `/pet_owners/${pet.owner_id}` },
               { label: pet.display_name || pet.name, href: `/pets/${petId}` },
-              { label: `${new Date(transcript.visit_date).toLocaleDateString()} Visit`, isActive: true }
+              { label: `${new Date(transcript.visit_date * 1000).toLocaleDateString()} Visit`, isActive: true }
             ]}
             className="mb-6"
           />
         )}
         
-        <div className="flex items-center justify-end mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-gray-900">Visit Transcript</h1>
+            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${TRANSCRIPT_STATE_COLORS[transcript.state]}`}>
+              {getStateIcon(transcript.state)}
+              <span className="ml-2">{TRANSCRIPT_STATE_LABELS[transcript.state]}</span>
+            </div>
+          </div>
+          
           <div className="flex items-center space-x-3">
             {canEdit() && (
               <Link
@@ -457,14 +440,6 @@ const VisitTranscriptDetail: React.FC = () => {
                 Delete
               </button>
             )}
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-4 mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Visit Transcript</h1>
-          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${TRANSCRIPT_STATE_COLORS[transcript.state]}`}>
-            {getStateIcon(transcript.state)}
-            <span className="ml-2">{TRANSCRIPT_STATE_LABELS[transcript.state]}</span>
           </div>
         </div>
 
@@ -535,7 +510,6 @@ const VisitTranscriptDetail: React.FC = () => {
             </div>
           </div>
           
-          {/* Audio Error Display */}
           {audioError && (
             <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
               <div className="flex items-start">
@@ -547,80 +521,237 @@ const VisitTranscriptDetail: React.FC = () => {
         </div>
       )}
 
-      {/* Debug Information */}
-      {showDebug && debugInfo && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <h3 className="font-medium text-gray-900 mb-3">Debug Information</h3>
-          <div className="space-y-2 text-sm">
-            <div><strong>Visit ID:</strong> {debugInfo.visit_id}</div>
-            <div><strong>Visit State:</strong> {debugInfo.visit_state}</div>
-            <div><strong>S3 Key:</strong> {debugInfo.s3_key || debugInfo.audio_s3_key || 'Not found'}</div>
-            <div><strong>S3 Bucket:</strong> {debugInfo.s3_bucket}</div>
-            <div><strong>Filename:</strong> {debugInfo.filename || debugInfo.audio_filename || 'Not found'}</div>
-            <div><strong>Content Type:</strong> {debugInfo.content_type || 'Not found'}</div>
-            <div><strong>File Exists in S3:</strong> 
-              <span className={debugInfo.s3_file_exists ? 'text-green-600' : 'text-red-600'}>
-                {debugInfo.s3_file_exists ? ' Yes' : ' No'}
-              </span>
-            </div>
-            {debugInfo.s3_error && (
-              <div><strong>S3 Error:</strong> <span className="text-red-600">{debugInfo.s3_error}</span></div>
-            )}
-            {debugInfo.s3_file_size && (
-              <div><strong>File Size:</strong> {(debugInfo.s3_file_size / 1024 / 1024).toFixed(2)} MB</div>
-            )}
-            {debugInfo.s3_content_type && (
-              <div><strong>S3 Content Type:</strong> {debugInfo.s3_content_type}</div>
-            )}
-            {debugInfo.s3_last_modified && (
-              <div><strong>Last Modified:</strong> {new Date(debugInfo.s3_last_modified).toLocaleString()}</div>
-            )}
-          </div>
-          <details className="mt-4">
-            <summary className="cursor-pointer font-medium text-gray-700">Raw Data</summary>
-            <pre className="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto">
-              {JSON.stringify(debugInfo, null, 2)}
-            </pre>
-          </details>
-        </div>
-      )}
-
-      {/* Summary */}
-      {transcript.summary && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Summary</h2>
-          <p className="text-gray-700 leading-relaxed">{transcript.summary}</p>
-        </div>
-      )}
-
-      {/* Full Transcript */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Full Transcript</h2>
-        <div className="prose max-w-none">
-          <div className="bg-gray-50 rounded-lg p-4 border">
-            <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
-              {transcript.full_text}
-            </pre>
-          </div>
-        </div>
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('main')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'main'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Transcript & Medical Data
+          </button>
+          <button
+            onClick={() => setActiveTab('technical')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'technical'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Technical Details
+          </button>
+        </nav>
       </div>
 
-      {/* Metadata */}
-      {Object.keys(transcript.metadata).length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Additional Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(transcript.metadata).map(([key, value]) => (
-              <div key={key} className="border-b border-gray-100 pb-2">
-                <dt className="text-sm font-medium text-gray-500 capitalize">
-                  {key.replace(/_/g, ' ')}
-                </dt>
-                <dd className="text-sm text-gray-900 mt-1">
-                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                </dd>
+      {activeTab === 'main' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Full Transcript */}
+          <div className="lg:col-span-1">
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Full Transcript</h2>
+              <div className="bg-gray-50 rounded-lg p-4 border">
+                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed max-h-96 overflow-y-auto">
+                  {transcript.full_text}
+                </pre>
               </div>
-            ))}
+            </div>
           </div>
+
+          {/* Extracted Medical Information */}
+          <div className="lg:col-span-1">
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Extracted Medical Information</h2>
+              
+              {extractedData && (
+                <div className="space-y-6">
+                  {/* Subjective Section */}
+                  <div>
+                    <h3 className="text-base font-semibold text-blue-700 mb-4 pb-2 border-b border-blue-200">Subjective</h3>
+                    <div className="space-y-4">
+                      {extractedData.chiefComplaint && (
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <dt className="text-sm font-semibold text-gray-700 mb-1">Chief Complaint</dt>
+                          <dd className="text-sm text-gray-900">{extractedData.chiefComplaint}</dd>
+                        </div>
+                      )}
+                      {extractedData.subjectiveHistory && (
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <dt className="text-sm font-semibold text-gray-700 mb-1">History of Present Illness</dt>
+                          <dd className="text-sm text-gray-900">{extractedData.subjectiveHistory}</dd>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 gap-3">
+                        {extractedData.subjectiveOwnerObservations && (
+                          <div className="bg-gray-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Owner Observations</dt>
+                            <dd className="text-sm text-gray-900">{extractedData.subjectiveOwnerObservations}</dd>
+                          </div>
+                        )}
+                        {extractedData.subjectivePreviousTreatment && (
+                          <div className="bg-gray-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Previous Treatment</dt>
+                            <dd className="text-sm text-gray-900">{extractedData.subjectivePreviousTreatment}</dd>
+                          </div>
+                        )}
+                        {extractedData.subjectiveAppetiteChanges && (
+                          <div className="bg-gray-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Appetite Changes</dt>
+                            <dd className="text-sm text-gray-900">{extractedData.subjectiveAppetiteChanges}</dd>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vital Signs Section */}
+                  {(extractedData.vitalSignsTemperature || extractedData.vitalSignsHeartRate || extractedData.vitalSignsRespiratoryRate || extractedData.vitalSignsMucousMembrane || extractedData.vitalSignsCapillaryRefill) && (
+                    <div>
+                      <h3 className="text-base font-semibold text-green-700 mb-4 pb-2 border-b border-green-200">Vital Signs</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {extractedData.vitalSignsTemperature && (
+                          <div className="bg-green-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Temperature</dt>
+                            <dd className="text-sm text-gray-900 font-medium">{extractedData.vitalSignsTemperature}</dd>
+                          </div>
+                        )}
+                        {extractedData.vitalSignsHeartRate && (
+                          <div className="bg-green-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Heart Rate</dt>
+                            <dd className="text-sm text-gray-900 font-medium">{extractedData.vitalSignsHeartRate}</dd>
+                          </div>
+                        )}
+                        {extractedData.vitalSignsRespiratoryRate && (
+                          <div className="bg-green-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Respiratory Rate</dt>
+                            <dd className="text-sm text-gray-900 font-medium">{extractedData.vitalSignsRespiratoryRate}</dd>
+                          </div>
+                        )}
+                        {extractedData.vitalSignsMucousMembrane && (
+                          <div className="bg-green-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Mucous Membrane</dt>
+                            <dd className="text-sm text-gray-900 font-medium">{extractedData.vitalSignsMucousMembrane}</dd>
+                          </div>
+                        )}
+                        {extractedData.vitalSignsCapillaryRefill && (
+                          <div className="bg-green-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Capillary Refill Time</dt>
+                            <dd className="text-sm text-gray-900 font-medium">{extractedData.vitalSignsCapillaryRefill}</dd>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Physical Exam Section */}
+                  {(extractedData.physicalExamWeight || extractedData.physicalExamHydration || extractedData.physicalExamCardiovascular || extractedData.physicalExamRespiratory) && (
+                    <div>
+                      <h3 className="text-base font-semibold text-purple-700 mb-4 pb-2 border-b border-purple-200">Physical Exam</h3>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          {extractedData.physicalExamWeight && (
+                            <div className="bg-purple-50 p-3 rounded-md">
+                              <dt className="text-sm font-semibold text-gray-700 mb-1">Weight</dt>
+                              <dd className="text-sm text-gray-900 font-medium">{extractedData.physicalExamWeight}</dd>
+                            </div>
+                          )}
+                          {extractedData.physicalExamHydration && (
+                            <div className="bg-purple-50 p-3 rounded-md">
+                              <dt className="text-sm font-semibold text-gray-700 mb-1">Hydration Status</dt>
+                              <dd className="text-sm text-gray-900 font-medium">{extractedData.physicalExamHydration}</dd>
+                            </div>
+                          )}
+                        </div>
+                        {extractedData.physicalExamCardiovascular && (
+                          <div className="bg-purple-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Cardiovascular</dt>
+                            <dd className="text-sm text-gray-900">{extractedData.physicalExamCardiovascular}</dd>
+                          </div>
+                        )}
+                        {extractedData.physicalExamRespiratory && (
+                          <div className="bg-purple-50 p-3 rounded-md">
+                            <dt className="text-sm font-semibold text-gray-700 mb-1">Respiratory</dt>
+                            <dd className="text-sm text-gray-900">{extractedData.physicalExamRespiratory}</dd>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!extractedData && (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 text-sm">No extracted medical information available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'technical' && (
+        <div className="space-y-6">
+          {/* Summary */}
+          {transcript.summary && (
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">Summary</h2>
+              <p className="text-gray-700 leading-relaxed">{transcript.summary}</p>
+            </div>
+          )}
+
+          {/* Debug Information */}
+          {showDebug && debugInfo && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <h3 className="font-medium text-gray-900 mb-3">Debug Information</h3>
+              <div className="space-y-2 text-sm">
+                <div><strong>Visit ID:</strong> {debugInfo.visit_id}</div>
+                <div><strong>Visit State:</strong> {debugInfo.visit_state}</div>
+                <div><strong>S3 Key:</strong> {debugInfo.s3_key || debugInfo.audio_s3_key || 'Not found'}</div>
+                <div><strong>S3 Bucket:</strong> {debugInfo.s3_bucket}</div>
+                <div><strong>Filename:</strong> {debugInfo.filename || debugInfo.audio_filename || 'Not found'}</div>
+                <div><strong>Content Type:</strong> {debugInfo.content_type || 'Not found'}</div>
+                <div><strong>File Exists in S3:</strong> 
+                  <span className={debugInfo.s3_file_exists ? 'text-green-600' : 'text-red-600'}>
+                    {debugInfo.s3_file_exists ? ' Yes' : ' No'}
+                  </span>
+                </div>
+                {debugInfo.s3_error && (
+                  <div><strong>S3 Error:</strong> <span className="text-red-600">{debugInfo.s3_error}</span></div>
+                )}
+                {debugInfo.s3_file_size && (
+                  <div><strong>File Size:</strong> {(debugInfo.s3_file_size / 1024 / 1024).toFixed(2)} MB</div>
+                )}
+                {debugInfo.s3_content_type && (
+                  <div><strong>S3 Content Type:</strong> {debugInfo.s3_content_type}</div>
+                )}
+                {debugInfo.s3_last_modified && (
+                  <div><strong>Last Modified:</strong> {new Date(debugInfo.s3_last_modified).toLocaleString()}</div>
+                )}
+              </div>
+              <details className="mt-4">
+                <summary className="cursor-pointer font-medium text-gray-700">Raw Data</summary>
+                <pre className="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </details>
+            </div>
+          )}
+
+          {/* All Metadata */}
+          {Object.keys(transcript.metadata).length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">All Technical Metadata</h2>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <pre className="text-sm text-gray-600 overflow-auto">
+                  {JSON.stringify(transcript.metadata, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -10,6 +10,7 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 import os
 import uuid
+import logging
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +19,7 @@ from ..database_pg import get_db_session
 from ..models_pg.visit import Visit, VisitState
 from ..models_pg.appointment import Appointment, AppointmentPet, AppointmentStatus
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # S3 Configuration
@@ -264,6 +266,7 @@ async def upload_audio_file(
                 detail=f"S3 upload failed: {str(e)}"
             )
     except Exception as e:
+        logger.error(f"Audio upload failed: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Upload failed: {str(e)}"

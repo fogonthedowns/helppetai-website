@@ -35,6 +35,24 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 PRESIGNED_URL_EXPIRATION = 3600
 
 
+class TranscriptState(str, Enum):
+    NEW = "new"
+    PROCESSING = "processing"
+    PROCESSED = "processed"
+    FAILED = "failed"
+
+# Simplified response model for visit transcript summaries
+class VisitTranscriptSummaryResponse(BaseModel):
+    uuid: str
+    visit_date: int  # Unix timestamp
+    state: TranscriptState
+    has_audio: bool
+    summary: Optional[str] = None
+    created_at: datetime
+    created_by: Optional[str] = None
+    # Only include essential extracted data
+    chief_complaint: Optional[str] = None
+
 # Pydantic models for visit transcripts
 class VisitTranscriptCreate(BaseModel):
     pet_id: str
@@ -174,14 +192,13 @@ async def list_pet_visit_transcripts(
     pet_uuid: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
-) -> List[VisitTranscriptResponse]:
+) -> List[VisitTranscriptSummaryResponse]:
     """
-    List all visit transcripts for a pet
+    List all visit transcripts for a pet (summary view)
     Access: Admin | Pet Owner | Associated Vet
     """
     pet = await check_pet_access(pet_uuid, current_user, db)
     
-    # Find all visits for this pet, ordered by visit date descending
     result = await db.execute(
         select(Visit)
         .where(Visit.pet_id == pet.id)
@@ -189,7 +206,19 @@ async def list_pet_visit_transcripts(
     )
     visits = result.scalars().all()
     
-    return [visit_to_transcript_response(visit) for visit in visits]
+    return [
+        VisitTranscriptSummaryResponse(
+            uuid=str(visit.id),
+            visit_date=int(visit.visit_date.timestamp()),
+            state=visit.state,
+            has_audio=bool(visit.audio_transcript_url),
+            summary=visit.summary,
+            created_at=visit.created_at,
+            created_by=str(visit.created_by) if visit.created_by else None,
+            chief_complaint=visit.additional_data.get('chief_complaint') if visit.additional_data else None
+        ) 
+        for visit in visits
+    ]
 
 
 @router.get("/appointments/{appointment_id}/visits")
