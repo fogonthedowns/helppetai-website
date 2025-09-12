@@ -81,13 +81,18 @@ async def check_pet_access_for_medical_records(
 async def list_medical_records_for_pet(
     pet_uuid: uuid.UUID,
     include_historical: bool = Query(True, description="Include historical versions"),
+    latest_only: bool = Query(False, description="Return only the latest medical record"),
     current_user: User = Depends(get_current_user),
     medical_record_repo: MedicalRecordRepository = Depends(get_medical_record_repository),
     pet_repo: PetRepository = Depends(get_pet_repository),
     association_repo: AssociationRepository = Depends(get_association_repository)
 ):
     """
-    List all medical records for a pet (Admin | Pet Owner | Associated Vet)
+    List medical records for a pet (Admin | Pet Owner | Associated Vet)
+    
+    Query Parameters:
+    - include_historical: Include historical versions (default: True)
+    - latest_only: Return only the latest medical record for optimization (default: False)
     """
     # Check access to pet
     await check_pet_access_for_medical_records(
@@ -95,7 +100,7 @@ async def list_medical_records_for_pet(
     )
     
     # Get medical records
-    records = await medical_record_repo.get_by_pet_id(pet_uuid, include_historical)
+    records = await medical_record_repo.get_by_pet_id(pet_uuid, include_historical, latest_only)
     current_records = [r for r in records if r.is_current]
     historical_records = [r for r in records if not r.is_current]
     

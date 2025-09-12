@@ -21,14 +21,18 @@ class MedicalRecordRepository(BaseRepository[MedicalRecord]):
     def __init__(self, session: AsyncSession):
         super().__init__(MedicalRecord, session)
     
-    async def get_by_pet_id(self, pet_id: uuid.UUID, include_historical: bool = True) -> List[MedicalRecord]:
-        """Get all medical records for a specific pet"""
+    async def get_by_pet_id(self, pet_id: uuid.UUID, include_historical: bool = True, latest_only: bool = False) -> List[MedicalRecord]:
+        """Get medical records for a specific pet"""
         query = select(MedicalRecord).where(MedicalRecord.pet_id == pet_id)
         
         if not include_historical:
             query = query.where(MedicalRecord.is_current == True)
             
         query = query.order_by(desc(MedicalRecord.visit_date), desc(MedicalRecord.version))
+        
+        # If latest_only is requested, limit to 1 record and ensure we get current records
+        if latest_only:
+            query = query.where(MedicalRecord.is_current == True).limit(1)
         
         result = await self.session.execute(query)
         return list(result.scalars().all())
