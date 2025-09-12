@@ -127,6 +127,9 @@ Provide a professional veterinary summary in 2-4 sentences."""
         """
         Generate and format a medical summary for updating medical records.
         
+        DEPRECATED: This method is kept for backward compatibility.
+        Use generate_medical_summary() directly for new implementations.
+        
         Args:
             current_visit_transcript: Current visit transcript
             previous_visit_transcript: Previous visit transcript (optional)
@@ -134,7 +137,7 @@ Provide a professional veterinary summary in 2-4 sentences."""
             pet_info: Dictionary with pet information (name, species, etc.)
             
         Returns:
-            Updated medical record description with new summary
+            AI-generated medical summary (no timestamp appending since versioning handles history)
         """
         try:
             # Extract pet information
@@ -145,7 +148,7 @@ Provide a professional veterinary summary in 2-4 sentences."""
                 pet_name = pet_info.get('name', 'the pet')
                 pet_species = pet_info.get('species', 'animal')
             
-            # Generate the AI summary
+            # Generate the AI summary - return it directly since versioning handles history
             ai_summary = await self.generate_medical_summary(
                 current_visit_transcript=current_visit_transcript,
                 previous_visit_transcript=previous_visit_transcript,
@@ -154,21 +157,12 @@ Provide a professional veterinary summary in 2-4 sentences."""
                 pet_species=pet_species
             )
             
-            # Format the updated medical record description
-            timestamp = datetime.utcnow().strftime('%Y-%m-%d')
-            
-            # If there's existing description, append the new summary
-            if current_medical_record_description and current_medical_record_description.strip():
-                updated_description = f"{current_medical_record_description.strip()}\n\n[AI Summary - {timestamp}]: {ai_summary}"
-            else:
-                updated_description = f"[AI Summary - {timestamp}]: {ai_summary}"
-            
-            return updated_description
+            return ai_summary
             
         except Exception as e:
             logger.error(f"Failed to update medical record with summary: {e}")
-            # Return original description if summary generation fails
-            return current_medical_record_description or f"Medical record updated on {datetime.utcnow().strftime('%Y-%m-%d')}."
+            # Return fallback summary if generation fails
+            return f"Medical record updated on {datetime.utcnow().strftime('%Y-%m-%d')}. AI summary generation failed - please review transcript manually."
 
 
 # Global medical summary service instance

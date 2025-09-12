@@ -168,32 +168,38 @@ async def handle_transcription_complete(
                     previous_transcript = previous_visit.full_text if previous_visit else None
                     current_description = current_medical_record.description if current_medical_record else None
                     
-                    updated_description = await medical_summary_service.update_medical_record_with_summary(
+                    # Generate AI summary that REPLACES the description (not appends)
+                    ai_summary = await medical_summary_service.generate_medical_summary(
                         current_visit_transcript=payload.transcriptText,
                         previous_visit_transcript=previous_transcript,
                         current_medical_record_description=current_description,
-                        pet_info=pet_info
+                        pet_name=pet.name,
+                        pet_species=pet.species
                     )
                     
-                    # 5. Update the medical record with the AI summary
+                    # 5. Update the medical record with the AI summary using versioning system
                     if current_medical_record:
-                        # Update existing medical record
-                        await db.execute(
-                            update(MedicalRecord)
-                            .where(MedicalRecord.id == current_medical_record.id)
-                            .values(
-                                description=updated_description,
-                                updated_at=datetime.utcnow()
-                            )
+                        # Create new version with REPLACED description (not appended) - versioning allows stepping back
+                        update_data = {
+                            'description': ai_summary,  # REPLACE, don't append
+                            'visit_date': visit.visit_date,  # Update to current visit date
+                            'veterinarian_name': visit.veterinarian.name if visit.veterinarian else current_medical_record.veterinarian_name,
+                            'clinic_name': visit.practice.name if visit.practice else current_medical_record.clinic_name,
+                        }
+                        
+                        new_record = await medical_record_repo.create_new_version(
+                            current_medical_record, 
+                            update_data, 
+                            visit.vet_user_id or visit.created_by
                         )
-                        logger.info(f"Updated existing medical record {current_medical_record.id} with AI summary")
+                        logger.info(f"Created new version {new_record.version} of medical record {current_medical_record.id} with AI summary")
                     else:
                         # Create new medical record if none exists
                         new_medical_record = MedicalRecord(
                             pet_id=visit.pet_id,
                             record_type="visit_summary",
-                            title=f"Visit Summary - {datetime.utcnow().strftime('%Y-%m-%d')}",
-                            description=updated_description,
+                            title=f"AI Medical Summary - {pet.name}",
+                            description=ai_summary,
                             visit_date=visit.visit_date,
                             veterinarian_name=visit.veterinarian.name if visit.veterinarian else "Unknown",
                             clinic_name=visit.practice.name if visit.practice else "Unknown",
@@ -201,7 +207,7 @@ async def handle_transcription_complete(
                             version=1,
                             is_current=True
                         )
-                        db.add(new_medical_record)
+                        created_record = await medical_record_repo.create(new_medical_record)
                         logger.info(f"Created new medical record with AI summary for pet {visit.pet_id}")
                     
                     logger.info(f"Successfully generated and saved AI medical summary for visit {visit_id}")
@@ -404,32 +410,38 @@ async def handle_transcription_complete_by_s3_key(
                     previous_transcript = previous_visit.full_text if previous_visit else None
                     current_description = current_medical_record.description if current_medical_record else None
                     
-                    updated_description = await medical_summary_service.update_medical_record_with_summary(
+                    # Generate AI summary that REPLACES the description (not appends)
+                    ai_summary = await medical_summary_service.generate_medical_summary(
                         current_visit_transcript=payload.transcriptText,
                         previous_visit_transcript=previous_transcript,
                         current_medical_record_description=current_description,
-                        pet_info=pet_info
+                        pet_name=pet.name,
+                        pet_species=pet.species
                     )
                     
-                    # 5. Update the medical record with the AI summary
+                    # 5. Update the medical record with the AI summary using versioning system
                     if current_medical_record:
-                        # Update existing medical record
-                        await db.execute(
-                            update(MedicalRecord)
-                            .where(MedicalRecord.id == current_medical_record.id)
-                            .values(
-                                description=updated_description,
-                                updated_at=datetime.utcnow()
-                            )
+                        # Create new version with REPLACED description (not appended) - versioning allows stepping back
+                        update_data = {
+                            'description': ai_summary,  # REPLACE, don't append
+                            'visit_date': visit.visit_date,  # Update to current visit date
+                            'veterinarian_name': visit.veterinarian.name if visit.veterinarian else current_medical_record.veterinarian_name,
+                            'clinic_name': visit.practice.name if visit.practice else current_medical_record.clinic_name,
+                        }
+                        
+                        new_record = await medical_record_repo.create_new_version(
+                            current_medical_record, 
+                            update_data, 
+                            visit.vet_user_id or visit.created_by
                         )
-                        logger.info(f"Updated existing medical record {current_medical_record.id} with AI summary")
+                        logger.info(f"Created new version {new_record.version} of medical record {current_medical_record.id} with AI summary")
                     else:
                         # Create new medical record if none exists
                         new_medical_record = MedicalRecord(
                             pet_id=visit.pet_id,
                             record_type="visit_summary",
-                            title=f"Visit Summary - {datetime.utcnow().strftime('%Y-%m-%d')}",
-                            description=updated_description,
+                            title=f"AI Medical Summary - {pet.name}",
+                            description=ai_summary,
                             visit_date=visit.visit_date,
                             veterinarian_name=visit.veterinarian.name if visit.veterinarian else "Unknown",
                             clinic_name=visit.practice.name if visit.practice else "Unknown",
@@ -437,7 +449,7 @@ async def handle_transcription_complete_by_s3_key(
                             version=1,
                             is_current=True
                         )
-                        db.add(new_medical_record)
+                        created_record = await medical_record_repo.create(new_medical_record)
                         logger.info(f"Created new medical record with AI summary for pet {visit.pet_id}")
                     
                     logger.info(f"Successfully generated and saved AI medical summary for visit {visit.id}")
