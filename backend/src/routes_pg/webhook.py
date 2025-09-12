@@ -9,12 +9,16 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, desc
 
 from ..database_pg import get_db_session
 from ..models_pg.visit import Visit, VisitState
+from ..models_pg.medical_record import MedicalRecord
+from ..models_pg.pet import Pet
+from ..repositories_pg.medical_record_repository import MedicalRecordRepository
 from ..config import settings
 from ..utils.error_handling import log_endpoint_errors
+from ..services.medical_summary_service import medical_summary_service
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +109,7 @@ async def handle_transcription_complete(
         
         # Update visit with transcription data
         if payload.status.lower() == "completed":
-            # Update visit record
+            # Update visit record with transcription
             await db.execute(
                 update(Visit)
                 .where(Visit.id == visit_id)
@@ -123,14 +127,98 @@ async def handle_transcription_complete(
                 )
             )
             
+            # Enhanced functionality: Generate AI medical summary
+            try:
+                logger.info(f"Generating AI medical summary for visit {visit_id}")
+                
+                # 1. Get the pet information for this visit
+                pet_result = await db.execute(
+                    select(Pet).where(Pet.id == visit.pet_id)
+                )
+                pet = pet_result.scalar_one_or_none()
+                
+                if not pet:
+                    logger.warning(f"Pet not found for visit {visit_id}, skipping medical summary")
+                else:
+                    # 2. Get the most recent previous visit for this pet (excluding current visit)
+                    previous_visit_result = await db.execute(
+                        select(Visit)
+                        .where(
+                            Visit.pet_id == visit.pet_id,
+                            Visit.id != visit_id,
+                            Visit.state == VisitState.PROCESSED.value,
+                            Visit.full_text.isnot(None)
+                        )
+                        .order_by(desc(Visit.visit_date))
+                        .limit(1)
+                    )
+                    previous_visit = previous_visit_result.scalar_one_or_none()
+                    
+                    # 3. Get the current medical record for this pet
+                    medical_record_repo = MedicalRecordRepository(db)
+                    current_medical_records = await medical_record_repo.get_current_records_by_pet_id(visit.pet_id)
+                    current_medical_record = current_medical_records[0] if current_medical_records else None
+                    
+                    # 4. Generate AI medical summary
+                    pet_info = {
+                        'name': pet.name,
+                        'species': pet.species
+                    }
+                    
+                    previous_transcript = previous_visit.full_text if previous_visit else None
+                    current_description = current_medical_record.description if current_medical_record else None
+                    
+                    updated_description = await medical_summary_service.update_medical_record_with_summary(
+                        current_visit_transcript=payload.transcriptText,
+                        previous_visit_transcript=previous_transcript,
+                        current_medical_record_description=current_description,
+                        pet_info=pet_info
+                    )
+                    
+                    # 5. Update the medical record with the AI summary
+                    if current_medical_record:
+                        # Update existing medical record
+                        await db.execute(
+                            update(MedicalRecord)
+                            .where(MedicalRecord.id == current_medical_record.id)
+                            .values(
+                                description=updated_description,
+                                updated_at=datetime.utcnow()
+                            )
+                        )
+                        logger.info(f"Updated existing medical record {current_medical_record.id} with AI summary")
+                    else:
+                        # Create new medical record if none exists
+                        new_medical_record = MedicalRecord(
+                            pet_id=visit.pet_id,
+                            record_type="visit_summary",
+                            title=f"Visit Summary - {datetime.utcnow().strftime('%Y-%m-%d')}",
+                            description=updated_description,
+                            visit_date=visit.visit_date,
+                            veterinarian_name=visit.veterinarian.name if visit.veterinarian else "Unknown",
+                            clinic_name=visit.practice.name if visit.practice else "Unknown",
+                            created_by_user_id=visit.vet_user_id or visit.created_by,
+                            version=1,
+                            is_current=True
+                        )
+                        db.add(new_medical_record)
+                        logger.info(f"Created new medical record with AI summary for pet {visit.pet_id}")
+                    
+                    logger.info(f"Successfully generated and saved AI medical summary for visit {visit_id}")
+                    
+            except Exception as e:
+                logger.error(f"Failed to generate medical summary for visit {visit_id}: {str(e)}")
+                # Don't fail the entire webhook if medical summary generation fails
+                # The transcription was still successful
+            
             await db.commit()
             
-            logger.info(f"Successfully updated visit {visit_id} with transcription")
+            logger.info(f"Successfully updated visit {visit_id} with transcription and medical summary")
             
             return {
                 "status": "success",
                 "visit_id": str(visit_id),
-                "message": "Transcription processed successfully"
+                "message": "Transcription processed successfully with AI medical summary"
             }
         else:
             # Mark as failed
@@ -257,6 +345,7 @@ async def handle_transcription_complete_by_s3_key(
         
         # Update visit with transcription data (same logic as above)
         if payload.status.lower() == "completed":
+            # Update visit record with transcription
             await db.execute(
                 update(Visit)
                 .where(Visit.id == visit.id)
@@ -274,14 +363,98 @@ async def handle_transcription_complete_by_s3_key(
                 )
             )
             
+            # Enhanced functionality: Generate AI medical summary
+            try:
+                logger.info(f"Generating AI medical summary for visit {visit.id}")
+                
+                # 1. Get the pet information for this visit
+                pet_result = await db.execute(
+                    select(Pet).where(Pet.id == visit.pet_id)
+                )
+                pet = pet_result.scalar_one_or_none()
+                
+                if not pet:
+                    logger.warning(f"Pet not found for visit {visit.id}, skipping medical summary")
+                else:
+                    # 2. Get the most recent previous visit for this pet (excluding current visit)
+                    previous_visit_result = await db.execute(
+                        select(Visit)
+                        .where(
+                            Visit.pet_id == visit.pet_id,
+                            Visit.id != visit.id,
+                            Visit.state == VisitState.PROCESSED.value,
+                            Visit.full_text.isnot(None)
+                        )
+                        .order_by(desc(Visit.visit_date))
+                        .limit(1)
+                    )
+                    previous_visit = previous_visit_result.scalar_one_or_none()
+                    
+                    # 3. Get the current medical record for this pet
+                    medical_record_repo = MedicalRecordRepository(db)
+                    current_medical_records = await medical_record_repo.get_current_records_by_pet_id(visit.pet_id)
+                    current_medical_record = current_medical_records[0] if current_medical_records else None
+                    
+                    # 4. Generate AI medical summary
+                    pet_info = {
+                        'name': pet.name,
+                        'species': pet.species
+                    }
+                    
+                    previous_transcript = previous_visit.full_text if previous_visit else None
+                    current_description = current_medical_record.description if current_medical_record else None
+                    
+                    updated_description = await medical_summary_service.update_medical_record_with_summary(
+                        current_visit_transcript=payload.transcriptText,
+                        previous_visit_transcript=previous_transcript,
+                        current_medical_record_description=current_description,
+                        pet_info=pet_info
+                    )
+                    
+                    # 5. Update the medical record with the AI summary
+                    if current_medical_record:
+                        # Update existing medical record
+                        await db.execute(
+                            update(MedicalRecord)
+                            .where(MedicalRecord.id == current_medical_record.id)
+                            .values(
+                                description=updated_description,
+                                updated_at=datetime.utcnow()
+                            )
+                        )
+                        logger.info(f"Updated existing medical record {current_medical_record.id} with AI summary")
+                    else:
+                        # Create new medical record if none exists
+                        new_medical_record = MedicalRecord(
+                            pet_id=visit.pet_id,
+                            record_type="visit_summary",
+                            title=f"Visit Summary - {datetime.utcnow().strftime('%Y-%m-%d')}",
+                            description=updated_description,
+                            visit_date=visit.visit_date,
+                            veterinarian_name=visit.veterinarian.name if visit.veterinarian else "Unknown",
+                            clinic_name=visit.practice.name if visit.practice else "Unknown",
+                            created_by_user_id=visit.vet_user_id or visit.created_by,
+                            version=1,
+                            is_current=True
+                        )
+                        db.add(new_medical_record)
+                        logger.info(f"Created new medical record with AI summary for pet {visit.pet_id}")
+                    
+                    logger.info(f"Successfully generated and saved AI medical summary for visit {visit.id}")
+                    
+            except Exception as e:
+                logger.error(f"Failed to generate medical summary for visit {visit.id}: {str(e)}")
+                # Don't fail the entire webhook if medical summary generation fails
+                # The transcription was still successful
+            
             await db.commit()
             
-            logger.info(f"Successfully updated visit {visit.id} with transcription")
+            logger.info(f"Successfully updated visit {visit.id} with transcription and medical summary")
             
             return {
                 "status": "success",
                 "visit_id": str(visit.id),
-                "message": "Transcription processed successfully"
+                "message": "Transcription processed successfully with AI medical summary"
             }
         else:
             # Mark as failed
