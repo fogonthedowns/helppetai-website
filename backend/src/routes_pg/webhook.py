@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, desc
+from sqlalchemy.orm import selectinload
 
 from ..database_pg import get_db_session
 from ..models_pg.visit import Visit, VisitState
@@ -94,9 +95,15 @@ async def handle_transcription_complete(
                 detail="Could not extract visit ID from file key"
             )
         
-        # Find the visit record
+        # Find the visit record with relationships loaded
         result = await db.execute(
-            select(Visit).where(Visit.id == visit_id)
+            select(Visit)
+            .options(
+                selectinload(Visit.veterinarian),
+                selectinload(Visit.practice),
+                selectinload(Visit.pet)
+            )
+            .where(Visit.id == visit_id)
         )
         visit = result.scalar_one_or_none()
         
@@ -131,11 +138,8 @@ async def handle_transcription_complete(
             try:
                 logger.info(f"Generating AI medical summary for visit {visit_id}")
                 
-                # 1. Get the pet information for this visit
-                pet_result = await db.execute(
-                    select(Pet).where(Pet.id == visit.pet_id)
-                )
-                pet = pet_result.scalar_one_or_none()
+                # 1. Get the pet information for this visit (already loaded with visit)
+                pet = visit.pet
                 
                 if not pet:
                     logger.warning(f"Pet not found for visit {visit_id}, skipping medical summary")
@@ -177,13 +181,15 @@ async def handle_transcription_complete(
                         pet_species=pet.species
                     )
                     
+                    logger.info(f"Generated AI summary: {len(ai_summary)} chars - {ai_summary[:100]}...")
+                    
                     # 5. Update the medical record with the AI summary using versioning system
                     if current_medical_record:
                         # Create new version with REPLACED description (not appended) - versioning allows stepping back
                         update_data = {
                             'description': ai_summary,  # REPLACE, don't append
                             'visit_date': visit.visit_date,  # Update to current visit date
-                            'veterinarian_name': visit.veterinarian.name if visit.veterinarian else current_medical_record.veterinarian_name,
+                            'veterinarian_name': visit.veterinarian.full_name if visit.veterinarian else current_medical_record.veterinarian_name,
                             'clinic_name': visit.practice.name if visit.practice else current_medical_record.clinic_name,
                         }
                         
@@ -193,6 +199,7 @@ async def handle_transcription_complete(
                             visit.vet_user_id or visit.created_by
                         )
                         logger.info(f"Created new version {new_record.version} of medical record {current_medical_record.id} with AI summary")
+                        logger.info(f"New record description: {new_record.description[:200]}...")
                     else:
                         # Create new medical record if none exists
                         new_medical_record = MedicalRecord(
@@ -201,7 +208,7 @@ async def handle_transcription_complete(
                             title=f"AI Medical Summary - {pet.name}",
                             description=ai_summary,
                             visit_date=visit.visit_date,
-                            veterinarian_name=visit.veterinarian.name if visit.veterinarian else "Unknown",
+                            veterinarian_name=visit.veterinarian.full_name if visit.veterinarian else "Unknown",
                             clinic_name=visit.practice.name if visit.practice else "Unknown",
                             created_by_user_id=visit.vet_user_id or visit.created_by,
                             version=1,
@@ -209,6 +216,7 @@ async def handle_transcription_complete(
                         )
                         created_record = await medical_record_repo.create(new_medical_record)
                         logger.info(f"Created new medical record with AI summary for pet {visit.pet_id}")
+                        logger.info(f"New record description: {created_record.description[:200]}...")
                     
                     logger.info(f"Successfully generated and saved AI medical summary for visit {visit_id}")
                     
@@ -317,12 +325,18 @@ async def handle_transcription_complete_by_s3_key(
     try:
         logger.info(f"Received authenticated transcription webhook for S3 key: {payload.originalFileKey}")
         
-        # Find visit by S3 key in audio_transcript_url
+        # Find visit by S3 key in audio_transcript_url with relationships loaded
         # The upload code stores URLs in format: https://bucket.s3.region.amazonaws.com/key
         https_url = f"https://{payload.originalBucket}.s3.us-west-1.amazonaws.com/{payload.originalFileKey}"
         
         result = await db.execute(
-            select(Visit).where(Visit.audio_transcript_url == https_url)
+            select(Visit)
+            .options(
+                selectinload(Visit.veterinarian),
+                selectinload(Visit.practice),
+                selectinload(Visit.pet)
+            )
+            .where(Visit.audio_transcript_url == https_url)
         )
         visit = result.scalar_one_or_none()
         
@@ -330,7 +344,13 @@ async def handle_transcription_complete_by_s3_key(
             # Try with s3:// format as fallback
             s3_url = f"s3://{payload.originalBucket}/{payload.originalFileKey}"
             result = await db.execute(
-                select(Visit).where(Visit.audio_transcript_url == s3_url)
+                select(Visit)
+                .options(
+                    selectinload(Visit.veterinarian),
+                    selectinload(Visit.practice),
+                    selectinload(Visit.pet)
+                )
+                .where(Visit.audio_transcript_url == s3_url)
             )
             visit = result.scalar_one_or_none()
         
@@ -338,7 +358,13 @@ async def handle_transcription_complete_by_s3_key(
             # Try with simplified https format (without region)
             simple_https_url = f"https://{payload.originalBucket}.s3.amazonaws.com/{payload.originalFileKey}"
             result = await db.execute(
-                select(Visit).where(Visit.audio_transcript_url == simple_https_url)
+                select(Visit)
+                .options(
+                    selectinload(Visit.veterinarian),
+                    selectinload(Visit.practice),
+                    selectinload(Visit.pet)
+                )
+                .where(Visit.audio_transcript_url == simple_https_url)
             )
             visit = result.scalar_one_or_none()
         
@@ -373,11 +399,8 @@ async def handle_transcription_complete_by_s3_key(
             try:
                 logger.info(f"Generating AI medical summary for visit {visit.id}")
                 
-                # 1. Get the pet information for this visit
-                pet_result = await db.execute(
-                    select(Pet).where(Pet.id == visit.pet_id)
-                )
-                pet = pet_result.scalar_one_or_none()
+                # 1. Get the pet information for this visit (already loaded with visit)
+                pet = visit.pet
                 
                 if not pet:
                     logger.warning(f"Pet not found for visit {visit.id}, skipping medical summary")
@@ -419,13 +442,15 @@ async def handle_transcription_complete_by_s3_key(
                         pet_species=pet.species
                     )
                     
+                    logger.info(f"Generated AI summary: {len(ai_summary)} chars - {ai_summary[:100]}...")
+                    
                     # 5. Update the medical record with the AI summary using versioning system
                     if current_medical_record:
                         # Create new version with REPLACED description (not appended) - versioning allows stepping back
                         update_data = {
                             'description': ai_summary,  # REPLACE, don't append
                             'visit_date': visit.visit_date,  # Update to current visit date
-                            'veterinarian_name': visit.veterinarian.name if visit.veterinarian else current_medical_record.veterinarian_name,
+                            'veterinarian_name': visit.veterinarian.full_name if visit.veterinarian else current_medical_record.veterinarian_name,
                             'clinic_name': visit.practice.name if visit.practice else current_medical_record.clinic_name,
                         }
                         
@@ -435,6 +460,7 @@ async def handle_transcription_complete_by_s3_key(
                             visit.vet_user_id or visit.created_by
                         )
                         logger.info(f"Created new version {new_record.version} of medical record {current_medical_record.id} with AI summary")
+                        logger.info(f"New record description: {new_record.description[:200]}...")
                     else:
                         # Create new medical record if none exists
                         new_medical_record = MedicalRecord(
@@ -443,7 +469,7 @@ async def handle_transcription_complete_by_s3_key(
                             title=f"AI Medical Summary - {pet.name}",
                             description=ai_summary,
                             visit_date=visit.visit_date,
-                            veterinarian_name=visit.veterinarian.name if visit.veterinarian else "Unknown",
+                            veterinarian_name=visit.veterinarian.full_name if visit.veterinarian else "Unknown",
                             clinic_name=visit.practice.name if visit.practice else "Unknown",
                             created_by_user_id=visit.vet_user_id or visit.created_by,
                             version=1,
@@ -451,6 +477,7 @@ async def handle_transcription_complete_by_s3_key(
                         )
                         created_record = await medical_record_repo.create(new_medical_record)
                         logger.info(f"Created new medical record with AI summary for pet {visit.pet_id}")
+                        logger.info(f"New record description: {created_record.description[:200]}...")
                     
                     logger.info(f"Successfully generated and saved AI medical summary for visit {visit.id}")
                     
@@ -549,7 +576,13 @@ async def update_visit_metadata(
             # Format 1: https://bucket.s3.region.amazonaws.com/key
             https_url = f"https://{bucket_name}.s3.us-west-1.amazonaws.com/{x_s3_key}"
             result = await db.execute(
-                select(Visit).where(Visit.audio_transcript_url == https_url)
+                select(Visit)
+                .options(
+                    selectinload(Visit.veterinarian),
+                    selectinload(Visit.practice),
+                    selectinload(Visit.pet)
+                )
+                .where(Visit.audio_transcript_url == https_url)
             )
             visit = result.scalar_one_or_none()
             
@@ -557,7 +590,13 @@ async def update_visit_metadata(
                 # Format 2: s3://bucket/key
                 s3_url = f"s3://{bucket_name}/{x_s3_key}"
                 result = await db.execute(
-                    select(Visit).where(Visit.audio_transcript_url == s3_url)
+                    select(Visit)
+                    .options(
+                        selectinload(Visit.veterinarian),
+                        selectinload(Visit.practice),
+                        selectinload(Visit.pet)
+                    )
+                    .where(Visit.audio_transcript_url == s3_url)
                 )
                 visit = result.scalar_one_or_none()
             
@@ -565,7 +604,13 @@ async def update_visit_metadata(
                 # Format 3: https://bucket.s3.amazonaws.com/key (without region)
                 simple_https_url = f"https://{bucket_name}.s3.amazonaws.com/{x_s3_key}"
                 result = await db.execute(
-                    select(Visit).where(Visit.audio_transcript_url == simple_https_url)
+                    select(Visit)
+                    .options(
+                        selectinload(Visit.veterinarian),
+                        selectinload(Visit.practice),
+                        selectinload(Visit.pet)
+                    )
+                    .where(Visit.audio_transcript_url == simple_https_url)
                 )
                 visit = result.scalar_one_or_none()
                 
@@ -577,9 +622,15 @@ async def update_visit_metadata(
         if not visit:
             try:
                 visit_uuid = UUID(visit_id)
-                # Find the visit record by UUID
+                # Find the visit record by UUID with relationships loaded
                 result = await db.execute(
-                    select(Visit).where(Visit.id == visit_uuid)
+                    select(Visit)
+                    .options(
+                        selectinload(Visit.veterinarian),
+                        selectinload(Visit.practice),
+                        selectinload(Visit.pet)
+                    )
+                    .where(Visit.id == visit_uuid)
                 )
                 visit = result.scalar_one_or_none()
                 logger.info(f"Looked up visit by UUID: {visit_id}")
@@ -597,7 +648,13 @@ async def update_visit_metadata(
                 # Format 1: https://bucket.s3.region.amazonaws.com/key
                 https_url = f"https://{bucket_name}.s3.us-west-1.amazonaws.com/{s3_key}"
                 result = await db.execute(
-                    select(Visit).where(Visit.audio_transcript_url == https_url)
+                    select(Visit)
+                    .options(
+                        selectinload(Visit.veterinarian),
+                        selectinload(Visit.practice),
+                        selectinload(Visit.pet)
+                    )
+                    .where(Visit.audio_transcript_url == https_url)
                 )
                 visit = result.scalar_one_or_none()
                 
@@ -605,7 +662,13 @@ async def update_visit_metadata(
                     # Format 2: s3://bucket/key
                     s3_url = f"s3://{bucket_name}/{s3_key}"
                     result = await db.execute(
-                        select(Visit).where(Visit.audio_transcript_url == s3_url)
+                        select(Visit)
+                        .options(
+                            selectinload(Visit.veterinarian),
+                            selectinload(Visit.practice),
+                            selectinload(Visit.pet)
+                        )
+                        .where(Visit.audio_transcript_url == s3_url)
                     )
                     visit = result.scalar_one_or_none()
                 
@@ -613,7 +676,13 @@ async def update_visit_metadata(
                     # Format 3: https://bucket.s3.amazonaws.com/key (without region)
                     simple_https_url = f"https://{bucket_name}.s3.amazonaws.com/{s3_key}"
                     result = await db.execute(
-                        select(Visit).where(Visit.audio_transcript_url == simple_https_url)
+                        select(Visit)
+                        .options(
+                            selectinload(Visit.veterinarian),
+                            selectinload(Visit.practice),
+                            selectinload(Visit.pet)
+                        )
+                        .where(Visit.audio_transcript_url == simple_https_url)
                     )
                     visit = result.scalar_one_or_none()
                     
@@ -679,3 +748,96 @@ async def webhook_health_check():
         "service": "transcription_webhook",
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+# Phone Call Service Integration
+from ..services.phone_call_service import handle_phone_webhook, setup_retell_agent, update_retell_agent, RetellWebhookRequest
+
+
+@router.post("/phone")
+async def phone_webhook(
+    raw_request: Request,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Handle phone call webhooks from Retell AI"""
+    try:
+        # Log the raw request body for debugging
+        body = await raw_request.body()
+        logger.info(f"Raw webhook request body: {body.decode()}")
+        
+        # Try to parse as JSON first to see the structure
+        import json
+        try:
+            json_data = json.loads(body.decode())
+            logger.info(f"Parsed JSON structure: {json_data}")
+        except json.JSONDecodeError as je:
+            logger.error(f"Failed to parse JSON: {je}")
+        
+        # Parse the request
+        request = RetellWebhookRequest.parse_raw(body)
+        
+        # Log different types of requests
+        if request.event:
+            logger.info(f"Received phone webhook event: {request.event}")
+        elif request.function_call:
+            logger.info(f"Received phone webhook function call: {request.function_call.name}")
+        elif request.name:
+            logger.info(f"Received phone webhook function call (new format): {request.name}")
+        else:
+            logger.info("Received phone webhook with unknown format")
+        
+        # Handle the phone webhook using the service
+        result = await handle_phone_webhook(request, db)
+        
+        # Log success differently based on request type
+        if request.event:
+            logger.info(f"Phone webhook event processed successfully: {request.event}")
+        elif request.function_call:
+            logger.info(f"Phone webhook function call processed successfully: {request.function_call.name}")
+        elif request.name:
+            logger.info(f"Phone webhook function call processed successfully: {request.name}")
+        else:
+            logger.info("Phone webhook processed successfully")
+            
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error processing phone webhook: {str(e)}")
+        return {
+            "response": {
+                "success": False,
+                "message": "I'm experiencing a technical issue. Let me try that again."
+            }
+        }
+
+
+@router.post("/setup-retell")
+async def setup_retell_endpoint(phone_number: str):
+    """Setup Retell AI agent for phone appointments (creates new agent)"""
+    try:
+        logger.info(f"Setting up Retell AI for phone number: {phone_number}")
+        
+        result = await setup_retell_agent(phone_number)
+        
+        logger.info(f"Retell AI setup completed for: {phone_number}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error setting up Retell AI: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/update-retell")
+async def update_retell_endpoint(agent_id: str, phone_number: str = None):
+    """Update existing Retell AI agent configuration"""
+    try:
+        logger.info(f"Updating Retell AI agent: {agent_id}")
+        
+        result = await update_retell_agent(agent_id, phone_number)
+        
+        logger.info(f"Retell AI agent updated: {agent_id}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error updating Retell AI agent: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

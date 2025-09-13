@@ -171,7 +171,7 @@ deploy-prep: build-prod
 	@echo "2. Set environment variables in Fargate task definition:"
 	@echo "   - RDS_HOSTNAME, RDS_USERNAME, RDS_PASSWORD"
 	@echo "   - OPENAI_API_KEY, PINECONE_API_KEY"
-	@echo "   - JWT_SECRET_KEY"
+	@echo "   - JWT_SECRET_KEY, RETELL_API_KEY"
 	@echo ""
 	@echo "3. Configure CORS_ORIGINS=https://helppet.ai"
 
@@ -238,6 +238,9 @@ SECRETS_ARN := $(shell aws secretsmanager describe-secret --secret-id helppet-pr
 # JWT secret - should be set as environment variable or retrieved from AWS Secrets Manager
 JWT_SECRET ?= $(shell echo "$$JWT_SECRET_KEY")
 
+# Retell AI API Key - retrieved from .env.production file (required for deployment)
+RETELL_API_KEY := $(shell grep '^RETELL_API_KEY=' .env.production 2>/dev/null | cut -d'=' -f2- | tr -d '"')
+
 # Push image to ECR
 .PHONY: push-image
 push-image:
@@ -250,10 +253,18 @@ push-image:
 # Update ECS service with new task definition
 .PHONY: update-service
 update-service: build-prod push-image
+	@echo "🔍 Checking required environment variables..."
+	@if [ -z "$(RETELL_API_KEY)" ]; then \
+		echo "❌ ERROR: RETELL_API_KEY environment variable is required but not set!"; \
+		echo "💡 Run: export RETELL_API_KEY=your_api_key"; \
+		exit 1; \
+	fi
+	@echo "✅ RETELL_API_KEY is set"
 	@echo "▶ Cluster:       $(CLUSTER_NAME)"
 	@echo "▶ Service:       $(SERVICE_NAME)" 
 	@echo "▶ RDS Host:      $(RDS_HOSTNAME)"
 	@echo "▶ Exec Role:     $(EXEC_ROLE_ARN)"
+	@echo "▶ Retell API:    $(shell echo "$(RETELL_API_KEY)" | cut -c1-10)..."
 	@echo ""
 	@echo "⟳ Registering new task-definition with RDS connection..."
 	$(eval TASK_DEF_ARN := $(shell \
@@ -264,7 +275,7 @@ update-service: build-prod push-image
 	    --execution-role-arn "$(EXEC_ROLE_ARN)" \
 	    --task-role-arn "$(TASK_ROLE_ARN)" \
 	    --cpu $(TASK_CPU) --memory $(TASK_MEMORY) \
-	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"}],"secrets":[{"name":"RDS_PASSWORD","valueFrom":"$(SECRETS_ARN)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
+	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"},{"name":"RETELL_API_KEY","value":"$(RETELL_API_KEY)"}],"secrets":[{"name":"RDS_PASSWORD","valueFrom":"$(SECRETS_ARN)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
 	    --query 'taskDefinition.taskDefinitionArn' \
 	    --output text))
 	@echo "✅ New task-definition: $(TASK_DEF_ARN)"
