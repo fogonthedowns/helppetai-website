@@ -65,6 +65,8 @@ from .scheduling_schemas import (
     AvailableSlotRequest,
     AvailableSlot,
     AvailableSlotsResponse,
+    TimeSlot,
+    VetAvailabilitySlots,
     ConflictCheckRequest,
     ConflictCheckResponse,
     BulkPracticeHoursCreate,

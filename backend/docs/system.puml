@@ -134,6 +134,90 @@ class Appointment <<ACTIVE_COLOR>> {
   + pets : List[Pet]
 }
 
+' Scheduling System Models
+class PracticeHours <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + practice_id : UUID (FK)
+  + day_of_week : Integer (0=Sunday, 6=Saturday)
+  + open_time : Time (nullable)
+  + close_time : Time (nullable)
+  + effective_from : Date
+  + effective_until : Date (nullable)
+  + notes : Text (nullable)
+  + is_active : Boolean
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + is_closed : Boolean
+  + day_name : String
+  --
+  Methods:
+  + is_time_within_hours(check_time: Time) : Boolean
+}
+
+class VetAvailability <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + vet_user_id : UUID (FK)
+  + practice_id : UUID (FK)
+  + date : Date
+  + start_time : Time
+  + end_time : Time
+  + availability_type : AvailabilityType (AVAILABLE|SURGERY_BLOCK|UNAVAILABLE|EMERGENCY_ONLY)
+  + notes : Text (nullable)
+  + is_active : Boolean
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + duration_minutes : Integer
+  --
+  Methods:
+  + overlaps_with_time(start: Time, end: Time) : Boolean
+}
+
+class RecurringAvailability <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + vet_user_id : UUID (FK)
+  + practice_id : UUID (FK)
+  + day_of_week : Integer (0=Sunday, 6=Saturday)
+  + start_time : Time
+  + end_time : Time
+  + availability_type : AvailabilityType (AVAILABLE|SURGERY_BLOCK|UNAVAILABLE|EMERGENCY_ONLY)
+  + effective_from : Date
+  + effective_until : Date (nullable)
+  + is_active : Boolean
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + day_name : String
+  + duration_minutes : Integer
+  --
+  Methods:
+  + is_effective_on_date(check_date: Date) : Boolean
+}
+
+class AppointmentConflict <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + appointment_id : UUID (FK)
+  + conflicting_appointment_id : UUID (FK, nullable)
+  + conflict_type : ConflictType (DOUBLE_BOOKED|OVERLAPPING|OUTSIDE_AVAILABILITY|PRACTICE_CLOSED)
+  + severity : ConflictSeverity (WARNING|ERROR)
+  + message : Text
+  + resolved : Boolean
+  + resolved_by_user_id : UUID (FK, nullable)
+  + resolved_at : DateTime (nullable)
+  + created_at : DateTime
+  --
+  Properties:
+  + is_error : Boolean
+  + is_warning : Boolean
+  --
+  Methods:
+  + resolve(resolved_by_user_id: UUID) : None
+}
+
 ' Junction Tables
 class AppointmentPet <<JUNCTION_COLOR>> {
   + id : UUID (PK)
@@ -230,6 +314,18 @@ Pet ||--o{ AppointmentPet : "pet"
 
 Appointment ||--o{ AppointmentPet : "appointment"
 
+' Scheduling System Relationships
+VeterinaryPractice ||--o{ PracticeHours : "practice_hours"
+VeterinaryPractice ||--o{ VetAvailability : "vet_availability"
+VeterinaryPractice ||--o{ RecurringAvailability : "recurring_availability"
+
+User ||--o{ VetAvailability : "vet_availability"
+User ||--o{ RecurringAvailability : "recurring_availability"
+User ||--o{ AppointmentConflict : "resolved_by"
+
+Appointment ||--o{ AppointmentConflict : "appointment_conflicts"
+Appointment ||--o{ AppointmentConflict : "conflicting_appointment"
+
 ' Potentially Unused Relationships
 Pet ||--o{ MedicalRecord : "medical_records" 
 User ||--o{ MedicalRecord : "created_by"
@@ -242,5 +338,13 @@ note top of ContactForm : **SIMPLE FORM MODEL**\nStandalone contact form\nfor pr
 note bottom of Visit : **CORE MODEL**\nHandles visit transcripts,\naudio recordings, and\nmedical summaries.\nReplaces much MedicalRecord\nfunctionality.
 
 note bottom of Appointment : **ACTIVE MODEL**\nFull appointment scheduling\nsystem with pet associations\nand status tracking.
+
+note top of PracticeHours : **SCHEDULING SYSTEM**\nDefines when practices are open.\nHard constraint for all appointments.\nSupports different hours per day\nand date-range effectiveness.
+
+note top of VetAvailability : **SCHEDULING SYSTEM**\nSpecific vet availability for\nindividual dates. Overrides\nrecurring schedules when present.\nSupports different availability types.
+
+note top of RecurringAvailability : **SCHEDULING SYSTEM**\nTemplate for generating regular\nvet schedules. Defines weekly\npatterns that can be used to\ncreate VetAvailability records.
+
+note bottom of AppointmentConflict : **CONFLICT TRACKING**\nTracks scheduling conflicts for\nstaff review. Supports different\nconflict types and severity levels.\nCan be resolved by staff members.
 
 @enduml

@@ -296,6 +296,26 @@ class AvailableSlotsResponse(BaseResponse):
     practice_id: uuid.UUID = Field(..., description="Practice ID")
 
 
+class TimeSlot(BaseModel):
+    """Schema for individual time slot with availability status"""
+    start_time: dt.time = Field(..., description="Slot start time")
+    end_time: dt.time = Field(..., description="Slot end time")
+    available: bool = Field(..., description="Whether this slot is available for booking")
+    availability_type: AvailabilityType = Field(..., description="Type of availability")
+    conflicting_appointment: Optional[str] = Field(None, description="Title of conflicting appointment if any")
+    notes: Optional[str] = Field(None, description="Additional notes about availability")
+
+
+class VetAvailabilitySlots(BaseModel):
+    """Schema for vet availability broken down into bookable slots"""
+    vet_user_id: uuid.UUID = Field(..., description="Vet user ID")
+    date: dt.date = Field(..., description="Date of availability")
+    practice_id: uuid.UUID = Field(..., description="Practice ID")
+    slots: List[TimeSlot] = Field(..., description="Available time slots")
+    total_slots: int = Field(..., description="Total number of slots")
+    available_slots: int = Field(..., description="Number of available slots")
+
+
 class ConflictCheckRequest(BaseModel):
     """Schema for checking appointment conflicts"""
     appointment_id: uuid.UUID = Field(..., description="Appointment to check")

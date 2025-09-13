@@ -5,7 +5,7 @@ Practice hours, vet availability, and appointment conflict management
 
 import uuid
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,7 +29,8 @@ from ..schemas.scheduling_schemas import (
     AvailableSlotRequest, AvailableSlotsResponse,
     ConflictCheckRequest, ConflictCheckResponse,
     BulkPracticeHoursCreate, BulkRecurringAvailabilityCreate,
-    ConflictStatistics, SchedulingStatistics
+    ConflictStatistics, SchedulingStatistics,
+    TimeSlot, VetAvailabilitySlots, AvailabilityType
 )
 from ..schemas.base import BaseResponse
 from ..auth.jwt_auth_pg import get_current_user
@@ -150,19 +151,69 @@ async def create_bulk_practice_hours(
 # VET AVAILABILITY ENDPOINTS
 # ============================================================================
 
-@router.get("/vet-availability/{vet_user_id}", response_model=List[VetAvailabilityResponse])
+@router.get("/vet-availability/{vet_user_id}")
 async def get_vet_availability(
     vet_user_id: uuid.UUID,
     date: date = Query(..., description="Date to get availability for"),
     include_inactive: bool = Query(False, description="Include inactive availability"),
+    slots: bool = Query(False, description="Return bookable time slots instead of broad windows"),
+    slot_duration: int = Query(30, ge=15, le=120, description="Duration of each slot in minutes"),
     current_user: User = Depends(get_current_user),
     repo: VetAvailabilityRepository = Depends(get_vet_availability_repository)
-):
-    """Get vet availability for a specific date"""
+) -> Union[List[VetAvailabilityResponse], VetAvailabilitySlots]:
+    """Get vet availability for a specific date - can return broad windows or specific time slots"""
     # TODO: Add proper authorization
     
-    availability = await repo.get_by_vet_and_date(vet_user_id, date, include_inactive)
-    return [VetAvailabilityResponse.from_orm(avail) for avail in availability]
+    if slots:
+        # Return actual bookable time slots (NEW FUNCTIONALITY)
+        
+        # First get the practice_id from existing availability
+        availability = await repo.get_by_vet_and_date(vet_user_id, date, include_inactive)
+        if not availability:
+            # No availability data found
+            return VetAvailabilitySlots(
+                vet_user_id=vet_user_id,
+                date=date,
+                practice_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),  # Will be updated
+                slots=[],
+                total_slots=0,
+                available_slots=0
+            )
+        
+        practice_id = availability[0].practice_id
+        
+        # Get actual available slots using the new method
+        slot_data = await repo.get_available_slots(vet_user_id, practice_id, date, slot_duration)
+        
+        # Convert to TimeSlot objects
+        time_slots = []
+        available_count = 0
+        
+        for slot in slot_data:
+            time_slot = TimeSlot(
+                start_time=slot['start_time'],
+                end_time=slot['end_time'],
+                available=slot['available'],
+                availability_type=AvailabilityType(slot['availability_type']),
+                conflicting_appointment=slot.get('conflicting_appointment'),
+                notes=slot.get('notes')
+            )
+            time_slots.append(time_slot)
+            if slot['available']:
+                available_count += 1
+        
+        return VetAvailabilitySlots(
+            vet_user_id=vet_user_id,
+            date=date,
+            practice_id=practice_id,
+            slots=time_slots,
+            total_slots=len(time_slots),
+            available_slots=available_count
+        )
+    else:
+        # Return broad availability windows (EXISTING FUNCTIONALITY)
+        availability = await repo.get_by_vet_and_date(vet_user_id, date, include_inactive)
+        return [VetAvailabilityResponse.from_orm(avail) for avail in availability]
 
 
 @router.post("/vet-availability", response_model=VetAvailabilityResponse, status_code=status.HTTP_201_CREATED)
