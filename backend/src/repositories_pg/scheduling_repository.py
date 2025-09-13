@@ -180,6 +180,20 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
             return []
         
         
+        # Get existing appointments for this vet on this date
+        from ..models_pg.appointment import Appointment
+        appointments_query = select(Appointment).where(
+            and_(
+                Appointment.assigned_vet_user_id == vet_user_id,
+                Appointment.practice_id == practice_id,
+                func.date(Appointment.appointment_date) == date,
+                Appointment.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+            )
+        )
+        
+        appointments_result = await self.session.execute(appointments_query)
+        existing_appointments = list(appointments_result.scalars().all())
+        
         # Process ALL availability records and merge overlapping time windows
         all_slots = []
         slot_duration = timedelta(minutes=slot_duration_minutes)
@@ -192,14 +206,35 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
             while current_time + slot_duration <= end_time:
                 slot_end = current_time + slot_duration
                 
+                # Check if this slot conflicts with any existing appointments
+                slot_available = True
+                conflicting_appointment = None
+                conflicting_type = None
+                
+                for appointment in existing_appointments:
+                    appt_start = appointment.appointment_date
+                    appt_end = appt_start + timedelta(minutes=appointment.duration_minutes)
+                    
+                    # Convert to naive datetimes for comparison (remove timezone info)
+                    appt_start_naive = appt_start.replace(tzinfo=None) if appt_start.tzinfo else appt_start
+                    appt_end_naive = appt_end.replace(tzinfo=None) if appt_end.tzinfo else appt_end
+                    
+                    # Check for overlap: slot overlaps if it starts before appointment ends 
+                    # and ends after appointment starts
+                    if (current_time < appt_end_naive and slot_end > appt_start_naive):
+                        slot_available = False
+                        conflicting_appointment = appointment.title
+                        conflicting_type = appointment.appointment_type
+                        break
+                
                 all_slots.append({
                     'start_time': current_time.time(),
                     'end_time': slot_end.time(),
                     'availability_type': availability.availability_type.value,
-                    'available': True,  # Simplified - not checking appointments yet
-                    'conflicting_appointment': None,
-                    'conflicting_type': None,
-                    'notes': 'Available'
+                    'available': slot_available,
+                    'conflicting_appointment': conflicting_appointment,
+                    'conflicting_type': conflicting_type,
+                    'notes': 'Slot already booked' if not slot_available else 'Available'
                 })
                 
                 current_time = slot_end
