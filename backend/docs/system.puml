@@ -1,0 +1,246 @@
+@startuml HelpPet AI Database Model
+
+!define ACTIVE_COLOR #E8F5E8
+!define UNUSED_COLOR #FFE8E8
+!define JUNCTION_COLOR #F0F0F0
+
+' Active Models - Core System
+class User <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + username : String (unique)
+  + password_hash : String
+  + email : String (unique, nullable)
+  + full_name : String
+  + role : UserRole (VET_STAFF|PET_OWNER|ADMIN)
+  + practice_id : UUID (nullable)
+  + is_active : Boolean
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + is_vet_staff : Boolean
+  + is_pet_owner : Boolean
+  + is_admin : Boolean
+}
+
+class VeterinaryPractice <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + name : String
+  + description : Text (nullable)
+  + phone : String (nullable)
+  + email : String (nullable)
+  + website : String (nullable)
+  + address_line1 : String (nullable)
+  + address_line2 : String (nullable)
+  + city : String (nullable)
+  + state : String (nullable)
+  + zip_code : String (nullable)
+  + country : String (default: "US")
+  + license_number : String (unique, nullable)
+  + tax_id : String (nullable)
+  + hours_of_operation : Text (nullable)
+  + emergency_contact : String (nullable)
+  + max_appointments_per_day : Integer (nullable)
+  + is_active : Boolean
+  + accepts_new_patients : Boolean
+  + specialties : JSON (List[String])
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + full_address : String (nullable)
+}
+
+class PetOwner <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + user_id : UUID (FK, nullable)
+  + full_name : String
+  + email : String (nullable)
+  + phone : String (nullable)
+  + emergency_contact : String (nullable)
+  + secondary_phone : String (nullable)
+  + address : Text (nullable)
+  + preferred_communication : PreferredCommunication (EMAIL|SMS|PHONE)
+  + notifications_enabled : Boolean
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + primary_practice_association : PetOwnerPracticeAssociation (nullable)
+}
+
+class Pet <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + owner_id : UUID (FK)
+  + name : String
+  + species : String
+  + breed : String (nullable)
+  + color : String (nullable)
+  + gender : String (nullable)
+  + weight : Float (nullable)
+  + date_of_birth : Date (nullable)
+  + microchip_id : String (unique, nullable)
+  + spayed_neutered : Boolean (nullable)
+  + allergies : Text (nullable)
+  + medications : Text (nullable)
+  + medical_notes : Text (nullable)
+  + emergency_contact : String (nullable)
+  + emergency_phone : String (nullable)
+  + is_active : Boolean
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + age_years : Integer (nullable)
+  + display_name : String
+}
+
+class Visit <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + pet_id : UUID (FK)
+  + practice_id : UUID (FK)
+  + vet_user_id : UUID (FK, nullable)
+  + visit_date : DateTime
+  + full_text : Text
+  + audio_transcript_url : String (nullable)
+  + summary : Text (nullable)
+  + state : String (NEW|PROCESSING|PROCESSED|FAILED)
+  + additional_data : JSON
+  + created_at : DateTime
+  + updated_at : DateTime
+  + created_by : UUID (FK, nullable)
+  --
+  Methods:
+  + to_dict() : Dict[str, Any]
+}
+
+class Appointment <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + practice_id : UUID (FK)
+  + pet_owner_id : UUID (FK)
+  + assigned_vet_user_id : UUID (FK, nullable)
+  + created_by_user_id : UUID (FK)
+  + appointment_date : DateTime
+  + duration_minutes : Integer (default: 30)
+  + appointment_type : String (CHECKUP|EMERGENCY|SURGERY|CONSULTATION)
+  + status : String (SCHEDULED|IN_PROGRESS|COMPLETE|ERROR|CONFIRMED|COMPLETED|CANCELLED|NO_SHOW)
+  + title : String
+  + description : Text (nullable)
+  + notes : Text (nullable)
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + pets : List[Pet]
+}
+
+' Junction Tables
+class AppointmentPet <<JUNCTION_COLOR>> {
+  + id : UUID (PK)
+  + appointment_id : UUID (FK)
+  + pet_id : UUID (FK)
+  --
+  Constraints:
+  + unique(appointment_id, pet_id)
+}
+
+class PetOwnerPracticeAssociation <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + pet_owner_id : UUID (FK)
+  + practice_id : UUID (FK)
+  + status : AssociationStatus (PENDING|APPROVED|REJECTED|INACTIVE)
+  + request_type : AssociationRequestType (NEW_CLIENT|REFERRAL|TRANSFER|EMERGENCY)
+  + requested_by_user_id : UUID (FK, nullable)
+  + approved_by_user_id : UUID (FK, nullable)
+  + requested_at : DateTime
+  + approved_at : DateTime (nullable)
+  + last_visit_date : DateTime (nullable)
+  + notes : Text (nullable)
+  + primary_contact : Boolean
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Methods:
+  + approve(approved_by_user_id: UUID) : None
+  + reject(rejected_by_user_id: UUID, notes: String) : None
+}
+
+' Potentially Unused Models
+class MedicalRecord <<UNUSED_COLOR>> {
+  + id : UUID (PK)
+  + pet_id : UUID (FK)
+  + version : Integer (default: 1)
+  + is_current : Boolean (default: True)
+  + record_type : String
+  + title : String
+  + description : Text (nullable)
+  + medical_data : JSON (nullable)
+  + visit_date : DateTime
+  + veterinarian_name : String (nullable)
+  + clinic_name : String (nullable)
+  + diagnosis : Text (nullable)
+  + treatment : Text (nullable)
+  + medications : Text (nullable)
+  + follow_up_required : Boolean
+  + follow_up_date : DateTime (nullable)
+  + weight : Float (nullable)
+  + temperature : Float (nullable)
+  + cost : Float (nullable)
+  + created_by_user_id : UUID (FK)
+  + created_at : DateTime
+  + updated_at : DateTime
+  --
+  Properties:
+  + is_follow_up_due : Boolean
+  + days_since_visit : Integer
+  --
+  Methods:
+  + get_medical_data_field(field_name: String, default) : Any
+}
+
+class ContactForm <<ACTIVE_COLOR>> {
+  + id : UUID (PK)
+  + name : String
+  + email : String
+  + phone : String (nullable)
+  + practice_name : String
+  + message : Text
+  + created_at : DateTime
+  + updated_at : DateTime
+}
+
+' Relationships - Core System
+User ||--o{ Visit : "creates/attends"
+User ||--o{ Appointment : "assigned_vet"
+User ||--o{ Appointment : "created_by"
+User ||--o{ PetOwnerPracticeAssociation : "requested_by"
+User ||--o{ PetOwnerPracticeAssociation : "approved_by"
+User ||--o| PetOwner : "optional_user_ref"
+
+VeterinaryPractice ||--o{ Visit : "practice"
+VeterinaryPractice ||--o{ Appointment : "practice"
+VeterinaryPractice ||--o{ PetOwnerPracticeAssociation : "practice"
+
+PetOwner ||--o{ Pet : "owns"
+PetOwner ||--o{ Appointment : "pet_owner"
+PetOwner ||--o{ PetOwnerPracticeAssociation : "pet_owner"
+
+Pet ||--o{ Visit : "pet"
+Pet ||--o{ AppointmentPet : "pet"
+
+Appointment ||--o{ AppointmentPet : "appointment"
+
+' Potentially Unused Relationships
+Pet ||--o{ MedicalRecord : "medical_records" 
+User ||--o{ MedicalRecord : "created_by"
+
+' Notes
+note top of MedicalRecord : **POTENTIALLY UNUSED**\nHas repository & route but\nlimited actual usage in system.\nVisit model handles most\nmedical record functionality.
+
+note top of ContactForm : **SIMPLE FORM MODEL**\nStandalone contact form\nfor practice inquiries.\nNo complex relationships.
+
+note bottom of Visit : **CORE MODEL**\nHandles visit transcripts,\naudio recordings, and\nmedical summaries.\nReplaces much MedicalRecord\nfunctionality.
+
+note bottom of Appointment : **ACTIVE MODEL**\nFull appointment scheduling\nsystem with pet associations\nand status tracking.
+
+@enduml

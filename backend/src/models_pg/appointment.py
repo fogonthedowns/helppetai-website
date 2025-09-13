@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .pet_owner import PetOwner
     from .user import User
     from .pet import Pet
+    from .visit import Visit
 
 
 
@@ -99,6 +100,7 @@ class Appointment(Base):
     assigned_vet: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assigned_vet_user_id], back_populates="assigned_appointments")
     created_by: Mapped["User"] = relationship("User", foreign_keys=[created_by_user_id], back_populates="created_appointments")
     appointment_pets: Mapped[List["AppointmentPet"]] = relationship("AppointmentPet", back_populates="appointment", cascade="all, delete-orphan")
+    visits: Mapped[List["Visit"]] = relationship("Visit", back_populates="appointment", cascade="all, delete-orphan")
 
     
     def __repr__(self) -> str:

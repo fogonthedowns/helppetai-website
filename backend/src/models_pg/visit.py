@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .pet import Pet
     from .practice import VeterinaryPractice
     from .user import User
+    from .appointment import Appointment
 
 
 class VisitState(str, Enum):
@@ -39,6 +40,12 @@ class Visit(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # Foreign keys
+    appointment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), 
+        ForeignKey("appointments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
     pet_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), 
         ForeignKey("pets.id", ondelete="CASCADE"),
@@ -82,6 +89,7 @@ class Visit(Base):
     )
     
     # Relationships
+    appointment: Mapped[Optional["Appointment"]] = relationship("Appointment", back_populates="visits")
     pet: Mapped["Pet"] = relationship("Pet", back_populates="visits")
     practice: Mapped["VeterinaryPractice"] = relationship("VeterinaryPractice", back_populates="visits")
     creator: Mapped[Optional["User"]] = relationship("User", foreign_keys=[created_by], back_populates="created_visits")
