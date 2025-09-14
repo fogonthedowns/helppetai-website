@@ -12,6 +12,7 @@ requests
 # Environment and Configuration
 python-dotenv
 python-multipart
+pytz
 
 # Security
 python-jose[cryptography]

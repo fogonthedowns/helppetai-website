@@ -47,6 +47,7 @@ class VeterinaryPractice(Base):
     # Operating information
     hours_of_operation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     emergency_contact: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    timezone: Mapped[str] = mapped_column(String(50), nullable=False, default="America/Los_Angeles")
     
     # Capacity and limits
     max_appointments_per_day: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)

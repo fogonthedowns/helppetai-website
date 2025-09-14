@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import logging
+import pytz
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta, date
 from pydantic import BaseModel
@@ -690,7 +691,7 @@ class AppointmentService:
             if filtered_slots:
                 formatted_times = []
                 for slot in filtered_slots[:3]:  # Return top 3 options
-                    formatted_time = self._format_slot_for_caller(slot, parsed_date)
+                    formatted_time = self._format_slot_for_caller(slot, parsed_date, practice.timezone)
                     formatted_times.append(formatted_time)
                     logger.info(f"📞 Formatted for caller: {formatted_time}")
                 
@@ -915,22 +916,41 @@ class AppointmentService:
         logger.info(f"✅ Filtered to {len(filtered)} slots for {time_pref}")
         return filtered
     
-    def _format_slot_for_caller(self, slot: Dict, date: date) -> str:
+    def _format_slot_for_caller(self, slot: Dict, date: date, practice_timezone: str = "UTC") -> str:
         """
-        Format a slot for phone caller in natural language
+        Format a slot for phone caller in natural language, converting from UTC to practice timezone
         
-        Example: "2:30 PM" or "10:00 AM"
+        Example: "2:30 PM" or "10:00 AM" (in practice local time)
         """
+        from datetime import datetime as dt
+        
         start_time = slot['start_time']
         
         # Handle both datetime.time objects and string formats
         if hasattr(start_time, 'hour'):
             # It's a datetime.time object
-            hour = start_time.hour
-            minute = start_time.minute
+            utc_hour = start_time.hour
+            utc_minute = start_time.minute
         else:
             # It's a string like "14:30:00"
-            hour, minute = map(int, str(start_time).split(':')[:2])
+            utc_hour, utc_minute = map(int, str(start_time).split(':')[:2])
+        
+        # Create UTC datetime for the slot
+        utc_datetime = dt.combine(date, dt.min.time().replace(hour=utc_hour, minute=utc_minute))
+        utc_datetime = pytz.UTC.localize(utc_datetime)
+        
+        # Convert to practice timezone
+        try:
+            practice_tz = pytz.timezone(practice_timezone)
+            local_datetime = utc_datetime.astimezone(practice_tz)
+            hour = local_datetime.hour
+            minute = local_datetime.minute
+            
+            logger.info(f"🌍 Timezone conversion: UTC {utc_hour:02d}:{utc_minute:02d} → {practice_timezone} {hour:02d}:{minute:02d}")
+        except Exception as e:
+            logger.warning(f"⚠️ Timezone conversion failed for {practice_timezone}: {e}, using UTC")
+            hour = utc_hour
+            minute = utc_minute
         
         # Convert to 12-hour format
         if hour == 0:
