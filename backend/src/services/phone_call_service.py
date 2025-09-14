@@ -179,7 +179,7 @@ class AppointmentService:
             pets = await self.pet_repo.get_by_owner_id(pet_owner.id)
             
             if pets:
-                pet = pets[0]  # Use first pet for greeting
+                pet_list = [{"id": str(pet.id), "name": pet.name} for pet in pets]
                 return {
                     "success": True,
                     "user_exists": True,
@@ -188,11 +188,10 @@ class AppointmentService:
                         "phone_number": pet_owner.phone or "",
                         "email": pet_owner.email or "",
                         "address": pet_owner.address or "",
-                        "pet_name": pet.name,
-                        "pet_type": pet.species,
+                        "pets": pet_list,
                         "owner_name": pet_owner.full_name
                     },
-                    "message": f"Welcome back {pet_owner.full_name}! I found you by your {found_by}. I see you have {pet.name} the {pet.species} in our system."
+                    "message": f"Welcome back {pet_owner.full_name}! I found you by your {found_by}. I see you have {', '.join([pet['name'] for pet in pet_list])} in our system."
                 }
             else:
                 return {
