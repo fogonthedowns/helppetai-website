@@ -3,7 +3,7 @@ import requests
 import json
 import logging
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -87,9 +87,11 @@ class RetellAIService:
    - Pet's name and type (dog, cat, bird, etc.)
    - Owner's address for our records
    - Email address (optional but recommended)
-6. Use check_calendar function to show available appointment times
-7. Use book_appointment function to schedule the appointment
-8. Use confirm_appointment function to finalize everything
+6. When they want to schedule, ask for their preferred date and time of day
+7. Use get_available_times function with their date and time preference (morning/afternoon/evening/any time)
+8. Present the available options and let them choose
+9. Use book_appointment function to schedule the appointment
+10. Use confirm_appointment function to finalize everything
 
 Be conversational, warm, and helpful. Ask one question at a time. Always confirm information before proceeding. Show excitement about helping their pet!""",
 
@@ -201,6 +203,24 @@ Be conversational, warm, and helpful. Ask one question at a time. Always confirm
                             }
                         },
                         "required": ["appointment_id"]
+                    }
+                },
+                {
+                    "name": "get_available_times",
+                    "description": "Get available appointment times for a specific date and time preference",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "date": {
+                                "type": "string",
+                                "description": "The date for the appointment (e.g., '9-14', 'September 14', 'tomorrow')"
+                            },
+                            "time_preference": {
+                                "type": "string",
+                                "description": "Time of day preference (e.g., 'morning', 'afternoon', 'evening', 'any time')"
+                            }
+                        },
+                        "required": ["date", "time_preference"]
                     }
                 }
             ]
@@ -592,6 +612,113 @@ class AppointmentService:
                 "message": "I'm having trouble confirming that appointment. Let me try again."
             }
     
+    async def get_available_times(self, date_str: str, time_preference: str) -> Dict[str, Any]:
+        """
+        🎯 GET AVAILABLE APPOINTMENT TIMES - PHONE WEBHOOK FUNCTION
+        
+        This function integrates with our slot-based scheduling system to return
+        actual available appointment slots for phone callers.
+        
+        Args:
+            date_str: Raw date input from caller (e.g., '9-14', 'September 14', 'tomorrow')
+            time_preference: Time preference (e.g., 'morning', 'afternoon', 'evening')
+        
+        Returns:
+            Dict with success status and available appointment times
+        """
+        logger.info("=" * 80)
+        logger.info("🔍 PHONE WEBHOOK: get_available_times() CALLED")
+        logger.info(f"📅 Raw date input: '{date_str}'")
+        logger.info(f"⏰ Raw time preference: '{time_preference}'")
+        logger.info("=" * 80)
+        
+        try:
+            # Step 1: Parse and clean the date
+            parsed_date = self._parse_date_string(date_str)
+            logger.info(f"✅ Parsed date: {parsed_date}")
+            
+            # Step 2: Clean time preference
+            cleaned_time_pref = self._clean_time_preference(time_preference)
+            logger.info(f"✅ Cleaned time preference: {cleaned_time_pref}")
+            
+            # Step 3: Get default practice and vet
+            practice = await self._get_default_practice()
+            if not practice:
+                logger.error("❌ No default practice found")
+                return {
+                    "success": False,
+                    "message": "I'm having trouble accessing our scheduling system. Let me get a human to help you."
+                }
+            
+            # Get first available vet (you might want to make this smarter)
+            vet_user_id = await self._get_available_vet(practice.id)
+            if not vet_user_id:
+                logger.error("❌ No available vets found")
+                return {
+                    "success": False,
+                    "message": "I don't see any vets available. Let me check with our staff."
+                }
+            
+            logger.info(f"🏥 Using practice: {practice.id}")
+            logger.info(f"👩‍⚕️ Using vet: {vet_user_id}")
+            
+            # Step 4: Get actual available slots using our slot system
+            from ..repositories_pg.scheduling_repository import VetAvailabilityRepository
+            
+            # Create repository
+            repo = VetAvailabilityRepository(self.db)
+            
+            logger.info(f"🔍 Calling get_available_slots for date: {parsed_date}")
+            slot_data = await repo.get_available_slots(
+                vet_user_id=vet_user_id,
+                practice_id=practice.id,
+                date=parsed_date,
+                slot_duration_minutes=45  # 45-minute appointments as requested
+            )
+            
+            logger.info(f"📊 Raw slots returned: {len(slot_data)} slots")
+            for i, slot in enumerate(slot_data):
+                logger.info(f"  Slot {i+1}: {slot['start_time']}-{slot['end_time']} available={slot['available']}")
+            
+            # Step 5: Filter by time preference and availability
+            available_slots = [slot for slot in slot_data if slot['available']]
+            filtered_slots = self._filter_slots_by_time_preference(available_slots, cleaned_time_pref)
+            
+            logger.info(f"✅ Available slots after filtering: {len(filtered_slots)}")
+            
+            # Step 6: Format response for phone caller (return max 3 options)
+            if filtered_slots:
+                formatted_times = []
+                for slot in filtered_slots[:3]:  # Return top 3 options
+                    formatted_time = self._format_slot_for_caller(slot, parsed_date)
+                    formatted_times.append(formatted_time)
+                    logger.info(f"📞 Formatted for caller: {formatted_time}")
+                
+                message = f"I found {len(formatted_times)} available times on {parsed_date.strftime('%A, %B %d')}: " + ", ".join(formatted_times)
+                
+                logger.info(f"✅ SUCCESS: Returning {len(formatted_times)} options")
+                return {
+                    "success": True,
+                    "available_times": formatted_times,
+                    "message": message,
+                    "date": parsed_date.strftime('%Y-%m-%d'),
+                    "time_preference": cleaned_time_pref
+                }
+            else:
+                logger.warning(f"⚠️ No available slots found for {parsed_date} {cleaned_time_pref}")
+                return {
+                    "success": False,
+                    "message": f"I'm sorry, we don't have any {cleaned_time_pref} appointments available on {parsed_date.strftime('%A, %B %d')}. Would you like to try a different day or time?"
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ ERROR in get_available_times: {str(e)}")
+            logger.exception("Full traceback:")
+            return {
+                "success": False,
+                "message": "I'm having trouble checking our calendar. Let me try again or get a human to help you."
+            }
+    
     # Helper methods
     def _clean_phone_number(self, phone_number: str) -> str:
         """Clean and format phone number"""
@@ -656,6 +783,194 @@ class AppointmentService:
             time = datetime.strptime("14:00", "%H:%M").time()  # Default to 2 PM
         
         return datetime.combine(base_date, time)
+    
+    def _parse_date_string(self, date_str: str) -> date:
+        """
+        Parse various date formats from phone callers
+        
+        Examples: '9-14', 'September 14', 'tomorrow', 'next Friday'
+        """
+        logger.info(f"🔍 Parsing date string: '{date_str}'")
+        
+        from datetime import date as dt_date
+        import re
+        
+        # Clean the input
+        date_str = date_str.lower().strip()
+        
+        # Handle relative dates
+        now = datetime.now()
+        
+        if 'today' in date_str:
+            return now.date()
+        elif 'tomorrow' in date_str:
+            return (now + timedelta(days=1)).date()
+        elif 'next week' in date_str:
+            return (now + timedelta(days=7)).date()
+        
+        # Handle numeric formats like '9-14', '9/14', '09-14'
+        numeric_match = re.search(r'(\d{1,2})[-/](\d{1,2})', date_str)
+        if numeric_match:
+            month, day = int(numeric_match.group(1)), int(numeric_match.group(2))
+            year = now.year
+            # If the date has passed this year, assume next year
+            try:
+                parsed_date = dt_date(year, month, day)
+                if parsed_date < now.date():
+                    parsed_date = dt_date(year + 1, month, day)
+                logger.info(f"✅ Parsed numeric date: {parsed_date}")
+                return parsed_date
+            except ValueError:
+                pass
+        
+        # Handle month names like 'September 14', 'Sep 14'
+        month_names = {
+            'jan': 1, 'january': 1, 'feb': 2, 'february': 2, 'mar': 3, 'march': 3,
+            'apr': 4, 'april': 4, 'may': 5, 'jun': 6, 'june': 6, 'jul': 7, 'july': 7,
+            'aug': 8, 'august': 8, 'sep': 9, 'september': 9, 'oct': 10, 'october': 10,
+            'nov': 11, 'november': 11, 'dec': 12, 'december': 12
+        }
+        
+        for month_name, month_num in month_names.items():
+            if month_name in date_str:
+                # Look for day number
+                day_match = re.search(r'\b(\d{1,2})\b', date_str)
+                if day_match:
+                    day = int(day_match.group(1))
+                    year = now.year
+                    try:
+                        parsed_date = dt_date(year, month_num, day)
+                        if parsed_date < now.date():
+                            parsed_date = dt_date(year + 1, month_num, day)
+                        logger.info(f"✅ Parsed month name date: {parsed_date}")
+                        return parsed_date
+                    except ValueError:
+                        pass
+        
+        # Default fallback - tomorrow
+        fallback_date = (now + timedelta(days=1)).date()
+        logger.warning(f"⚠️ Could not parse '{date_str}', defaulting to tomorrow: {fallback_date}")
+        return fallback_date
+    
+    def _clean_time_preference(self, time_pref: str) -> str:
+        """
+        Clean and standardize time preference
+        
+        Examples: 'Morning', 'afternoon', 'evening', 'any time', 'AM', 'PM'
+        """
+        logger.info(f"🔍 Cleaning time preference: '{time_pref}'")
+        
+        time_pref = time_pref.lower().strip()
+        
+        if any(word in time_pref for word in ['any', 'anytime', 'any time', 'flexible', 'whenever', 'doesn\'t matter', 'no preference']):
+            return 'any time'
+        elif any(word in time_pref for word in ['morning', 'am', 'early', 'before noon']):
+            return 'morning'
+        elif any(word in time_pref for word in ['afternoon', 'pm', 'after noon', 'midday']):
+            return 'afternoon'
+        elif any(word in time_pref for word in ['evening', 'night', 'late', 'after 5']):
+            return 'evening'
+        else:
+            # Default to any time if unclear
+            logger.warning(f"⚠️ Unclear time preference '{time_pref}', defaulting to any time")
+            return 'any time'
+    
+    def _filter_slots_by_time_preference(self, slots: List[Dict], time_pref: str) -> List[Dict]:
+        """
+        Filter slots based on time preference
+        
+        Morning: 6 AM - 12 PM
+        Afternoon: 12 PM - 5 PM  
+        Evening: 5 PM - 9 PM
+        Any time: All available slots
+        """
+        logger.info(f"🔍 Filtering {len(slots)} slots by time preference: {time_pref}")
+        
+        # If "any time", return all available slots
+        if time_pref == 'any time':
+            logger.info(f"✅ Any time preference - returning all {len(slots)} slots")
+            return slots
+        
+        filtered = []
+        for slot in slots:
+            start_time = slot['start_time']
+            
+            # Handle both datetime.time objects and string formats
+            if hasattr(start_time, 'hour'):
+                # It's a datetime.time object
+                hour = start_time.hour
+            else:
+                # It's a string like "14:30:00"
+                hour = int(str(start_time).split(':')[0])
+            
+            logger.info(f"  Slot at hour {hour} ({'morning' if 6 <= hour < 12 else 'afternoon' if 12 <= hour < 17 else 'evening' if 17 <= hour < 21 else 'other'})")
+            
+            if time_pref == 'morning' and 6 <= hour < 12:
+                filtered.append(slot)
+            elif time_pref == 'afternoon' and 12 <= hour < 17:
+                filtered.append(slot)
+            elif time_pref == 'evening' and 17 <= hour < 21:
+                filtered.append(slot)
+        
+        logger.info(f"✅ Filtered to {len(filtered)} slots for {time_pref}")
+        return filtered
+    
+    def _format_slot_for_caller(self, slot: Dict, date: date) -> str:
+        """
+        Format a slot for phone caller in natural language
+        
+        Example: "2:30 PM" or "10:00 AM"
+        """
+        start_time = slot['start_time']
+        
+        # Handle both datetime.time objects and string formats
+        if hasattr(start_time, 'hour'):
+            # It's a datetime.time object
+            hour = start_time.hour
+            minute = start_time.minute
+        else:
+            # It's a string like "14:30:00"
+            hour, minute = map(int, str(start_time).split(':')[:2])
+        
+        # Convert to 12-hour format
+        if hour == 0:
+            formatted = f"12:{minute:02d} AM"
+        elif hour < 12:
+            formatted = f"{hour}:{minute:02d} AM"
+        elif hour == 12:
+            formatted = f"12:{minute:02d} PM"
+        else:
+            formatted = f"{hour-12}:{minute:02d} PM"
+        
+        return formatted
+    
+    async def _get_available_vet(self, practice_id: UUID) -> Optional[UUID]:
+        """
+        Get an available vet for the practice
+        
+        This is a simplified version - you might want to make this smarter
+        by checking vet schedules, specialties, etc.
+        """
+        logger.info(f"🔍 Looking for available vet in practice: {practice_id}")
+        
+        from ..models_pg.user import User
+        
+        # Get vets associated with this practice
+        result = await self.db.execute(
+            select(User).where(
+                User.practice_id == practice_id,
+                User.role == 'VET_STAFF',
+                User.is_active == True
+            ).limit(1)
+        )
+        
+        vet = result.scalar_one_or_none()
+        if vet:
+            logger.info(f"✅ Found vet: {vet.id} ({vet.full_name})")
+            return vet.id
+        else:
+            logger.warning("⚠️ No vets found for this practice")
+            return None
     
     async def _get_default_practice(self) -> Optional[VeterinaryPractice]:
         """Get the default practice for appointments"""
@@ -740,6 +1055,15 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
             
         elif function_name == "confirm_appointment":
             result = await appointment_service.confirm_appointment(arguments.get("appointment_id"))
+            
+        elif function_name == "get_available_times":
+            logger.info("🎯 PHONE WEBHOOK: get_available_times CALLED")
+            logger.info(f"📅 Arguments received: {arguments}")
+            result = await appointment_service.get_available_times(
+                arguments.get("date"),
+                arguments.get("time_preference")
+            )
+            logger.info(f"✅ get_available_times result: {result}")
             
         else:
             result = {
