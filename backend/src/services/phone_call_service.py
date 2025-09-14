@@ -4,7 +4,7 @@ import json
 import logging
 import pytz
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -304,14 +304,27 @@ class AppointmentService:
                 "message": "I'm having trouble checking our calendar. Let me try again."
             }
     
-    async def book_appointment(self, user_id: str, date_time: str, service: str = "General Checkup") -> Dict[str, Any]:
+    async def book_appointment(self, user_id: str, date_time: str, practice_id: str, service: str = "General Checkup") -> Dict[str, Any]:
         """Book an appointment"""
         try:
             # Parse the date_time (you might need to adjust this based on format)
             appointment_datetime = self._parse_appointment_time(date_time)
             
-            # Get default practice (you might want to make this configurable)
-            practice = await self._get_default_practice()
+            # Get practice from passed practice_id
+            if not practice_id:
+                return {
+                    "success": False,
+                    "message": "I'm having trouble accessing our scheduling system. Let me get a human to help you."
+                }
+            
+            # Get the practice details
+            from uuid import UUID
+            practice_uuid = UUID(practice_id)
+            result = await self.db.execute(
+                select(VeterinaryPractice).where(VeterinaryPractice.id == practice_uuid)
+            )
+            practice = result.scalar_one_or_none()
+            
             if not practice:
                 return {
                     "success": False,
@@ -383,7 +396,7 @@ class AppointmentService:
                 "message": "I'm having trouble confirming that appointment. Let me try again."
             }
     
-    async def get_available_times(self, date_str: str, time_preference: str) -> Dict[str, Any]:
+    async def get_available_times(self, date_str: str, time_preference: str, practice_id: str, timezone: str = "America/Los_Angeles") -> Dict[str, Any]:
         """
         🎯 GET AVAILABLE APPOINTMENT TIMES - PHONE WEBHOOK FUNCTION
         
@@ -393,6 +406,8 @@ class AppointmentService:
         Args:
             date_str: Raw date input from caller (e.g., '9-14', 'September 14', 'tomorrow')
             time_preference: Time preference (e.g., 'morning', 'afternoon', 'evening')
+            practice_id: UUID of the practice to check availability for
+            timezone: Practice timezone (e.g., 'America/Los_Angeles', 'America/New_York')
         
         Returns:
             Dict with success status and available appointment times
@@ -401,6 +416,7 @@ class AppointmentService:
         logger.info("🔍 PHONE WEBHOOK: get_available_times() CALLED")
         logger.info(f"📅 Raw date input: '{date_str}'")
         logger.info(f"⏰ Raw time preference: '{time_preference}'")
+        logger.info(f"🌍 Timezone parameter: '{timezone}'")
         logger.info("=" * 80)
         
         try:
@@ -412,17 +428,29 @@ class AppointmentService:
             cleaned_time_pref = self._clean_time_preference(time_preference)
             logger.info(f"✅ Cleaned time preference: {cleaned_time_pref}")
             
-            # Step 3: Get default practice and vet
-            practice = await self._get_default_practice()
-            if not practice:
-                logger.error("❌ No default practice found")
+            # Step 3: Validate practice_id and timezone
+            if not practice_id:
+                logger.error("❌ No practice ID provided")
                 return {
                     "success": False,
                     "message": "I'm having trouble accessing our scheduling system. Let me get a human to help you."
                 }
             
-            # Get first available vet (you might want to make this smarter)
-            vet_user_id = await self._get_available_vet(practice.id)
+            # Validate timezone parameter
+            logger.info(f"🌍 Using timezone: {timezone}")
+            try:
+                tz = pytz.timezone(timezone)
+            except pytz.UnknownTimeZoneError:
+                logger.error(f"❌ Invalid timezone: {timezone}")
+                return {
+                    "success": False,
+                    "message": "I'm having trouble with the timezone configuration. Let me get a human to help you."
+                }
+            
+            # Get first available vet for this specific practice
+            from uuid import UUID
+            practice_uuid = UUID(practice_id)
+            vet_user_id = await self._get_available_vet(practice_uuid)
             if not vet_user_id:
                 logger.error("❌ No available vets found")
                 return {
@@ -430,7 +458,7 @@ class AppointmentService:
                     "message": "I don't see any vets available. Let me check with our staff."
                 }
             
-            logger.info(f"🏥 Using practice: {practice.id}")
+            logger.info(f"🏥 Using practice: {practice_uuid}")
             logger.info(f"👩‍⚕️ Using vet: {vet_user_id}")
             
             # Step 4: Get actual available slots using our slot system
@@ -439,29 +467,80 @@ class AppointmentService:
             # Create repository
             repo = VetAvailabilityRepository(self.db)
             
-            logger.info(f"🔍 Calling get_available_slots for date: {parsed_date}")
-            slot_data = await repo.get_available_slots(
-                vet_user_id=vet_user_id,
-                practice_id=practice.id,
-                date=parsed_date,
-                slot_duration_minutes=45  # 45-minute appointments as requested
-            )
+            # Step 4: Convert local date to UTC date range for database lookup
+            # The parsed_date is in local timezone, but availability might be stored in UTC
+            local_start = tz.localize(datetime.combine(parsed_date, time.min))
+            local_end = tz.localize(datetime.combine(parsed_date, time.max))
             
-            logger.info(f"📊 Raw slots returned: {len(slot_data)} slots")
-            for i, slot in enumerate(slot_data):
-                logger.info(f"  Slot {i+1}: {slot['start_time']}-{slot['end_time']} available={slot['available']}")
+            # Convert to UTC for database lookup
+            utc_start = local_start.astimezone(pytz.UTC)
+            utc_end = local_end.astimezone(pytz.UTC)
             
-            # Step 5: Filter by time preference and availability
-            available_slots = [slot for slot in slot_data if slot['available']]
-            filtered_slots = self._filter_slots_by_time_preference(available_slots, cleaned_time_pref)
+            # We need to check availability for potentially multiple UTC dates
+            utc_dates_to_check = set()
+            utc_dates_to_check.add(utc_start.date())
+            utc_dates_to_check.add(utc_end.date())
+            
+            logger.info(f"🔍 Local date range: {local_start} to {local_end}")
+            logger.info(f"🔍 UTC date range: {utc_start} to {utc_end}")
+            logger.info(f"🔍 Checking UTC dates: {utc_dates_to_check}")
+            
+            # Get slots for all relevant UTC dates
+            all_slot_data = []
+            for utc_date in utc_dates_to_check:
+                logger.info(f"🔍 Calling get_available_slots for UTC date: {utc_date}")
+                daily_slots = await repo.get_available_slots(
+                    vet_user_id=vet_user_id,
+                    practice_id=practice_uuid,
+                    date=utc_date,
+                    slot_duration_minutes=45
+                )
+                all_slot_data.extend(daily_slots)
+            
+            logger.info(f"📊 Raw slots returned: {len(all_slot_data)} slots")
+            
+            # Step 5: Filter slots to only include those within the requested local date
+            valid_slots = []
+            for slot in all_slot_data:
+                if not slot['available']:
+                    continue
+                    
+                # Convert UTC slot time to local timezone
+                start_time = slot['start_time']
+                if hasattr(start_time, 'hour'):
+                    utc_hour, utc_minute = start_time.hour, start_time.minute
+                else:
+                    utc_hour, utc_minute = map(int, str(start_time).split(':')[:2])
+                
+                # Create UTC datetime for this slot (we need to figure out which UTC date this belongs to)
+                # Try both UTC dates to see which one makes sense
+                for check_utc_date in utc_dates_to_check:
+                    utc_slot_datetime = pytz.UTC.localize(
+                        datetime.combine(check_utc_date, time(hour=utc_hour, minute=utc_minute))
+                    )
+                    local_slot_datetime = utc_slot_datetime.astimezone(tz)
+                    
+                    # Check if this slot falls within our target local date
+                    if local_slot_datetime.date() == parsed_date:
+                        slot['local_datetime'] = local_slot_datetime
+                        valid_slots.append(slot)
+                        logger.info(f"  ✅ Valid slot: UTC {utc_hour:02d}:{utc_minute:02d} → Local {local_slot_datetime.strftime('%H:%M on %Y-%m-%d')}")
+                        break
+                else:
+                    logger.info(f"  ❌ Slot outside target date: UTC {utc_hour:02d}:{utc_minute:02d}")
+            
+            logger.info(f"📊 Valid slots for {parsed_date}: {len(valid_slots)} slots")
+            
+            # Step 6: Filter by time preference
+            filtered_slots = self._filter_slots_by_time_preference(valid_slots, cleaned_time_pref)
             
             logger.info(f"✅ Available slots after filtering: {len(filtered_slots)}")
             
-            # Step 6: Format response for phone caller (return max 3 options)
+            # Step 7: Format response for phone caller (return max 3 options)
             if filtered_slots:
                 formatted_times = []
                 for slot in filtered_slots[:3]:  # Return top 3 options
-                    formatted_time = self._format_slot_for_caller(slot, parsed_date, practice.timezone)
+                    formatted_time = self._format_slot_for_caller(slot, parsed_date, timezone)
                     formatted_times.append(formatted_time)
                     logger.info(f"📞 Formatted for caller: {formatted_time}")
                 
@@ -473,7 +552,9 @@ class AppointmentService:
                     "available_times": formatted_times,
                     "message": message,
                     "date": parsed_date.strftime('%Y-%m-%d'),
-                    "time_preference": cleaned_time_pref
+                    "time_preference": cleaned_time_pref,
+                    "timezone_used": timezone,
+                    "version": "timezone_param_v1"
                 }
             else:
                 logger.warning(f"⚠️ No available slots found for {parsed_date} {cleaned_time_pref}")
@@ -506,21 +587,32 @@ class AppointmentService:
         
         return phone_number  # Return original if we can't parse it
     
-    async def _get_available_slots(self) -> List[str]:
+    async def _get_available_slots(self, practice_id: str = None) -> List[str]:
         """Get available appointment slots"""
         # This is a simplified version - you can integrate with actual calendar system
         # For now, generate some sample slots
         
         # Get the practice timezone to ensure we're using the correct local time
-        practice = self.practice
-        if not practice:
+        if not practice_id:
             # Fallback to server time if no practice context
             now = datetime.now()
         else:
-            # Use practice timezone
-            practice_tz = pytz.timezone(practice.timezone)
-            utc_now = datetime.utcnow().replace(tzinfo=pytz.UTC)
-            now = utc_now.astimezone(practice_tz).replace(tzinfo=None)  # Convert to naive datetime
+            # Get practice details to access timezone
+            from uuid import UUID
+            practice_uuid = UUID(practice_id)
+            result = await self.db.execute(
+                select(VeterinaryPractice).where(VeterinaryPractice.id == practice_uuid)
+            )
+            practice = result.scalar_one_or_none()
+            
+            if not practice:
+                # Fallback to server time if practice not found
+                now = datetime.now()
+            else:
+                # Use practice timezone
+                practice_tz = pytz.timezone(practice.timezone)
+                utc_now = datetime.utcnow().replace(tzinfo=pytz.UTC)
+                now = utc_now.astimezone(practice_tz).replace(tzinfo=None)  # Convert to naive datetime
         
         slots = []
         
@@ -686,17 +778,19 @@ class AppointmentService:
         
         filtered = []
         for slot in slots:
-            start_time = slot['start_time']
-            
-            # Handle both datetime.time objects and string formats
-            if hasattr(start_time, 'hour'):
-                # It's a datetime.time object
-                hour = start_time.hour
+            # Use local_datetime if available (from timezone conversion), otherwise fall back to UTC time
+            if 'local_datetime' in slot:
+                # Use the converted local time
+                hour = slot['local_datetime'].hour
+                logger.info(f"  Slot at LOCAL hour {hour} ({'morning' if 6 <= hour < 12 else 'afternoon' if 12 <= hour < 17 else 'evening' if 17 <= hour < 21 else 'other'})")
             else:
-                # It's a string like "14:30:00"
-                hour = int(str(start_time).split(':')[0])
-            
-            logger.info(f"  Slot at hour {hour} ({'morning' if 6 <= hour < 12 else 'afternoon' if 12 <= hour < 17 else 'evening' if 17 <= hour < 21 else 'other'})")
+                # Fallback to UTC time (for backward compatibility)
+                start_time = slot['start_time']
+                if hasattr(start_time, 'hour'):
+                    hour = start_time.hour
+                else:
+                    hour = int(str(start_time).split(':')[0])
+                logger.info(f"  Slot at UTC hour {hour} ({'morning' if 6 <= hour < 12 else 'afternoon' if 12 <= hour < 17 else 'evening' if 17 <= hour < 21 else 'other'})")
             
             if time_pref == 'morning' and 6 <= hour < 12:
                 filtered.append(slot)
@@ -784,13 +878,6 @@ class AppointmentService:
             logger.warning("⚠️ No vets found for this practice")
             return None
     
-    async def _get_default_practice(self) -> Optional[VeterinaryPractice]:
-        """Get the default practice for appointments"""
-        # Get the first available practice - you might want to make this configurable
-        result = await self.db.execute(
-            select(VeterinaryPractice).limit(1)
-        )
-        return result.scalar_one_or_none()
 
 # Initialize Retell service lazily (will be created when first needed)
 retell_service = None
@@ -864,6 +951,7 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
             result = await appointment_service.book_appointment(
                 arguments.get("user_id"),
                 arguments.get("date_time"),
+                arguments.get("practice_id"),
                 arguments.get("service", "General Checkup")
             )
             
@@ -875,7 +963,9 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
             logger.info(f"📅 Arguments received: {arguments}")
             result = await appointment_service.get_available_times(
                 arguments.get("date"),
-                arguments.get("time_preference")
+                arguments.get("time_preference"),
+                arguments.get("practice_id"),
+                arguments.get("timezone", "America/Los_Angeles")  # Default to PST if not provided
             )
             logger.info(f"✅ get_available_times result: {result}")
             

@@ -3,6 +3,8 @@ Webhook endpoints for external service integrations
 """
 
 import logging
+import urllib.parse
+import json
 from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 from datetime import datetime
@@ -20,6 +22,7 @@ from ..repositories_pg.medical_record_repository import MedicalRecordRepository
 from ..config import settings
 from ..utils.error_handling import log_endpoint_errors
 from ..services.medical_summary_service import medical_summary_service
+from ..services.phone_call_service import handle_phone_webhook, RetellWebhookRequest
 
 logger = logging.getLogger(__name__)
 
@@ -639,7 +642,7 @@ async def update_visit_metadata(
                 logger.info(f"Visit ID not a UUID, treating as S3 key: {visit_id}")
                 
                 # URL decode the S3 key in case it was encoded
-                import urllib.parse
+
                 s3_key = urllib.parse.unquote(visit_id)
                 logger.info(f"Decoded S3 key: {s3_key}")
                 
@@ -750,10 +753,6 @@ async def webhook_health_check():
     }
 
 
-# Phone Call Service Integration
-from ..services.phone_call_service import handle_phone_webhook, RetellWebhookRequest
-
-
 @router.post("/phone")
 async def phone_webhook(
     raw_request: Request,
@@ -766,7 +765,7 @@ async def phone_webhook(
         logger.info(f"Raw webhook request body: {body.decode()}")
         
         # Try to parse as JSON first to see the structure
-        import json
+
         try:
             json_data = json.loads(body.decode())
             logger.info(f"Parsed JSON structure: {json_data}")
