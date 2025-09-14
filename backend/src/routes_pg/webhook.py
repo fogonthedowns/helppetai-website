@@ -751,7 +751,7 @@ async def webhook_health_check():
 
 
 # Phone Call Service Integration
-from ..services.phone_call_service import handle_phone_webhook, setup_retell_agent, update_retell_agent, RetellWebhookRequest
+from ..services.phone_call_service import handle_phone_webhook, RetellWebhookRequest
 
 
 @router.post("/phone")
@@ -810,34 +810,3 @@ async def phone_webhook(
             }
         }
 
-
-@router.post("/setup-retell")
-async def setup_retell_endpoint(phone_number: str):
-    """Setup Retell AI agent for phone appointments (creates new agent)"""
-    try:
-        logger.info(f"Setting up Retell AI for phone number: {phone_number}")
-        
-        result = await setup_retell_agent(phone_number)
-        
-        logger.info(f"Retell AI setup completed for: {phone_number}")
-        return result
-        
-    except Exception as e:
-        logger.error(f"Error setting up Retell AI: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/update-retell")
-async def update_retell_endpoint(agent_id: str, phone_number: str = None):
-    """Update existing Retell AI agent configuration"""
-    try:
-        logger.info(f"Updating Retell AI agent: {agent_id}")
-        
-        result = await update_retell_agent(agent_id, phone_number)
-        
-        logger.info(f"Retell AI agent updated: {agent_id}")
-        return result
-        
-    except Exception as e:
-        logger.error(f"Error updating Retell AI agent: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))

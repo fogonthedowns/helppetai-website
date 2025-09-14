@@ -11,6 +11,7 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, text, func
 from sqlalchemy.orm import selectinload
+import pytz
 
 
 from .base_repository import BaseRepository
@@ -18,6 +19,7 @@ from ..models_pg.scheduling import (
     PracticeHours, VetAvailability, RecurringAvailability, AppointmentConflict,
     AvailabilityType, ConflictType, ConflictSeverity
 )
+from ..models_pg.practice import VeterinaryPractice
 
 
 class PracticeHoursRepository(BaseRepository[PracticeHours]):
@@ -162,6 +164,21 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         # Simplified approach - get vet availability and generate slots in Python
         # This avoids complex SQL parameter binding issues
         
+        # First, get the practice to access its timezone
+        practice_query = select(VeterinaryPractice).where(VeterinaryPractice.id == practice_id)
+        practice_result = await self.session.execute(practice_query)
+        practice = practice_result.scalar_one_or_none()
+        
+        if not practice:
+            return []
+        
+        # Get current time in the practice's timezone
+        practice_tz = pytz.timezone(practice.timezone)
+        current_datetime_utc = datetime.utcnow().replace(tzinfo=pytz.UTC)
+        current_datetime_practice = current_datetime_utc.astimezone(practice_tz)
+        current_date_practice = current_datetime_practice.date()
+        current_time_practice = current_datetime_practice.time()
+        
         # First, get the vet's availability for this date
         availability_query = select(VetAvailability).where(
             and_(
@@ -205,6 +222,11 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
             
             while current_time + slot_duration <= end_time:
                 slot_end = current_time + slot_duration
+                
+                # Skip past time slots if the requested date is today in the practice's timezone
+                if date == current_date_practice and current_time.time() <= current_time_practice:
+                    current_time = slot_end
+                    continue
                 
                 # Check if this slot conflicts with any existing appointments
                 slot_available = True

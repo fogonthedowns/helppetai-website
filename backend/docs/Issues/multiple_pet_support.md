@@ -1,2 +1,3 @@
 - we need to support appointments for 2 pets
 - call only references Amira only finds one pet
+- support together (same day/same appointment multiple pets) or seperate appointments

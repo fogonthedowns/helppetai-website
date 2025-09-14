@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID, uuid4
+import pytz
 
 logger = logging.getLogger(__name__)
 
@@ -73,188 +74,12 @@ class RetellAIService:
         if not self.api_key:
             raise ValueError("RETELL_API_KEY environment variable is required")
     
-    def create_llm(self) -> str:
-        """Create a Retell LLM first"""
-        
-        llm_config = {
-            "general_prompt": """You are a friendly pet appointment scheduling assistant for HelpPet. Your job is to:
-
-1. Greet the caller warmly: "Hello! Thank you for calling HelpPet. I'm here to help you schedule an appointment for your pet."
-2. Get the caller's phone number (or confirm it matches the calling number)
-3. Use check_user function to see if they're an existing customer by phone number
-4. If not found by phone, ask for their email address and try check_user_by_email
-5. If new customer, use create_user function after collecting:
-   - Owner's full name
-   - Pet's name and type (dog, cat, bird, etc.)
-   - Owner's address for our records
-   - Email address (optional but recommended)
-6. When they want to schedule, ask for their preferred date and time of day
-7. Use get_available_times function with their date and time preference (morning/afternoon/evening/any time)
-8. Present the available options and let them choose
-9. Use book_appointment function to schedule the appointment
-10. Use confirm_appointment function to finalize everything
-
-Be conversational, warm, and helpful. Ask one question at a time. Always confirm information before proceeding. Show excitement about helping their pet!""",
-
-            "begin_message": "Hello! Thank you for calling HelpPet. I'm here to help you schedule an appointment for your furry friend. May I start by getting your phone number?",
-            
-            "functions": [
-                {
-                    "name": "check_user",
-                    "description": "Check if customer exists by phone number",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "phone_number": {
-                                "type": "string",
-                                "description": "The customer's phone number"
-                            }
-                        },
-                        "required": ["phone_number"]
-                    }
-                },
-                {
-                    "name": "check_user_by_email",
-                    "description": "Check if customer exists by email address",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "email": {
-                                "type": "string",
-                                "description": "The customer's email address"
-                            }
-                        },
-                        "required": ["email"]
-                    }
-                },
-                {
-                    "name": "create_user",
-                    "description": "Create new customer profile",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "phone_number": {
-                                "type": "string",
-                                "description": "The customer's phone number"
-                            },
-                            "email": {
-                                "type": "string",
-                                "description": "The customer's email address (optional)"
-                            },
-                            "address": {
-                                "type": "string",
-                                "description": "The customer's address"
-                            },
-                            "pet_name": {
-                                "type": "string",
-                                "description": "The pet's name"
-                            },
-                            "pet_type": {
-                                "type": "string",
-                                "description": "The type of pet (dog, cat, bird, etc.)"
-                            },
-                            "owner_name": {
-                                "type": "string",
-                                "description": "The owner's full name"
-                            }
-                        },
-                        "required": ["phone_number", "owner_name"]
-                    }
-                },
-                {
-                    "name": "check_calendar",
-                    "description": "Get available appointment times",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {},
-                        "required": []
-                    }
-                },
-                {
-                    "name": "book_appointment",
-                    "description": "Book the appointment slot",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "user_id": {
-                                "type": "string",
-                                "description": "The customer's user ID"
-                            },
-                            "date_time": {
-                                "type": "string",
-                                "description": "The appointment date and time"
-                            },
-                            "service": {
-                                "type": "string",
-                                "description": "The type of service (default: General Checkup)"
-                            }
-                        },
-                        "required": ["user_id", "date_time"]
-                    }
-                },
-                {
-                    "name": "confirm_appointment",
-                    "description": "Confirm and finalize the appointment",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "appointment_id": {
-                                "type": "string",
-                                "description": "The appointment ID to confirm"
-                            }
-                        },
-                        "required": ["appointment_id"]
-                    }
-                },
-                {
-                    "name": "get_available_times",
-                    "description": "Get available appointment times for a specific date and time preference",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "date": {
-                                "type": "string",
-                                "description": "The date for the appointment (e.g., '9-14', 'September 14', 'tomorrow')"
-                            },
-                            "time_preference": {
-                                "type": "string",
-                                "description": "Time of day preference (e.g., 'morning', 'afternoon', 'evening', 'any time')"
-                            }
-                        },
-                        "required": ["date", "time_preference"]
-                    }
-                }
-            ]
-        }
-        
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        response = requests.post(
-            f"{self.base_url}/create-retell-llm",
-            headers=headers,
-            json=llm_config
-        )
-        
-        # Check for successful status codes (200, 201)
-        if response.status_code in [200, 201]:
-            llm_data = response.json()
-            # The response contains the llm_id directly in the response
-            llm_id = llm_data.get("llm_id")
-            if llm_id:
-                return llm_id
-            else:
-                raise Exception(f"LLM created but no llm_id in response: {response.text}")
-        else:
-            raise Exception(f"Failed to create LLM: Status {response.status_code}, Response: {response.text}")
-
-    def create_agent(self, webhook_url: str) -> str:
+    def create_agent(self, webhook_url: str, llm_id: str = None) -> str:
         """Create a Retell AI agent for appointment scheduling"""
         
-        # First, create the LLM
-        llm_id = self.create_llm()
+        # Use provided LLM ID or raise error if not provided
+        if not llm_id:
+            raise ValueError("llm_id is required - create LLM manually and pass the ID")
         
         agent_config = {
             "agent_name": "Pet Appointment Scheduler",
@@ -289,61 +114,6 @@ Be conversational, warm, and helpful. Ask one question at a time. Always confirm
         else:
             raise Exception(f"Failed to create agent: Status {response.status_code}, Response: {response.text}")
     
-    def configure_phone_number(self, agent_id: str, phone_number: str):
-        """Configure a phone number to use the agent"""
-        
-        phone_config = {
-            "phone_number": phone_number,
-            "agent_id": agent_id
-        }
-        
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        response = requests.post(
-            f"{self.base_url}/create-phone-number",
-            headers=headers,
-            json=phone_config
-        )
-        
-        # Check for any success status code (200-299)
-        if not (200 <= response.status_code < 300):
-            raise Exception(f"Failed to configure phone number: {response.text}")
-
-
-    def update_agent(self, agent_id: str, webhook_url: str, llm_id: str = None):
-        """Update an existing Retell AI agent configuration"""
-        
-        # If no LLM ID provided, create a new one
-        if not llm_id:
-            llm_id = self.create_llm()
-        
-        agent_config = {
-            "agent_name": "Pet Appointment Scheduler",
-            "voice_id": "openai-Alloy",
-            "language": "en-US",
-            "response_engine": {
-                "type": "retell-llm",
-                "llm_id": llm_id
-            },
-            "webhook_url": webhook_url
-        }
-        
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        response = requests.patch(
-            f"{self.base_url}/update-agent/{agent_id}",
-            headers=headers,
-            json=agent_config
-        )
-        
-        if response.status_code != 200:
-            raise Exception(f"Failed to update agent: {response.text}")
 
 class AppointmentService:
     """Service class for appointment booking business logic"""
@@ -740,7 +510,18 @@ class AppointmentService:
         """Get available appointment slots"""
         # This is a simplified version - you can integrate with actual calendar system
         # For now, generate some sample slots
-        now = datetime.now()
+        
+        # Get the practice timezone to ensure we're using the correct local time
+        practice = self.practice
+        if not practice:
+            # Fallback to server time if no practice context
+            now = datetime.now()
+        else:
+            # Use practice timezone
+            practice_tz = pytz.timezone(practice.timezone)
+            utc_now = datetime.utcnow().replace(tzinfo=pytz.UTC)
+            now = utc_now.astimezone(practice_tz).replace(tzinfo=None)  # Convert to naive datetime
+        
         slots = []
         
         # Generate slots for next 7 days, 9 AM to 5 PM
@@ -749,7 +530,7 @@ class AppointmentService:
             if date.weekday() < 5:  # Monday to Friday
                 for hour in [9, 11, 14, 16]:  # 9 AM, 11 AM, 2 PM, 4 PM
                     slot_time = date.replace(hour=hour, minute=0, second=0, microsecond=0)
-                    if slot_time > now:  # Only future slots
+                    if slot_time > now:  # Only future slots based on practice timezone
                         formatted = slot_time.strftime("%A, %B %d at %I:%M %p")
                         slots.append(formatted)
         
@@ -808,6 +589,17 @@ class AppointmentService:
             return (now + timedelta(days=1)).date()
         elif 'next week' in date_str:
             return (now + timedelta(days=7)).date()
+        
+        # Handle ISO format dates like '2025-09-16', '2025/09/16'
+        iso_match = re.search(r'(\d{4})[-/](\d{1,2})[-/](\d{1,2})', date_str)
+        if iso_match:
+            year, month, day = int(iso_match.group(1)), int(iso_match.group(2)), int(iso_match.group(3))
+            try:
+                parsed_date = dt_date(year, month, day)
+                logger.info(f"✅ Parsed ISO date: {parsed_date}")
+                return parsed_date
+            except ValueError:
+                pass
         
         # Handle numeric formats like '9-14', '9/14', '09-14'
         numeric_match = re.search(r'(\d{1,2})[-/](\d{1,2})', date_str)
@@ -1010,7 +802,9 @@ def get_retell_service() -> RetellAIService:
         retell_service = RetellAIService()
     return retell_service
 
-# Function to handle phone webhook requests (will be called from webhook route)
+#-------------------------------------------------------------------------------#
+# Function to handle phone webhook requests (will be called from webhook route) #
+#-------------------------------------------------------------------------------#
 async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncSession) -> Dict[str, Any]:
     """Handle webhooks from Retell AI - both call events and function calls"""
     
@@ -1100,48 +894,3 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
                 "message": "I'm experiencing a technical issue. Let me try that again."
             }
         }
-
-# Function to setup Retell agent (will be called from setup endpoint)
-async def setup_retell_agent(phone_number: str) -> Dict[str, Any]:
-    """Setup endpoint to create and configure Retell AI agent"""
-    try:
-        webhook_url = "https://api.helppet.ai/api/v1/webhook/phone"
-        service = get_retell_service()
-        
-        # Create agent
-        agent_id = service.create_agent(webhook_url)
-        
-        # Configure phone number
-        service.configure_phone_number(agent_id, phone_number)
-        
-        return {
-            "success": True,
-            "agent_id": agent_id,
-            "message": "Retell AI setup completed successfully!"
-        }
-        
-    except Exception as e:
-        raise Exception(f"Failed to setup Retell AI: {str(e)}")
-
-# Function to update existing Retell agent (will be called from update endpoint)
-async def update_retell_agent(agent_id: str, phone_number: str = None) -> Dict[str, Any]:
-    """Update existing Retell AI agent configuration"""
-    try:
-        webhook_url = "https://api.helppet.ai/api/v1/webhook/phone"
-        service = get_retell_service()
-        
-        # Update agent configuration
-        service.update_agent(agent_id, webhook_url)
-        
-        # Configure new phone number if provided
-        if phone_number:
-            service.configure_phone_number(agent_id, phone_number)
-        
-        return {
-            "success": True,
-            "agent_id": agent_id,
-            "message": f"Retell AI agent {agent_id} updated successfully!"
-        }
-        
-    except Exception as e:
-        raise Exception(f"Failed to update Retell AI agent: {str(e)}")
