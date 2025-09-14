@@ -6,6 +6,7 @@ from .user_repository import UserRepository
 from .practice_repository import PracticeRepository
 from .pet_owner_repository import PetOwnerRepository
 from .association_repository import AssociationRepository
+from .appointment_repository import AppointmentRepository
 from .scheduling_repository import (
     PracticeHoursRepository,
     VetAvailabilityRepository,
@@ -18,6 +19,7 @@ __all__ = [
     "PracticeRepository", 
     "PetOwnerRepository",
     "AssociationRepository",
+    "AppointmentRepository",
     "PracticeHoursRepository",
     "VetAvailabilityRepository",
     "RecurringAvailabilityRepository",

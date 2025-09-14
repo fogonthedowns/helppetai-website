@@ -22,7 +22,7 @@ from ..repositories_pg.medical_record_repository import MedicalRecordRepository
 from ..config import settings
 from ..utils.error_handling import log_endpoint_errors
 from ..services.medical_summary_service import medical_summary_service
-from ..services.phone_call_service import handle_phone_webhook, RetellWebhookRequest
+from ..services.phone.webhook_handler import handle_phone_webhook, RetellWebhookRequest
 
 logger = logging.getLogger(__name__)
 

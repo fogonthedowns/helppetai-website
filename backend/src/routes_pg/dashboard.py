@@ -101,6 +101,31 @@ async def get_vet_dashboard(
             detail="Access denied. Can only view your own dashboard."
         )
     
+    # Get practice timezone for proper date filtering
+    from ..models_pg.practice import VeterinaryPractice
+    import pytz
+    
+    # Get practice timezone from user's practice
+    user_result = await db.execute(
+        select(VeterinaryPractice.timezone)
+        .join(User, User.practice_id == VeterinaryPractice.id)
+        .where(User.id == vet_uuid)
+    )
+    practice_timezone_str = user_result.scalar_one_or_none()
+    if not practice_timezone_str:
+        raise HTTPException(
+            status_code=500, 
+            detail="Practice timezone not configured. Please contact administrator."
+        )
+    
+    try:
+        practice_tz = pytz.timezone(practice_timezone_str)
+    except pytz.UnknownTimeZoneError:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Invalid practice timezone: {practice_timezone_str}. Please contact administrator."
+        )
+    
     # Parse date parameter or use today
     if date:
         try:
@@ -108,12 +133,16 @@ async def get_vet_dashboard(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     else:
-        # Use UTC today to avoid timezone issues
-        from datetime import timezone
-        target_date = datetime.now(timezone.utc).date()
+        # Use practice's local today
+        target_date = datetime.now(practice_tz).date()
     
-    start_of_day = datetime.combine(target_date, datetime.min.time())
-    end_of_day = datetime.combine(target_date, datetime.max.time())
+    # Create timezone-aware start and end times in practice timezone
+    start_of_day_local = practice_tz.localize(datetime.combine(target_date, datetime.min.time()))
+    end_of_day_local = practice_tz.localize(datetime.combine(target_date, datetime.max.time()))
+    
+    # Convert to UTC for database query (appointments are stored in UTC)
+    start_of_day = start_of_day_local.astimezone(pytz.UTC).replace(tzinfo=None)
+    end_of_day = end_of_day_local.astimezone(pytz.UTC).replace(tzinfo=None)
     
     # Query today's appointments for this vet from database
     result = await db.execute(
@@ -203,6 +232,31 @@ async def get_vet_today_summary(
             detail="Access denied. Can only view your own dashboard."
         )
     
+    # Get practice timezone for proper date filtering (same logic as get_vet_dashboard)
+    from ..models_pg.practice import VeterinaryPractice
+    import pytz
+    
+    # Get practice timezone from user's practice
+    user_result = await db.execute(
+        select(VeterinaryPractice.timezone)
+        .join(User, User.practice_id == VeterinaryPractice.id)
+        .where(User.id == vet_uuid)
+    )
+    practice_timezone_str = user_result.scalar_one_or_none()
+    if not practice_timezone_str:
+        raise HTTPException(
+            status_code=500, 
+            detail="Practice timezone not configured. Please contact administrator."
+        )
+    
+    try:
+        practice_tz = pytz.timezone(practice_timezone_str)
+    except pytz.UnknownTimeZoneError:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Invalid practice timezone: {practice_timezone_str}. Please contact administrator."
+        )
+    
     # Parse date parameter or use today
     if date:
         try:
@@ -210,13 +264,17 @@ async def get_vet_today_summary(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
     else:
-        # Use UTC today to avoid timezone issues
-        from datetime import timezone
-        target_date = datetime.now(timezone.utc).date()
+        # Use practice's local today
+        target_date = datetime.now(practice_tz).date()
     
-    start_of_day = datetime.combine(target_date, datetime.min.time())
-    end_of_day = datetime.combine(target_date, datetime.max.time())
-    now = datetime.now().replace(tzinfo=None)  # Make timezone-naive to match database datetimes
+    # Create timezone-aware start and end times in practice timezone
+    start_of_day_local = practice_tz.localize(datetime.combine(target_date, datetime.min.time()))
+    end_of_day_local = practice_tz.localize(datetime.combine(target_date, datetime.max.time()))
+    
+    # Convert to UTC for database query (appointments are stored in UTC)
+    start_of_day = start_of_day_local.astimezone(pytz.UTC).replace(tzinfo=None)
+    end_of_day = end_of_day_local.astimezone(pytz.UTC).replace(tzinfo=None)
+    now = datetime.now(pytz.UTC).replace(tzinfo=None)  # Current UTC time for comparison
     
     # Query today's appointments for this vet from database
     result = await db.execute(
