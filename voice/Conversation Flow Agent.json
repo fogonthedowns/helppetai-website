@@ -1,18 +1,18 @@
 {
   "agent_id": "",
   "channel": "voice",
-  "last_modification_timestamp": 1757977420825,
+  "last_modification_timestamp": 1757980071233,
   "agent_name": "Conversation Flow Agent",
   "response_engine": {
     "type": "conversation-flow",
-    "version": 26,
+    "version": 31,
     "conversation_flow_id": "conversation_flow_40876625b4b2"
   },
   "language": "en-US",
   "opt_out_sensitive_data_storage": false,
   "data_storage_setting": "everything",
   "opt_in_signed_url": false,
-  "version": 26,
+  "version": 31,
   "is_published": false,
   "version_title": "",
   "post_call_analysis_model": "gpt-4o-mini",
@@ -28,8 +28,8 @@
   "retellLlmData": null,
   "conversationFlow": {
     "conversation_flow_id": "conversation_flow_40876625b4b2",
-    "version": 26,
-    "global_prompt": "## Objective\nYou are an AI agent LaShonda.\n\nCurrent time is {{current_time}}\n{{practice_id}}= \"934c57e7-4f9c-4d28-aa0f-3cb881e3c225\"\n{{timezone}} = \"US/Pacific\"",
+    "version": 31,
+    "global_prompt": "## Objective\nYou are an AI agent LaShonda working for a veterinarian. You are to be kind and helpful.\n\n- if someone has an emergency they aren't talking about a person. They are talking about a pet. Do not suggest to call 911\n\n\nCurrent time is {{current_time}}\n{{practice_id}}= \"934c57e7-4f9c-4d28-aa0f-3cb881e3c225\"\n{{timezone}} = \"US/Pacific\"",
     "nodes": [
       {
         "instruction": {
@@ -522,7 +522,7 @@
         "name": "Conversation",
         "edges": [
           {
-            "destination_node_id": "node-1757968170448",
+            "destination_node_id": "node-1757977307710",
             "id": "edge-1757968132989",
             "transition_condition": {
               "type": "prompt",
@@ -542,23 +542,10 @@
         }
       },
       {
-        "name": "End Call",
-        "id": "node-1757968170448",
-        "type": "end",
-        "display_position": {
-          "x": 5140.168755745658,
-          "y": 2590.6044406830392
-        },
-        "instruction": {
-          "type": "prompt",
-          "text": "Politely end the call"
-        }
-      },
-      {
         "name": "Conversation",
         "edges": [
           {
-            "destination_node_id": "node-1757969111032",
+            "destination_node_id": "node-1757977307710",
             "id": "edge-1757969077463",
             "transition_condition": {
               "type": "prompt",
@@ -569,25 +556,12 @@
         "id": "node-1757969077463",
         "type": "conversation",
         "display_position": {
-          "x": 4439.427824087304,
-          "y": 2781.383795973852
+          "x": 1896.3036520495718,
+          "y": 2815.8850269028485
         },
         "instruction": {
           "type": "prompt",
           "text": "- Looks like we are having some trouble.\n- computers today\n- talk about weather\n- call back later"
-        }
-      },
-      {
-        "name": "End Call",
-        "id": "node-1757969111032",
-        "type": "end",
-        "display_position": {
-          "x": 5154.189332551941,
-          "y": 2998.2618030273948
-        },
-        "instruction": {
-          "type": "prompt",
-          "text": "Politely end the call"
         }
       },
       {
@@ -709,8 +683,8 @@
         "id": "node-1757975056391",
         "type": "end",
         "display_position": {
-          "x": 644.5057807488016,
-          "y": 2204.5446203262536
+          "x": 2968.1810659770663,
+          "y": 3697.431554975298
         },
         "instruction": {
           "type": "prompt",
@@ -732,12 +706,64 @@
         "id": "node-1757977307710",
         "type": "conversation",
         "display_position": {
-          "x": 217.06548291633646,
-          "y": 1992.197670216008
+          "x": 2554.282134882874,
+          "y": 3436.349958093243
         },
         "instruction": {
           "type": "prompt",
           "text": "- Say goodbye\n- have a nice day\n- Say it was a pleasure serving you"
+        }
+      },
+      {
+        "instruction": {
+          "type": "prompt",
+          "text": "- I will connect you with a person right away"
+        },
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757974811339",
+            "id": "edge-1757979780647",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transfer immediately after you or the customer speaks\n"
+            }
+          }
+        ],
+        "global_node_setting": {
+          "condition": "There is a pet Emergency"
+        },
+        "id": "node-1757979335209",
+        "type": "conversation",
+        "display_position": {
+          "x": 333.75682484087304,
+          "y": 2027.5530650630633
+        }
+      },
+      {
+        "instruction": {
+          "type": "prompt",
+          "text": "- We are open from 9-5 M-F and Saturday's from 10 to Noon."
+        },
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1757979886296",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transition immediately "
+            }
+          }
+        ],
+        "global_node_setting": {
+          "condition": "The user asks about the hours of operation. How late are you open? etc"
+        },
+        "id": "node-1757979886296",
+        "type": "conversation",
+        "display_position": {
+          "x": -344.84817256571284,
+          "y": 2019.6972405037955
         }
       }
     ],
