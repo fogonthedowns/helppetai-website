@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Brain, DollarSign, Clock, Stethoscope } from 'lucide-react';
+import { ArrowRight, CheckCircle, DollarSign, Clock, Stethoscope, Phone, Calendar, Mic } from 'lucide-react';
 import TransformSection from './TransformSection';
 import Footer from './Footer';
 
@@ -9,24 +9,24 @@ const Home = () => {
 
   const faqs = [
     {
-      question: 'How does iPhone recording work during vet visits?',
-      answer: 'Simply open the HelpPet.ai app on your iPhone, select the pet, and start recording. Audio uploads directly to secure cloud storage with automatic transcription.'
+      question: 'How does the AI Front Desk Agent handle phone calls?',
+      answer: 'Our AI agent answers calls 24/7, handles appointment scheduling, basic triage questions, and routes urgent cases to appropriate staff - all while integrating with your existing practice management system.'
     },
     {
-      question: 'Is the recorded audio secure and SOC 2 Type 2 compliant?',
-      answer: 'Yes, all recordings use encrypted transmission to AWS S3 with role-based access controls. Only authorized veterinary staff and pet owners can access visit records.'
+      question: 'Can the system really save 80% of phone time?',
+      answer: 'Yes! By automating routine calls, appointment scheduling, prescription refill requests, and basic questions, your staff can focus on patient care instead of phone management.'
     },
     {
-      question: 'Can multiple veterinary practices access the same pet records?',
-      answer: 'Yes, pet owners can connect with multiple practices (primary care, specialists, emergency clinics) to share complete medical histories and visit transcripts.'
+      question: 'How does voice recording work during vet visits?',
+      answer: 'Simply open the HelpPet.ai app on your iPhone and start recording. The AI automatically transcribes the conversation, extracts key medical information, and integrates with your practice records.'
     },
     {
-      question: 'How does the AI transcription help with documentation?',
-      answer: 'AI automatically converts visit recordings into searchable text transcripts, reducing manual note-taking and ensuring complete visit documentation for compliance.'
+      question: 'Is the AI Front Desk Agent secure and compliant?',
+      answer: 'Absolutely. All voice data is encrypted and transmitted to secure cloud storage. Only authorized practice staff have access to patient information.'
     },
     {
-      question: 'What happens to the visit recordings and transcripts?',
-      answer: 'All recordings and transcripts are stored securely and become part of the permanent medical record, accessible to authorized users across connected practices.'
+      question: 'Does it integrate with existing calendar systems?',
+      answer: 'Yes, our calendar automation works with major practice management systems to automatically schedule appointments, send reminders, and manage follow-up care based on AI-analyzed visit notes.'
     }
   ];
 
@@ -44,43 +44,69 @@ const Home = () => {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
               }}>
-                Streamline vet visit documentation.
+                Meet LaShonda
+                An AI veterinary voice agent with serious front desk skills
               </h1>
+
+              <p className="text-2xl text-gray-600 mb-8 font-light">
+                Save 80% of phone time with intelligent check-in, triage, and voice-powered documentation.
+              </p>
               
-              <div className="flex items-center space-x-8 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Stethoscope className="w-6 h-6 text-blue-600" />
+                    <Phone className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <div className="font-bold text-gray-900">iPhone Recording</div>
-                    <div className="text-sm text-gray-600">Direct cloud upload & transcription</div>
+                    <div className="font-bold text-gray-900">AI Phone Agent</div>
+                    <div className="text-sm text-gray-600">24/7 calls, scheduling & triage</div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-purple-600" />
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <Mic className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <div className="font-bold text-gray-900">AI Documentation</div>
-                    <div className="text-sm text-gray-600">Automated transcripts & compliance</div>
+                    <div className="font-bold text-gray-900">Voice Documentation</div>
+                    <div className="text-sm text-gray-600">iPhone recording & transcription</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900">Smart Check-In</div>
+                    <div className="text-sm text-gray-600">AI-powered patient triage</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900">Calendar Automation</div>
+                    <div className="text-sm text-gray-600">Smart scheduling & follow-ups</div>
                   </div>
                 </div>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <Link to="/vets" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                  Get started
+                <Link to="/vets" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
+                  <ArrowRight className="w-4 h-4" />
+                  Start AI Front Desk
                 </Link>
-                
-                <Link to="/rag" className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  Veterinary Knowledge Search
-                </Link>
+
+                <a href="tel:425-584-1920" className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Try it: 425-584-1920
+                </a>
               </div>
-              
-              <p className="text-xs text-gray-500">Secure, SOC-compliant documentation platform</p>
+
+              <p className="text-xs text-gray-500">Voice-First Design • Practice Management Integration</p>
             </div>
             {/* Phone Mockup - Exact Wealthfront Style */}
             <div className="flex justify-center lg:justify-end">
@@ -100,33 +126,39 @@ const Home = () => {
                     {/* Phone Content */}
                     <div className="p-6 space-y-4">
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <div className="text-xs font-medium text-blue-800 mb-1">Recording Session</div>
-                        <div className="text-lg font-bold">Amira • Golden Retriever</div>
-                        <div className="text-xs text-gray-500">Visit: Annual Wellness • Dr. Smith</div>
-                      </div>
-                      
-                      <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                         <div className="flex items-center space-x-2 mb-2">
-                          <Clock className="w-4 h-4 text-orange-600" />
-                          <span className="text-xs font-medium text-orange-800">Recording Status</span>
+                          <Phone className="w-4 h-4 text-blue-600" />
+                          <span className="text-xs font-medium text-blue-800">AI Phone Agent</span>
                         </div>
-                        <div className="text-lg font-bold text-orange-700">ACTIVE</div>
-                        <div className="text-xs text-orange-600">12:34 duration • Auto-uploading</div>
+                        <div className="text-lg font-bold text-blue-700">HANDLING CALL</div>
+                        <div className="text-xs text-blue-600">"Scheduling Bella for checkup..."</div>
                       </div>
-                      
-                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                        <div className="text-xs font-medium text-purple-800 mb-1">AI Transcription</div>
-                        <div className="text-sm font-semibold text-purple-700">Processing...</div>
-                        <div className="text-xs text-gray-500">Converting speech to text</div>
-                      </div>
-                      
+
                       <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                         <div className="flex items-center space-x-2 mb-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800">Documentation</span>
+                          <Mic className="w-4 h-4 text-green-600" />
+                          <span className="text-xs font-medium text-green-800">Voice Recording</span>
                         </div>
-                        <div className="text-sm font-bold text-green-700">Auto-saved</div>
-                        <div className="text-xs text-green-600">Shared across practices</div>
+                        <div className="text-lg font-bold">Amira • Golden Retriever</div>
+                        <div className="text-xs text-gray-500">Visit Recording • Auto-transcribing</div>
+                      </div>
+
+                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <CheckCircle className="w-4 h-4 text-purple-600" />
+                          <span className="text-xs font-medium text-purple-800">Smart Triage</span>
+                        </div>
+                        <div className="text-sm font-semibold text-purple-700">Urgent - GDV symptoms</div>
+                        <div className="text-xs text-purple-600">Prioritized & Dr. alerted</div>
+                      </div>
+
+                      <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Calendar className="w-4 h-4 text-orange-600" />
+                          <span className="text-xs font-medium text-orange-800">Auto-Scheduling</span>
+                        </div>
+                        <div className="text-sm font-bold text-orange-700">3 appointments booked</div>
+                        <div className="text-xs text-orange-600">Follow-ups scheduled</div>
                       </div>
                     </div>
                   </div>
@@ -145,69 +177,84 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-6">
           {/* First Row - Three Large Clean Boxes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            {/* Clean Red Box */}
-            <div className="bg-gradient-to-br from-red-400 to-red-500 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
-              <div>
-                <h2 className="text-4xl font-light leading-tight mb-4" style={{
-                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
-                }}>
-                  iPhone recording<br />
-                  made simple
-                </h2>
-              </div>
-              <Link to="/vets" className="bg-white text-red-500 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
-                Explore
-              </Link>
-            </div>
-
-            {/* Clean Orange Box */}
-            <div className="bg-gradient-to-br from-amber-600 to-orange-700 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
-              <div>
-                <h2 className="text-4xl font-light leading-tight mb-4" style={{
-                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
-                }}>
-                  AI transcription<br />
-                  & compliance
-                </h2>
-              </div>
-              <Link to="/vets" className="bg-white text-orange-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
-                Learn more
-              </Link>
-            </div>
-
-            {/* Clean Blue Box - Practices */}
+            {/* AI Phone Agent Box */}
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
               <div>
                 <h2 className="text-4xl font-light leading-tight mb-4" style={{
                   fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
                 }}>
-                  Multi-practice<br />
-                  record sharing
+                  AI Phone Agent<br />
+                  24/7 Support
                 </h2>
+                <p className="text-blue-100 text-lg">Handles calls, scheduling, and triage automatically</p>
               </div>
-              <Link to="/practices" className="bg-white text-blue-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
-                Browse practices
+              <Link to="/vets" className="bg-white text-blue-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
+                Start AI Agent
+              </Link>
+            </div>
+
+            {/* Voice Documentation Box */}
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
+              <div>
+                <h2 className="text-4xl font-light leading-tight mb-4" style={{
+                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
+                }}>
+                  Voice-Powered<br />
+                  Documentation
+                </h2>
+                <p className="text-green-100 text-lg">iPhone recording with AI transcription & analysis</p>
+              </div>
+              <Link to="/vets" className="bg-white text-green-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
+                Try Recording
+              </Link>
+            </div>
+
+            {/* Smart Calendar Box */}
+            <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
+              <div>
+                <h2 className="text-4xl font-light leading-tight mb-4" style={{
+                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
+                }}>
+                  Smart Calendar<br />
+                  Automation
+                </h2>
+                <p className="text-orange-100 text-lg">Intelligent scheduling with practice management integration</p>
+              </div>
+              <Link to="/vets" className="bg-white text-orange-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
+                Automate Scheduling
               </Link>
             </div>
           </div>
 
-          {/* Second Row - Four Clean Condition Boxes */}
+          {/* Second Row - Four Key Features */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
+              <div className="flex items-center mb-3">
+                <Phone className="w-6 h-6 mr-2" />
+                <h3 className="text-lg font-light">Phone Automation</h3>
+              </div>
+              <p className="text-blue-100 text-sm font-medium">80% less call time</p>
+            </div>
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
+              <div className="flex items-center mb-3">
+                <Mic className="w-6 h-6 mr-2" />
+                <h3 className="text-lg font-light">Voice Recording</h3>
+              </div>
+              <p className="text-green-100 text-sm font-medium">iPhone to cloud</p>
+            </div>
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Visit Recording</h3>
-              <p className="text-purple-100 text-sm font-medium">iPhone to cloud</p>
+              <div className="flex items-center mb-3">
+                <CheckCircle className="w-6 h-6 mr-2" />
+                <h3 className="text-lg font-light">Smart Triage</h3>
+              </div>
+              <p className="text-purple-100 text-sm font-medium">AI-powered priority</p>
             </div>
-            <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Auto Transcription</h3>
-              <p className="text-orange-100 text-sm font-medium">AI-powered text</p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Record Management</h3>
-              <p className="text-purple-100 text-sm font-medium">Cross-practice sharing</p>
-            </div>
-            <div className="bg-gradient-to-br from-amber-600 to-orange-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <h3 className="text-lg font-light mb-2">Compliance Ready</h3>
-              <p className="text-orange-100 text-sm font-medium">SOC 2 Type 2 secure</p>
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
+              <div className="flex items-center mb-3">
+                <Calendar className="w-6 h-6 mr-2" />
+                <h3 className="text-lg font-light">Auto-Scheduling</h3>
+              </div>
+              <p className="text-orange-100 text-sm font-medium">Calendar integration</p>
             </div>
           </div>
         </div>
@@ -218,16 +265,23 @@ const Home = () => {
         <div className="w-full px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
-              Transform your vet visit<br />
-              documentation workflow
+              Save 80% of phone time with<br />
+              your AI Front Desk Agent
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              Join veterinary practices streamlining documentation with iPhone recording and AI transcription
+              Join veterinary practices automating calls, scheduling, triage, and documentation with voice-first AI
             </p>
-            <Link to="/vets" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors">
-              Start documenting visits
-            </Link>
-            <p className="text-sm text-blue-200 mt-4">SOC 2 Type 2 compliant • Secure cloud storage • Multi-practice sharing</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+              <Link to="/vets" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <ArrowRight className="w-5 h-5" />
+                Start AI Front Desk
+              </Link>
+              <a href="tel:425-584-1920" className="bg-blue-800 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-blue-900 transition-colors flex items-center gap-2">
+                <Phone className="w-5 h-5" />
+                Try it: 425-584-1920
+              </a>
+            </div>
+            <p className="text-sm text-blue-200">Voice-First Design • Practice Management Integration</p>
           </div>
         </div>
       </section>

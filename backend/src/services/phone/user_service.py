@@ -5,14 +5,17 @@ Handles user lookup, creation, and management for phone calls.
 """
 
 import logging
+from datetime import datetime
 from typing import Dict, Any
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...models_pg.pet_owner import PetOwner
 from ...models_pg.pet import Pet
+from ...models_pg.pet_owner_practice_association import PetOwnerPracticeAssociation, AssociationStatus, AssociationRequestType
 from ...repositories_pg.pet_owner_repository import PetOwnerRepository
 from ...repositories_pg.pet_repository import PetRepository
+from ...repositories_pg.association_repository import AssociationRepository
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +27,7 @@ class UserService:
         self.db = db_session
         self.pet_owner_repo = PetOwnerRepository(db_session)
         self.pet_repo = PetRepository(db_session)
+        self.association_repo = AssociationRepository(db_session)
     
     async def check_user(self, phone_number: str) -> Dict[str, Any]:
         """Check if user exists by phone number"""
@@ -153,38 +157,70 @@ class UserService:
                 "message": "I found your information but I'm having trouble loading your details. Let me try again."
             }
     
-    async def create_user(self, phone_number: str, email: str, address: str, pet_name: str, pet_type: str, owner_name: str) -> Dict[str, Any]:
-        """Create a new user in your database"""
+    async def create_user(self, phone_number: str, email: str, address: str, owner_name: str, practice_uuid: str) -> Dict[str, Any]:
+        """Create a new pet owner and associate them with a practice"""
         try:
+            logger.info("Starting user creation process.")
+            
             # Clean phone number and email
             clean_phone = self._clean_phone_number(phone_number)
             clean_email = email.lower().strip() if email else None
-            
+            logger.debug(f"Cleaned phone number: {clean_phone}, Cleaned email: {clean_email}")
+
             # Validate required fields
             if not owner_name or not owner_name.strip():
+                logger.warning("Owner name is missing or empty.")
                 return {
                     "success": False,
                     "message": "I need your full name to create your profile. Could you please provide that?"
                 }
-            
-            # Check if phone or email already exists
+
+            # Validate practice_uuid
+            try:
+                practice_id = UUID(practice_uuid)
+                logger.debug(f"Validated practice UUID: {practice_id}")
+            except ValueError:
+                logger.error("Invalid practice UUID provided.")
+                return {
+                    "success": False,
+                    "message": "Invalid practice information provided."
+                }
+
+            # Check if phone or email already exists using repository methods
             if clean_phone:
+                logger.info(f"Checking existing account by phone: {clean_phone}")
                 existing_by_phone = await self.pet_owner_repo.get_by_phone(clean_phone)
                 if existing_by_phone:
-                    return {
-                        "success": False,
-                        "message": "I found an existing account with that phone number. Let me look that up for you instead."
-                    }
-            
+                    logger.info(f"Found existing account by phone: {existing_by_phone.id}")
+                    # Check if they're already associated with this practice
+                    existing_association = await self.association_repo.check_association_exists(
+                        existing_by_phone.id, practice_id
+                    )
+                    if existing_association and existing_association.status == AssociationStatus.APPROVED:
+                        logger.info("Existing association found and approved.")
+                        return {
+                            "success": False,
+                            "message": "I found an existing account with that phone number. Let me look that up for you instead."
+                        }
+
             if clean_email:
+                logger.info(f"Checking existing account by email: {clean_email}")
                 existing_by_email = await self.pet_owner_repo.get_by_email(clean_email)
                 if existing_by_email:
-                    return {
-                        "success": False,
-                        "message": "I found an existing account with that email address. Let me look that up for you instead."
-                    }
-            
-            # Create pet owner
+                    logger.info(f"Found existing account by email: {existing_by_email.id}")
+                    # Check if they're already associated with this practice
+                    existing_association = await self.association_repo.check_association_exists(
+                        existing_by_email.id, practice_id
+                    )
+                    if existing_association and existing_association.status == AssociationStatus.APPROVED:
+                        logger.info("Existing association found and approved.")
+                        return {
+                            "success": False,
+                            "message": "I found an existing account with that email address. Let me look that up for you instead."
+                        }
+
+            # Create pet owner using repository
+            logger.info("Creating new pet owner.")
             pet_owner = PetOwner(
                 full_name=owner_name.strip(),
                 phone=clean_phone,
@@ -192,28 +228,39 @@ class UserService:
                 address=address.strip() if address else None,
                 preferred_communication="phone"
             )
-            
-            self.db.add(pet_owner)
-            await self.db.flush()  # Get the ID
-            
-            # Create pet if provided
-            if pet_name and pet_type:
-                pet = Pet(
-                    name=pet_name.strip(),
-                    species=pet_type.title(),
-                    owner_id=pet_owner.id
-                )
-                self.db.add(pet)
-            
-            await self.db.commit()
-            
+
+            created_owner = await self.pet_owner_repo.create(pet_owner)
+            logger.info(f"Created new pet owner with ID: {created_owner.id}")
+
+            # Create practice association - automatically approved for new clients
+            logger.info("Creating practice association for new client.")
+            association = PetOwnerPracticeAssociation(
+                pet_owner_id=created_owner.id,
+                practice_id=practice_id,
+                request_type=AssociationRequestType.NEW_CLIENT,
+                primary_contact=True,
+                notes="Automatically approved for phone booking"
+            )
+            # Auto-approve the association (this sets status, approved_at, and approved_by_user_id)
+            # Using None for approved_by_user_id since this is system auto-approval
+            association.status = AssociationStatus.APPROVED
+            association.approved_at = datetime.utcnow()
+
+            try:
+                await self.association_repo.create(association)
+                logger.info("Practice association created and approved.")
+            except Exception as assoc_error:
+                logger.error(f"Failed to create practice association for pet owner {created_owner.id}: {str(assoc_error)}")
+                # Note: Pet owner was created but association failed - this may need cleanup
+                raise Exception(f"Created pet owner but failed to associate with practice: {str(assoc_error)}")
+
             return {
                 "success": True,
-                "user_id": str(pet_owner.id),
-                "message": f"Perfect! I've created a profile for {owner_name}{' and ' + pet_name if pet_name else ''}. Now let's find an appointment time."
+                "user_id": str(created_owner.id),
+                "message": f"Perfect! I've created a profile for {owner_name}. Now let's find an appointment time."
             }
         except Exception as e:
-            await self.db.rollback()
+            logger.error(f"Error during user creation: {str(e)}")
             return {
                 "success": False,
                 "message": "I'm having trouble creating your profile. Let me try again."

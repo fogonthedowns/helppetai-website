@@ -107,9 +107,8 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
                 arguments.get("phone_number"),
                 arguments.get("email", ""),
                 arguments.get("address", ""),
-                arguments.get("pet_name", ""),
-                arguments.get("pet_type", ""),
-                arguments.get("owner_name", "")
+                arguments.get("owner_name", ""),
+                arguments.get("practice_uuid", "")
             )
             
         elif function_name == "get_user_pets":
