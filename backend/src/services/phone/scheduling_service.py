@@ -246,6 +246,39 @@ class SchedulingService:
             except ValueError:
                 pass
         
+        # Handle weekday names like 'monday', 'tuesday', 'wednesday', etc.
+        weekday_names = {
+            'monday': 0, 'mon': 0,
+            'tuesday': 1, 'tue': 1, 'tues': 1,
+            'wednesday': 2, 'wed': 2,
+            'thursday': 3, 'thu': 3, 'thur': 3, 'thurs': 3,
+            'friday': 4, 'fri': 4,
+            'saturday': 5, 'sat': 5,
+            'sunday': 6, 'sun': 6
+        }
+        
+        for weekday_name, weekday_num in weekday_names.items():
+            if weekday_name in date_str:
+                # Find the next occurrence of this weekday
+                today = now.date()
+                days_ahead = weekday_num - today.weekday()
+                
+                # Handle "next" prefix (e.g., "next wednesday")
+                if 'next' in date_str:
+                    # For "next", always go to next week (add 7 days to get to next week)
+                    if days_ahead <= 0:
+                        days_ahead += 7  # If it's today or past, go to next week
+                    else:
+                        days_ahead += 7  # If it's later this week, still go to next week
+                else:
+                    # Normal weekday parsing - if it's today or in the past this week, get next week's occurrence
+                    if days_ahead <= 0:
+                        days_ahead += 7
+                
+                target_date = today + timedelta(days=days_ahead)
+                logger.info(f"✅ Parsed weekday '{weekday_name}': {target_date}")
+                return target_date
+        
         # Handle month names like 'September 14', 'Sep 14'
         month_names = {
             'jan': 1, 'january': 1, 'feb': 2, 'february': 2, 'mar': 3, 'march': 3,
