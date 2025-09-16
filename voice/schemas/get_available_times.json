@@ -1,0 +1,25 @@
+{
+    "type": "object",
+    "properties": {
+      "date": {
+        "type": "string",
+        "description": "The date for the appointment (e.g., '9-14', 'September 14', 'tomorrow')"
+      },
+      "practice_id": {
+        "type": "string",
+        "description": "Use the practice_id uuid variable exactly"
+      },
+      "time_preference": {
+        "type": "string",
+        "description": "Time of day preference (e.g., 'morning', 'afternoon', 'evening', 'any time')"
+      },
+      "timezone": {
+        "type": "string",
+        "description": "Timezone of practice (e.g. America/New_York, US/Pacific, US/Mountain)"
+      }
+    },
+    "required": [
+      "date",
+      "time_preference"
+    ]
+  }

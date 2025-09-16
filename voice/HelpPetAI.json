@@ -1,0 +1,1216 @@
+{
+  "agent_id": "",
+  "channel": "voice",
+  "last_modification_timestamp": 1758002489636,
+  "agent_name": "HelpPetAI",
+  "response_engine": {
+    "type": "conversation-flow",
+    "version": 38,
+    "conversation_flow_id": "conversation_flow_40876625b4b2"
+  },
+  "language": "en-US",
+  "opt_out_sensitive_data_storage": false,
+  "data_storage_setting": "everything",
+  "opt_in_signed_url": false,
+  "version": 38,
+  "is_published": false,
+  "version_title": "",
+  "post_call_analysis_model": "gpt-4o-mini",
+  "pii_config": {
+    "mode": "post_call",
+    "categories": []
+  },
+  "voice_id": "11labs-Zuri",
+  "max_call_duration_ms": 3600000,
+  "interruption_sensitivity": 0.9,
+  "allow_user_dtmf": true,
+  "user_dtmf_options": {},
+  "retellLlmData": null,
+  "conversationFlow": {
+    "conversation_flow_id": "conversation_flow_40876625b4b2",
+    "version": 38,
+    "global_prompt": "## Objective\nYou are an AI agent LaShonda working for a veterinarian. You are to be kind and helpful.\n\n- if someone has an emergency they aren't talking about a person. They are talking about a pet. Do not suggest to call 911\n\n\nCurrent time is {{current_time}}\n{{practice_id}}= \"934c57e7-4f9c-4d28-aa0f-3cb881e3c225\"\n{{timezone}} = \"US/Pacific\"",
+    "nodes": [
+      {
+        "instruction": {
+          "type": "prompt",
+          "text": "\"HelpPet.This is LaShonda speaking. Thanks for calling. May I get your phone number please\""
+        },
+        "name": "Welcome Node",
+        "edges": [
+          {
+            "destination_node_id": "node-1757967782582",
+            "id": "edge-1757722429993",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information has been confirmed correct"
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1757723309675",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Describe the transition conditionThe information does not align"
+            }
+          }
+        ],
+        "start_speaker": "agent",
+        "id": "start-node-1757721846880",
+        "type": "conversation",
+        "display_position": {
+          "x": 8.289116372592304,
+          "y": 389.61744182997796
+        }
+      },
+      {
+        "tool_id": "tool-1757722169294",
+        "name": "Check User",
+        "edges": [
+          {
+            "destination_node_id": "node-1758001557734",
+            "id": "edge-1757722341016",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "{{user_exists}} is True"
+            }
+          },
+          {
+            "destination_node_id": "node-1757722719484",
+            "id": "edge-1757722418678",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "{{user_exists}} is False"
+            }
+          }
+        ],
+        "id": "node-1757722171113",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": false,
+        "display_position": {
+          "x": 832.9166935851066,
+          "y": 427.7810240708486
+        },
+        "wait_for_result": true
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757808212089",
+            "id": "edge-1757722478793",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information has been confirmed correct"
+            }
+          }
+        ],
+        "id": "node-1757722478793",
+        "type": "conversation",
+        "display_position": {
+          "x": 1611.379121374198,
+          "y": 400.06909855125343
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- What day would you like to visit the office?\"\n- determine time preference (if there is one, ask first)\n- determine which pets are coming if there are more than one pet"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757967468387",
+            "id": "edge-1757722719484",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The user would like to sign up"
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1757967375580",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The User does not want to sign up"
+            }
+          }
+        ],
+        "id": "node-1757722719484",
+        "type": "conversation",
+        "display_position": {
+          "x": 789.3965786710945,
+          "y": 1089.992047408231
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Looks like you are new around here! Would you like to create a new account for your pet?"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757888896343",
+            "id": "edge-1757808123374",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If the user selects a time\n"
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1757888928303",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "if the user decides not to make an appointment"
+            }
+          }
+        ],
+        "id": "node-1757808123374",
+        "type": "conversation",
+        "display_position": {
+          "x": 2084.0623617773736,
+          "y": 682.1808657505869
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "\"{{message}}\""
+        }
+      },
+      {
+        "tool_id": "tool-1757807832923",
+        "name": "Get Available Times",
+        "edges": [
+          {
+            "destination_node_id": "node-1757808123374",
+            "id": "edge-1757808242576",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information responded with success"
+            }
+          },
+          {
+            "destination_node_id": "node-1757808123374",
+            "id": "edge-1757808742998",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The status is not successful "
+            }
+          }
+        ],
+        "id": "node-1757808212089",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": false,
+        "display_position": {
+          "x": 1621.4025563655725,
+          "y": 909.438199167977
+        },
+        "wait_for_result": true
+      },
+      {
+        "tool_id": "tool-1757886750049",
+        "name": "Book Appointment",
+        "edges": [
+          {
+            "destination_node_id": "node-1757888967081",
+            "id": "edge-1757888952569",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If it is successful"
+            }
+          }
+        ],
+        "id": "node-1757888896343",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": false,
+        "display_position": {
+          "x": 2566.2662882734703,
+          "y": 771.7769944363631
+        },
+        "wait_for_result": true
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757977307710",
+            "id": "edge-1757888967081",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If the user indicates they wish to end the call"
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1757997936407",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If the user has more requests"
+            }
+          }
+        ],
+        "id": "node-1757888967081",
+        "type": "conversation",
+        "display_position": {
+          "x": 3144.297807087619,
+          "y": 35.36396813137091
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- Confirm the appointment was made\n- Indicate you are looking forward to seeing the pet\n- Ask if there is anything else they need\n- be brief"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757967521945",
+            "id": "edge-1757967468387",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information has been confirmed correct"
+            }
+          },
+          {
+            "destination_node_id": "node-1757967521945",
+            "id": "edge-1757967928820",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information does not align"
+            }
+          }
+        ],
+        "id": "node-1757967468387",
+        "type": "conversation",
+        "display_position": {
+          "x": 1250.4792304936848,
+          "y": 1362.5239963249064
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Whats your first and last name?"
+        }
+      },
+      {
+        "name": "Extract Variables",
+        "edges": [
+          {
+            "destination_node_id": "node-1757967589678",
+            "id": "edge-1757967521945",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The full name is extracted"
+            }
+          }
+        ],
+        "variables": [
+          {
+            "name": "full_name",
+            "description": "First and last Name of the user",
+            "type": "string",
+            "choices": []
+          }
+        ],
+        "id": "node-1757967521945",
+        "type": "extract_dynamic_variables",
+        "display_position": {
+          "x": 1670.9168706543594,
+          "y": 1584.6813480983737
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757967669774",
+            "id": "edge-1757967589678",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information has been confirmed correct"
+            }
+          },
+          {
+            "id": "edge-1757967653738",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information does not align"
+            }
+          }
+        ],
+        "id": "node-1757967589678",
+        "type": "conversation",
+        "display_position": {
+          "x": 2057.4154975096544,
+          "y": 1655.6284235004146
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "What is your email address?"
+        }
+      },
+      {
+        "name": "Extract Variables",
+        "edges": [
+          {
+            "destination_node_id": "node-1757967864053",
+            "id": "edge-1757967669774",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The email is extracted"
+            }
+          }
+        ],
+        "variables": [
+          {
+            "name": "email",
+            "description": "Email of the user",
+            "type": "string",
+            "choices": []
+          }
+        ],
+        "id": "node-1757967669774",
+        "type": "extract_dynamic_variables",
+        "display_position": {
+          "x": 2487.847944908877,
+          "y": 1612.8590540465643
+        }
+      },
+      {
+        "name": "Extract Variables",
+        "edges": [
+          {
+            "destination_node_id": "node-1757722171113",
+            "id": "edge-1757967782582",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The variable phone is extracted"
+            }
+          }
+        ],
+        "variables": [
+          {
+            "name": "phone",
+            "description": "Phone of the user (e.g 415-754-9214)",
+            "type": "string",
+            "choices": []
+          }
+        ],
+        "id": "node-1757967782582",
+        "type": "extract_dynamic_variables",
+        "display_position": {
+          "x": 427.6104146781447,
+          "y": 393.4508944967345
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757968020179",
+            "id": "edge-1757967864053",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The user provides a full address"
+            }
+          }
+        ],
+        "id": "node-1757967864053",
+        "type": "conversation",
+        "display_position": {
+          "x": 3088.212848372207,
+          "y": 1797.1925990357615
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "What is your Full Address?"
+        }
+      },
+      {
+        "name": "Extract Variables",
+        "edges": [
+          {
+            "destination_node_id": "node-1757968046486",
+            "id": "edge-1757968020179",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The full_address is extracted"
+            }
+          }
+        ],
+        "variables": [
+          {
+            "name": "full_address",
+            "description": "The home address of the user",
+            "type": "string",
+            "choices": []
+          }
+        ],
+        "id": "node-1757968020179",
+        "type": "extract_dynamic_variables",
+        "display_position": {
+          "x": 3500.686139518198,
+          "y": 2058.5949998638625
+        }
+      },
+      {
+        "tool_id": "tool-1757958213534",
+        "name": "Create User",
+        "edges": [
+          {
+            "destination_node_id": "node-1758001108523",
+            "id": "edge-1757968095061",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "It was successful"
+            }
+          },
+          {
+            "destination_node_id": "node-1757969077463",
+            "id": "edge-1757968924274",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "It was not successful "
+            }
+          }
+        ],
+        "id": "node-1757968046486",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": false,
+        "display_position": {
+          "x": 3966.975179226445,
+          "y": 2248.019777528306
+        },
+        "wait_for_result": true
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757977307710",
+            "id": "edge-1757968132989",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The user doesn't want to add their pet"
+            }
+          },
+          {
+            "destination_node_id": "node-1758000117593",
+            "id": "edge-1758000600475",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The user provides their Pet Name\n"
+            }
+          }
+        ],
+        "id": "node-1757968132989",
+        "type": "conversation",
+        "display_position": {
+          "x": 4584.023706827813,
+          "y": 2343.268113717676
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Great I got you. Now lets add your pet. What's your Pet's name?"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757977307710",
+            "id": "edge-1757969077463",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Describe the transition condition"
+            }
+          }
+        ],
+        "id": "node-1757969077463",
+        "type": "conversation",
+        "display_position": {
+          "x": 1896.3036520495718,
+          "y": 2815.8850269028485
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- Looks like we are having some trouble.\n- computers today\n- talk about weather\n- call back later"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757974811339",
+            "id": "edge-1757974757638",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If its an emergency, transfer the call"
+            }
+          },
+          {
+            "destination_node_id": "node-1757974918427",
+            "id": "edge-1757974941132",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If they want to check on the lab results\n"
+            }
+          },
+          {
+            "destination_node_id": "node-1757975019982",
+            "id": "edge-1757975011127",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If they want to check on Medications & Refills\n"
+            }
+          }
+        ],
+        "id": "node-1757974757638",
+        "type": "conversation",
+        "display_position": {
+          "x": -218.15979047375762,
+          "y": 893.691869043234
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- inquire what you can help them with\n"
+        }
+      },
+      {
+        "custom_sip_headers": {},
+        "transfer_destination": {
+          "type": "predefined",
+          "number": "+14192831624"
+        },
+        "edge": {
+          "id": "edge-1757974811339",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Transfer failed"
+          }
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Transferring your call now."
+        },
+        "name": "Transfer Call",
+        "id": "node-1757974811339",
+        "transfer_option": {
+          "type": "cold_transfer",
+          "show_transferee_as_caller": false
+        },
+        "type": "transfer_call",
+        "display_position": {
+          "x": 316.7716084208102,
+          "y": 1108.931611612247
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757977307710",
+            "id": "edge-1757974918427",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "User responds"
+            }
+          }
+        ],
+        "id": "node-1757974918427",
+        "type": "conversation",
+        "display_position": {
+          "x": 209.26371267078036,
+          "y": 1542.3217135023256
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- This is a demo I can't help check on lab results yet.\n- this is an easy integration"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757977307710",
+            "id": "edge-1757975019982",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Any ressponse"
+            }
+          }
+        ],
+        "id": "node-1757975019982",
+        "type": "conversation",
+        "display_position": {
+          "x": -323.5038741506335,
+          "y": 1533.9070660281475
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- This is a demo I can't help check on medications and refills.\n- this is an easy integration"
+        }
+      },
+      {
+        "name": "End Call",
+        "id": "node-1757975056391",
+        "type": "end",
+        "display_position": {
+          "x": 2968.1810659770663,
+          "y": 3697.431554975298
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Politely end the call"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757975056391",
+            "id": "edge-1757977307710",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Describe the transition condition"
+            }
+          }
+        ],
+        "id": "node-1757977307710",
+        "type": "conversation",
+        "display_position": {
+          "x": 2554.282134882874,
+          "y": 3436.349958093243
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- Say goodbye\n- have a nice day\n- Say it was a pleasure serving you"
+        }
+      },
+      {
+        "instruction": {
+          "type": "prompt",
+          "text": "- I will connect you with a person right away"
+        },
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757974811339",
+            "id": "edge-1757979780647",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transfer immediately after you or the customer speaks\n"
+            }
+          }
+        ],
+        "global_node_setting": {
+          "condition": "There is a pet Emergency"
+        },
+        "id": "node-1757979335209",
+        "type": "conversation",
+        "display_position": {
+          "x": 333.75682484087304,
+          "y": 2027.5530650630633
+        }
+      },
+      {
+        "instruction": {
+          "type": "prompt",
+          "text": "- We are open from 9-5 M-F and Saturday's from 10 to Noon."
+        },
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1757979886296",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transition immediately "
+            }
+          }
+        ],
+        "global_node_setting": {
+          "condition": "The user asks about the hours of operation. How late are you open? etc"
+        },
+        "id": "node-1757979886296",
+        "type": "conversation",
+        "display_position": {
+          "x": -344.84817256571284,
+          "y": 2019.6972405037955
+        }
+      },
+      {
+        "name": "Extract Variables",
+        "edges": [
+          {
+            "destination_node_id": "node-1758000675144",
+            "id": "edge-1758000117593",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The pet_name variable is extracted"
+            }
+          }
+        ],
+        "variables": [
+          {
+            "name": "pet_name",
+            "description": "Name of the pet",
+            "type": "string",
+            "choices": []
+          }
+        ],
+        "id": "node-1758000117593",
+        "type": "extract_dynamic_variables",
+        "display_position": {
+          "x": 5039.065209044517,
+          "y": 2353.619654323367
+        }
+      },
+      {
+        "name": "Extract Variables",
+        "edges": [
+          {
+            "destination_node_id": "node-1758000462397",
+            "id": "edge-1758000234477",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The species variable is extracted"
+            }
+          }
+        ],
+        "variables": [
+          {
+            "name": "species",
+            "description": "Species of the pet (Dog | Cat | Bird | Rabbit | Other)",
+            "type": "string",
+            "choices": []
+          }
+        ],
+        "id": "node-1758000234477",
+        "type": "extract_dynamic_variables",
+        "display_position": {
+          "x": 5797.852080503631,
+          "y": 2428.4090748126596
+        }
+      },
+      {
+        "tool_id": "tool-1757999977662",
+        "name": "Create Pet",
+        "edges": [
+          {
+            "destination_node_id": "node-1758000932809",
+            "id": "edge-1758000938926",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "It was successful"
+            }
+          }
+        ],
+        "id": "node-1758000462397",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": false,
+        "display_position": {
+          "x": 6174.653122454556,
+          "y": 2531.332507967956
+        },
+        "wait_for_result": true
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1758000234477",
+            "id": "edge-1758000675144",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The user provides a species"
+            }
+          }
+        ],
+        "id": "node-1758000675144",
+        "type": "conversation",
+        "display_position": {
+          "x": 5436.145012232652,
+          "y": 2355.1714089983234
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- Is {{pet_name}} a dog or cat (or something else)"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757968132989",
+            "id": "edge-1758000932809",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If they need to add another pet\n"
+            }
+          },
+          {
+            "destination_node_id": "node-1758001229942",
+            "id": "edge-1758001195360",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If they do not want to add another pet"
+            }
+          }
+        ],
+        "id": "node-1758000932809",
+        "type": "conversation",
+        "display_position": {
+          "x": 6615.181963896932,
+          "y": 2962.2828353854443
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- {{pet_name}} was added to our system\n- ask if they need to add another pet?"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757968132989",
+            "id": "edge-1758001108523",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transition Immediately "
+            }
+          }
+        ],
+        "id": "node-1758001108523",
+        "type": "conversation",
+        "display_position": {
+          "x": 4333.974055895971,
+          "y": 1914.3403464570856
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "{{message}}. Now lets add your pet."
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757722478793",
+            "id": "edge-1758001229942",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If they want to set up an appointment \n"
+            }
+          }
+        ],
+        "id": "node-1758001229942",
+        "type": "conversation",
+        "display_position": {
+          "x": 7125.874720141104,
+          "y": 3220.7051316913944
+        },
+        "instruction": {
+          "type": "static_text",
+          "text": "Do you want to set up an appointment?"
+        }
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757722478793",
+            "id": "edge-1758001557734",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transition immediately"
+            }
+          }
+        ],
+        "id": "node-1758001557734",
+        "type": "conversation",
+        "display_position": {
+          "x": 1240.982770346143,
+          "y": 159.18186505312622
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- \"Great! {{message}}. Lets set up an appointment."
+        }
+      }
+    ],
+    "start_node_id": "start-node-1757721846880",
+    "start_speaker": "agent",
+    "tools": [
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "Check if customer exists by phone number",
+        "type": "custom",
+        "url": "https://api.helppet.ai/api/v1/webhook/phone",
+        "tool_id": "tool-1757722169294",
+        "args_at_root": false,
+        "timeout_ms": 120000,
+        "name": "check_user",
+        "response_variables": {
+          "full_name": "user.owner_name",
+          "user.pet_2_name": "user.pet_2_name",
+          "user.pet_2_id": "user.pet_2_id",
+          "pet_owner_id": "user.id",
+          "user.pet_1_id": "user.pet_1_id",
+          "user.pet_count": "user.pet_count",
+          "message": "message",
+          "user.pet_1_name": "user.pet_1_name",
+          "user_exists": "user_exists"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phone_number": {
+              "type": "string",
+              "description": "use the phone variable exactly"
+            }
+          },
+          "required": [
+            "phone_number"
+          ]
+        }
+      },
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "Get available appointment times for a specific date and time preference. This function checks real-time availability and returns up to 3 available 45-minute appointment slots.",
+        "type": "custom",
+        "url": "https://api.helppet.ai/api/v1/webhook/phone",
+        "tool_id": "tool-1757807832923",
+        "args_at_root": false,
+        "timeout_ms": 120000,
+        "name": "get_available_times",
+        "response_variables": {
+          "message": "message",
+          "available_times": "available_times",
+          "success": "success"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "The date for the appointment (e.g., '9-14', 'September 14', 'tomorrow')"
+            },
+            "practice_id": {
+              "type": "string",
+              "description": "Use the practice_id uuid variable exactly"
+            },
+            "time_preference": {
+              "type": "string",
+              "description": "Time of day preference (e.g., 'morning', 'afternoon', 'evening', 'any time')"
+            },
+            "timezone": {
+              "type": "string",
+              "description": "Timezone of practice (e.g. America/New_York, US/Pacific, US/Mountain)"
+            }
+          },
+          "required": [
+            "date",
+            "time_preference"
+          ]
+        }
+      },
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "",
+        "type": "custom",
+        "url": "https://api.helppet.ai/api/v1/webhook/phone",
+        "tool_id": "tool-1757886750049",
+        "args_at_root": false,
+        "timeout_ms": 119981,
+        "name": "book_appointment",
+        "response_variables": {
+          "message": "message",
+          "appointment_id": "appointment_id",
+          "success": "success"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Local date for the appointment (e.g., '2025-09-15', '9-15', 'September 15', 'tomorrow')"
+            },
+            "start_time": {
+              "type": "string",
+              "description": "Local start time selected by user (e.g., '2:30 PM', '14:30', '7:30 PM')"
+            },
+            "assigned_vet_user_id": {
+              "type": "string",
+              "description": "Specific vet UUID if requested (optional - system will assign if not provided)"
+            },
+            "notes": {
+              "type": "string",
+              "description": "Additional notes or special requests"
+            },
+            "timezone": {
+              "type": "string",
+              "description": "Practice timezone (e.g., 'America/New_York', 'US/Pacific', 'US/Mountain')"
+            },
+            "service": {
+              "type": "string",
+              "description": "Type of service/appointment (e.g., 'General Checkup', 'Vaccination')"
+            },
+            "pet_owner_id": {
+              "type": "string",
+              "description": "Pet owner UUID from user lookup. This corresponds to user.id from check_user response"
+            },
+            "practice_id": {
+              "type": "string",
+              "description": "Practice UUID - use the practice_id variable exactly as provided"
+            },
+            "pet_names": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of pet names for this appointment (e.g., ['Amira'], ['Winston'], ['Amira', 'Winston']). Optional - all pets included if not specified"
+            }
+          },
+          "required": [
+            "practice_id",
+            "pet_owner_id",
+            "date",
+            "start_time"
+          ]
+        }
+      },
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "",
+        "type": "custom",
+        "url": "https://api.helppet.ai/api/v1/webhook/phone",
+        "tool_id": "tool-1757958213534",
+        "args_at_root": false,
+        "timeout_ms": 120000,
+        "name": "create_user",
+        "response_variables": {
+          "message": "message",
+          "success": "success",
+          "pet_owner_id": "user_id"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "practice_uuid": {
+              "type": "string",
+              "description": "Practice UUID - use the practice_id variable exactly as provided"
+            },
+            "phone_number": {
+              "type": "string",
+              "description": "use the phone variable exactly as provided."
+            },
+            "address": {
+              "type": "string",
+              "description": "use the full_address variable exactly as provided."
+            },
+            "owner_name": {
+              "type": "string",
+              "description": "use the full_name variable exactly as provided"
+            },
+            "email": {
+              "type": "string",
+              "description": "use the email variable exactly as provided"
+            }
+          },
+          "required": [
+            "owner_name",
+            "practice_uuid"
+          ]
+        }
+      },
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "",
+        "type": "custom",
+        "url": "https://api.helppet.ai/api/v1/webhook/phone",
+        "tool_id": "tool-1757999977662",
+        "args_at_root": false,
+        "timeout_ms": 120000,
+        "name": "create_pet",
+        "response_variables": {
+          "message": "message",
+          "success": "success"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "pet_name": {
+              "type": "string",
+              "description": "Use the exact pet_name variable"
+            },
+            "gender": {
+              "type": "string",
+              "description": "Gender of the pet"
+            },
+            "species": {
+              "type": "string",
+              "description": "Use the exact species variable"
+            },
+            "date_of_birth": {
+              "type": "string",
+              "description": "Pet's date of birth"
+            },
+            "pet_owner_id": {
+              "type": "string",
+              "description": "Use the exact user_id variable."
+            },
+            "weight": {
+              "type": "number",
+              "description": "Weight of the pet in pounds"
+            },
+            "breed": {
+              "type": "string",
+              "description": "Breed of the pet"
+            }
+          },
+          "required": [
+            "pet_owner_id",
+            "pet_name",
+            "species"
+          ]
+        }
+      }
+    ],
+    "model_choice": {
+      "type": "cascading",
+      "model": "gpt-4.1"
+    },
+    "kb_config": {
+      "top_k": 3,
+      "filter_score": 0.6
+    },
+    "begin_tag_display_position": {
+      "x": -270.92092676787036,
+      "y": 395.8005909649198
+    },
+    "is_published": false,
+    "knowledge_base_ids": []
+  },
+  "llmURL": null
+}

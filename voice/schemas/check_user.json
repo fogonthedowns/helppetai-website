@@ -1,0 +1,12 @@
+{
+    "type": "object",
+    "properties": {
+      "phone_number": {
+        "type": "string",
+        "description": "use the phone variable exactly"
+      }
+    },
+    "required": [
+      "phone_number"
+    ]
+  }

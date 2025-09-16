@@ -1,0 +1,35 @@
+{
+    "type": "object",
+    "properties": {
+      "pet_owner_id": {
+        "type": "string",
+        "description": "UUID of the pet owner"
+      },
+      "pet_name": {
+        "type": "string",
+        "description": "Name of the pet"
+      },
+      "species": {
+        "type": "string",
+        "description": "Species of the pet"
+      },
+      "breed": {
+        "type": "string", 
+        "description": "Breed of the pet"
+      },
+      "gender": {
+        "type": "string",
+        "description": "Gender of the pet"
+      },
+      "weight": {
+        "type": "number",
+        "description": "Weight of the pet in pounds"
+      },
+      "date_of_birth": {
+        "type": "string",
+        "format": "date",
+        "description": "Pet's date of birth"
+      }
+    },
+    "required": ["pet_owner_id", "pet_name", "species"]
+}

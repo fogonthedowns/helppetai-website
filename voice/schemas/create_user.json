@@ -1,0 +1,29 @@
+{
+    "type": "object",
+    "properties": {
+      "practice_uuid": {
+        "type": "string",
+        "description": "Practice UUID - use the practice_id variable exactly as provided"
+      },
+      "phone_number": {
+        "type": "string",
+        "description": "use the phone variable exactly as provided."
+      },
+      "address": {
+        "type": "string",
+        "description": "use the full_address variable exactly as provided."
+      },
+      "owner_name": {
+        "type": "string",
+        "description": "use the full_name variable exactly as provided"
+      },
+      "email": {
+        "type": "string",
+        "description": "use the email variable exactly as provided"
+      }
+    },
+    "required": [
+      "owner_name",
+      "practice_uuid"
+    ]
+  }
