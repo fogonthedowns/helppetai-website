@@ -114,7 +114,19 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
         elif function_name == "get_user_pets":
             logger.info(f"🔍 USER SERVICE: get_user_pets")
             result = await user_service.get_user_pets(arguments.get("pet_owner_id"))
-            
+
+        elif function_name == "create_pet":
+            logger.info(f"🔍 USER SERVICE: create_pet")
+            result = await user_service.create_pet(
+                arguments.get("pet_owner_id"),
+                arguments.get("pet_name", ""),
+                arguments.get("species", ""),
+                arguments.get("breed", ""),
+                arguments.get("gender", ""),
+                arguments.get("weight"),
+                arguments.get("date_of_birth", "")
+            )
+
         elif function_name == "check_calendar":
             logger.info(f"🔍 APPOINTMENT SERVICE: check_calendar")
             result = await appointment_service.check_calendar()

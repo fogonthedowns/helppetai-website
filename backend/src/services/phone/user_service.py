@@ -266,6 +266,84 @@ class UserService:
                 "message": "I'm having trouble creating your profile. Let me try again."
             }
     
+    async def create_pet(self, pet_owner_id: str, pet_name: str, species: str, breed: str = "", gender: str = "", weight: float = None, date_of_birth: str = "") -> Dict[str, Any]:
+        """Create a new pet for a pet owner"""
+        try:
+            logger.info(f"Creating new pet: {pet_name} ({species}) for owner {pet_owner_id}")
+
+            # Validate pet owner ID
+            try:
+                owner_uuid = UUID(pet_owner_id)
+            except ValueError:
+                logger.error(f"Invalid pet owner UUID: {pet_owner_id}")
+                return {
+                    "success": False,
+                    "message": "I'm having trouble finding your profile. Let me try again."
+                }
+
+            # Validate required fields
+            if not pet_name or not pet_name.strip():
+                return {
+                    "success": False,
+                    "message": "I need your pet's name to add them to your profile."
+                }
+
+            if not species or not species.strip():
+                return {
+                    "success": False,
+                    "message": "I need to know what type of pet this is (dog, cat, etc.)."
+                }
+
+            # Verify pet owner exists
+            pet_owner = await self.pet_owner_repo.get_by_id(owner_uuid)
+            if not pet_owner:
+                logger.error(f"Pet owner not found: {pet_owner_id}")
+                return {
+                    "success": False,
+                    "message": "I'm having trouble finding your profile. Let me try again."
+                }
+
+            # Parse date of birth if provided
+            parsed_date = None
+            if date_of_birth and date_of_birth.strip():
+                try:
+                    from datetime import datetime
+                    parsed_date = datetime.strptime(date_of_birth.strip(), "%Y-%m-%d").date()
+                except ValueError:
+                    logger.warning(f"Invalid date format: {date_of_birth}")
+                    # Continue without date rather than failing
+
+            # Create pet using the Pet model
+            pet = Pet(
+                owner_id=owner_uuid,
+                name=pet_name.strip(),
+                species=species.strip().lower(),
+                breed=breed.strip() if breed else None,
+                gender=gender.strip() if gender else None,
+                weight=weight if weight and weight > 0 else None,
+                date_of_birth=parsed_date,
+                is_active=True
+            )
+
+            # Save pet using repository
+            created_pet = await self.pet_repo.create(pet)
+            logger.info(f"Successfully created pet: {created_pet.id} - {created_pet.name}")
+
+            return {
+                "success": True,
+                "pet_id": str(created_pet.id),
+                "pet_name": created_pet.name,
+                "pet_species": created_pet.species,
+                "message": f"Perfect! I've added {created_pet.name} the {created_pet.species} to your profile."
+            }
+
+        except Exception as e:
+            logger.error(f"Error creating pet: {str(e)}")
+            return {
+                "success": False,
+                "message": "I'm having trouble adding your pet to the system. Let me try again."
+            }
+
     async def get_user_pets(self, pet_owner_id: str) -> Dict[str, Any]:
         """Get all pets for a pet owner - useful for appointment booking"""
         try:
