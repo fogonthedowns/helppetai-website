@@ -1,0 +1,50 @@
+{
+    "type": "object",
+    "properties": {
+      "date": {
+        "type": "string",
+        "description": "Local date for the appointment (e.g., '2025-09-15', '9-15', 'September 15', 'tomorrow')"
+      },
+      "start_time": {
+        "type": "string",
+        "description": "Local start time selected by user (e.g., '2:30 PM', '14:30', '7:30 PM')"
+      },
+      "assigned_vet_user_id": {
+        "type": "string",
+        "description": "Specific vet UUID if requested (optional - system will assign if not provided)"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Additional notes or special requests"
+      },
+      "timezone": {
+        "type": "string",
+        "description": "Practice timezone (e.g., 'America/New_York', 'US/Pacific', 'US/Mountain')"
+      },
+      "service": {
+        "type": "string",
+        "description": "Type of service/appointment (e.g., 'General Checkup', 'Vaccination')"
+      },
+      "pet_owner_id": {
+        "type": "string",
+        "description": "Pet owner UUID from user lookup. This corresponds to user.id from check_user response"
+      },
+      "practice_id": {
+        "type": "string",
+        "description": "Practice UUID - use the practice_id variable exactly as provided"
+      },
+      "pet_names": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of pet names for this appointment (e.g., ['Amira'], ['Winston'], ['Amira', 'Winston']). Optional - all pets included if not specified"
+      }
+    },
+    "required": [
+      "practice_id",
+      "pet_owner_id",
+      "date",
+      "start_time"
+    ]
+  }
