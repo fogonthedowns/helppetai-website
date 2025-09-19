@@ -162,8 +162,7 @@ const AboutUs = () => {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Multi-Practice Record Sharing</h3>
                     <p className="text-gray-600">
-                    Secure, SOC 2 Type 2 compliant platform enabling seamless sharing of pet medical records and visit transcripts across veterinary practices.
-                    </p>
+                    Less time on calls. Less time on paperwork. A secure, voice-first AI agent built for your clinic.                    </p>
                   </div>
                 </div>
               </div>
@@ -172,9 +171,9 @@ const AboutUs = () => {
             <div className="flex justify-center">
               <div className="w-96 h-96 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center">
                 <div className="text-center text-white">
-                  <div className="text-6xl font-bold mb-2">100%</div>
-                  <div className="text-xl font-light">Visit documentation</div>
-                  <div className="text-4xl font-bold mt-6 mb-2">SOC 2 Type 2</div>
+                  <div className="text-6xl font-bold mb-2">Front Desk Simplified</div>
+                  <div className="text-xl font-light">AI-powered calls</div>
+                  <div className="text-4xl font-bold mt-6 mb-2">Voice-First</div>
                   <div className="text-xl font-light">Compliant & secure</div>
                 </div>
               </div>
@@ -187,13 +186,13 @@ const AboutUs = () => {
       <section className="bg-blue-600 py-16">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to streamline your documentation?
+              Ready to streamline your front desk?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join veterinary practices using HelpPet.ai to transform their visit documentation workflow.
+            Join veterinary practices using HelpPet.ai to transform their front desk workflow.
           </p>
           <Link to="/vets" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors">
-            Start documenting visits
+            Start simplifying your front desk
           </Link>
         </div>
       </section>

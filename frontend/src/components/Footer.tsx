@@ -114,7 +114,7 @@ const Footer = () => {
                 © 2025 HelpPet.ai. All rights reserved.
               </p>
               <p className="text-gray-500 text-sm mt-4 md:mt-0">
-                SOC 2 Type 2 Compliant • Secure Documentation Platform
+                  Voice-First Platform • Front Desk Simplified
               </p>
             </div>
           </div>
