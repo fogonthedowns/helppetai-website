@@ -11,6 +11,7 @@ from .medical_record import MedicalRecord
 from .visit import Visit
 from .appointment import Appointment, AppointmentPet
 from .contact_form import ContactForm
+from .voice_config import VoiceConfig
 from .scheduling import (
     PracticeHours,
     VetAvailability,
@@ -32,6 +33,7 @@ __all__ = [
     "Appointment",
     "AppointmentPet",
     "ContactForm",
+    "VoiceConfig",
     "PracticeHours",
     "VetAvailability",
     "RecurringAvailability",

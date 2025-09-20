@@ -68,6 +68,7 @@ class VeterinaryPractice(Base):
     # pet_owner_associations: Mapped[List["PetOwnerPracticeAssociation"]] = relationship("PetOwnerPracticeAssociation", back_populates="practice")
     visits: Mapped[List["Visit"]] = relationship("Visit", back_populates="practice")
     appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="practice")
+    voice_config: Mapped[Optional["VoiceConfig"]] = relationship("VoiceConfig", back_populates="practice", uselist=False)
     
     def __repr__(self) -> str:
         return f"<VeterinaryPractice(id={self.id}, name='{self.name}')>"

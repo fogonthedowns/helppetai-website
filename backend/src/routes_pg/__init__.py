@@ -19,6 +19,7 @@ from .upload import router as upload_router
 from .webhook import router as webhook_router
 from .contact_form import router as contact_form_router
 from .scheduling import router as scheduling_router
+from .call_analysis import router as call_analysis_router
 
 
 # Create main router
@@ -45,5 +46,6 @@ router.include_router(rag_router, prefix="/api/v1/rag", tags=["rag-search"])
 router.include_router(webhook_router, prefix="/api/v1/webhook", tags=["webhook"])
 router.include_router(contact_form_router, prefix="/api/v1/vets", tags=["veterinary-contact"])
 router.include_router(scheduling_router, tags=["scheduling"])  # scheduling router already has prefix
+router.include_router(call_analysis_router, tags=["call-analysis"])  # call analysis router already has prefix
 
 __all__ = ["router"]
