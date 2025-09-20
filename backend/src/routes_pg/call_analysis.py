@@ -2,7 +2,7 @@
 
 from typing import List, Dict, Any
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database_pg import get_db_session
@@ -181,3 +181,96 @@ async def create_voice_config(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating voice config: {str(e)}")
+
+
+@router.post("/webhook")
+async def retell_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Webhook endpoint for Retell AI call events.
+    Receives call_started, call_ended, and call_analyzed events.
+    """
+    try:
+        # Parse the webhook payload
+        payload = await request.json()
+        event_type = payload.get("event")
+        call_data = payload.get("call", {})
+        
+        if not call_data:
+            print("❌ No call data in webhook payload")
+            return {"status": "error", "message": "No call data provided"}
+        
+        agent_id = call_data.get("agent_id")
+        if not agent_id:
+            print("❌ No agent_id in webhook payload")
+            return {"status": "error", "message": "No agent_id provided"}
+        
+        call_id = call_data.get("call_id")
+        if not call_id:
+            print("❌ No call_id in webhook payload")
+            return {"status": "error", "message": "No call_id provided"}
+        
+        print(f"🔔 Webhook received: {event_type} for agent {agent_id}, call {call_id}")
+        
+        # Find the practice associated with this agent
+        voice_config_repo = VoiceConfigRepository(session)
+        voice_config = await voice_config_repo.get_by_agent_id(agent_id)
+        
+        if not voice_config:
+            print(f"❌ No voice config found for agent {agent_id}")
+            return {"status": "error", "message": f"Agent {agent_id} not found"}
+        
+        practice_id = voice_config.practice_id
+        print(f"✅ Found practice {practice_id} for agent {agent_id}")
+        
+        # Save the call to database
+        call_record_repo = CallRecordRepository(session)
+        
+        # Convert webhook data to our format
+        api_data = {
+            "call_id": call_id,
+            "agent_id": call_data.get("agent_id"),
+            "recording_url": call_data.get("recording_url"),
+            "start_timestamp": call_data.get("start_timestamp"),
+            "end_timestamp": call_data.get("end_timestamp"),
+            "from_number": call_data.get("from_number"),
+            "to_number": call_data.get("to_number"),
+            "duration_ms": call_data.get("duration_ms"),
+            "call_status": call_data.get("call_status"),
+            "disconnect_reason": call_data.get("disconnection_reason"),
+            "call_analysis": call_data.get("call_analysis")
+        }
+        
+        # Get or create call record
+        existing_record = await call_record_repo.get_by_call_id(call_id)
+        if existing_record:
+            call_record = existing_record
+        else:
+            from ..models_pg.call_record import CallRecord
+            call_record = CallRecord(practice_id=practice_id, call_id=call_id)
+        
+        # Update the record with webhook data
+        call_record.update_from_api_data(api_data)
+        
+        # Save to database
+        await call_record_repo.create_or_update(call_record)
+        await session.commit()
+        
+        print(f"✅ Saved call {call_id} for practice {practice_id} (event: {event_type})")
+        
+        return {
+            "status": "success", 
+            "message": f"Call {call_id} processed successfully",
+            "event": event_type,
+            "call_id": call_id
+        }
+        
+    except Exception as e:
+        print(f"❌ Webhook error: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return 200 even on error to prevent retries for non-recoverable errors
+        return {"status": "error", "message": str(e)}

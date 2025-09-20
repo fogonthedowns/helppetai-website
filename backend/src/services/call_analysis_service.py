@@ -35,8 +35,32 @@ class CallAnalysisService:
         offset: int = 0
     ) -> List[Dict[str, Any]]:
         """
-        Get call analysis data for a practice.
-        Simple: 1. Call API 2. Save to DB 3. Return results
+        Get call analysis data for a practice from cached data.
+        Data is populated via webhooks from Retell AI.
+        """
+        limit = min(limit, 50)  # Prevent abuse
+        
+        # Get calls from cache (populated by webhooks)
+        cached_calls = await self.call_record_repo.get_by_practice_id(
+            practice_id=practice_id,
+            limit=limit,
+            offset=offset
+        )
+        
+        # Convert to API format
+        results = [call.to_api_dict() for call in cached_calls]
+        
+        print(f"Returning {len(results)} cached calls for practice {practice_id}")
+        return results
+    
+    async def manual_sync_calls_from_api(
+        self, 
+        practice_id: UUID, 
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Manual sync method - kept for backup/testing purposes.
+        Directly calls Retell API and saves to DB.
         """
         limit = min(limit, 50)  # Prevent abuse
         
@@ -51,7 +75,7 @@ class CallAnalysisService:
             return []
         
         try:
-            print(f"Fetching calls for agent {voice_config.agent_id}")
+            print(f"Manual sync: Fetching calls for agent {voice_config.agent_id}")
             
             # 1. Call API
             calls = self.retell_client.call.list(
@@ -85,11 +109,11 @@ class CallAnalysisService:
                     print(f"Error processing call {call_id}: {e}")
                     continue
             
-            print(f"Successfully processed {len(results)} calls")
+            print(f"Manual sync: Successfully processed {len(results)} calls")
             return results
             
         except Exception as e:
-            print(f"Error fetching calls: {e}")
+            print(f"Manual sync error: {e}")
             return []
     
     async def get_call_detail(self, practice_id: UUID, call_id: str) -> Dict[str, Any]:
