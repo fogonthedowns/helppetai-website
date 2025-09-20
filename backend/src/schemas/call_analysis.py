@@ -78,6 +78,21 @@ class CallSummary(BaseModel):
         description="When the call ended (ISO 8601 format with timezone)",
         example="2025-09-20T14:35:42.456Z"
     )
+    from_number: Optional[str] = Field(
+        None, 
+        description="Phone number that initiated the call (caller's number)",
+        example="+15551234567"
+    )
+    to_number: Optional[str] = Field(
+        None, 
+        description="Phone number that received the call (practice's number)",
+        example="+15559876543"
+    )
+    duration_ms: Optional[int] = Field(
+        None, 
+        description="Total call duration in milliseconds",
+        example=327000
+    )
     call_analysis: Optional[CallAnalysisData] = Field(
         None,
         description="AI analysis of the call content and outcome"
@@ -90,6 +105,9 @@ class CallSummary(BaseModel):
                 "recording_url": "https://recordings.retellai.com/call_1a2b3c4d5e6f7g8h9i0j.mp3",
                 "start_timestamp": "2025-09-20T14:30:15.123Z",
                 "end_timestamp": "2025-09-20T14:35:42.456Z",
+                "from_number": "+15551234567",
+                "to_number": "+15559876543",
+                "duration_ms": 327000,
                 "call_analysis": {
                     "call_successful": True,
                     "call_summary": "Customer called to schedule a checkup for their Golden Retriever, Max. Appointment scheduled for next Tuesday at 2 PM. Customer mentioned Max has been limping slightly.",
@@ -115,25 +133,10 @@ class CallDetail(CallSummary):
     
     Extends CallSummary with additional technical metadata and call details.
     """
-    duration_ms: Optional[int] = Field(
-        None, 
-        description="Total call duration in milliseconds",
-        example=327000
-    )
     agent_id: Optional[str] = Field(
         None, 
         description="ID of the voice agent that handled the call",
         example="agent_11583fd62e3ba8128cb73fcb0e"
-    )
-    from_number: Optional[str] = Field(
-        None, 
-        description="Phone number that initiated the call (caller's number)",
-        example="+15551234567"
-    )
-    to_number: Optional[str] = Field(
-        None, 
-        description="Phone number that received the call (practice's number)",
-        example="+15559876543"
     )
     call_status: Optional[str] = Field(
         None,
@@ -153,10 +156,10 @@ class CallDetail(CallSummary):
                 "recording_url": "https://recordings.retellai.com/call_1a2b3c4d5e6f7g8h9i0j.mp3",
                 "start_timestamp": "2025-09-20T14:30:15.123Z",
                 "end_timestamp": "2025-09-20T14:35:42.456Z",
-                "duration_ms": 327000,
-                "agent_id": "agent_11583fd62e3ba8128cb73fcb0e",
                 "from_number": "+15551234567",
                 "to_number": "+15559876543",
+                "duration_ms": 327000,
+                "agent_id": "agent_11583fd62e3ba8128cb73fcb0e",
                 "call_status": "completed",
                 "disconnect_reason": "user_hangup",
                 "call_analysis": {
@@ -248,6 +251,9 @@ class CallListResponse(BaseModel):
                         "recording_url": "https://recordings.retellai.com/call_1a2b3c4d5e6f7g8h9i0j.mp3",
                         "start_timestamp": "2025-09-20T14:30:15.123Z",
                         "end_timestamp": "2025-09-20T14:35:42.456Z",
+                        "from_number": "+15551234567",
+                        "to_number": "+15559876543",
+                        "duration_ms": 327000,
                         "call_analysis": {
                             "call_successful": True,
                             "call_summary": "Customer called to schedule a checkup for their Golden Retriever, Max.",
@@ -264,6 +270,9 @@ class CallListResponse(BaseModel):
                         "recording_url": "https://recordings.retellai.com/call_2b3c4d5e6f7g8h9i0j1k.mp3",
                         "start_timestamp": "2025-09-20T13:15:30.789Z",
                         "end_timestamp": "2025-09-20T13:18:45.012Z",
+                        "from_number": "+15559876543",
+                        "to_number": "+15551234567",
+                        "duration_ms": 195000,
                         "call_analysis": {
                             "call_successful": False,
                             "call_summary": "Customer called about emergency - cat ingested something toxic. Directed to emergency clinic.",

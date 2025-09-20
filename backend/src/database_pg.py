@@ -88,9 +88,8 @@ class DatabasePG:
                     except Exception:
                         await session.rollback()
                         raise
-                    finally:
-                        await session.close()
-                    return
+                    # Session will be automatically closed by the context manager
+                    break  # Successfully yielded, exit retry loop
             except Exception as e:
                 logger.warning(f"Database session attempt {attempt + 1}/{max_retries} failed: {e}")
                 if attempt < max_retries - 1:

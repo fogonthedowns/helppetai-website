@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database_pg import get_db_session
 from ..repositories_pg.voice_config_repository import VoiceConfigRepository
+from ..repositories_pg.call_record_repository import CallRecordRepository
 from ..services.call_analysis_service import CallAnalysisService
 from ..auth.jwt_auth_pg import get_current_user
 from ..models_pg.user import User
@@ -27,7 +28,8 @@ class CreateVoiceConfigRequest(BaseModel):
 def get_call_analysis_service(session: AsyncSession = Depends(get_db_session)) -> CallAnalysisService:
     """Dependency to get call analysis service."""
     voice_config_repo = VoiceConfigRepository(session)
-    return CallAnalysisService(voice_config_repo)
+    call_record_repo = CallRecordRepository(session)
+    return CallAnalysisService(voice_config_repo, call_record_repo)
 
 
 @router.get("/practice/{practice_id}/calls", response_model=CallListResponse)
