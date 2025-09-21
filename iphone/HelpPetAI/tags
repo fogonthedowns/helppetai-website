@@ -1,0 +1,368 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/Users/justinzollars/hack/swift/HelpPetAI/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/787811b6/
+**Additional Context:**	docs/backend-question-visit-transcript-associations.md	/^## **Additional Context:**$/;"	s	chapter:✅ RESOLVED: Visit Transcript - Appointment Association Issue
+**Current iOS Implementation:**	docs/backend-question-visit-transcript-associations.md	/^### **Current iOS Implementation:**$/;"	S	section:✅ RESOLVED: Visit Transcript - Appointment Association Issue""**Additional Context:**
+**Expected Behavior:**	docs/backend-question-visit-transcript-associations.md	/^### **Expected Behavior:**$/;"	S	section:✅ RESOLVED: Visit Transcript - Appointment Association Issue""**Additional Context:**
+**Impact:**	docs/backend-question-visit-transcript-associations.md	/^## **Impact:**$/;"	s	chapter:✅ RESOLVED: Visit Transcript - Appointment Association Issue
+**Priority:**	docs/backend-question-visit-transcript-associations.md	/^### **Priority:** $/;"	S	section:✅ RESOLVED: Visit Transcript - Appointment Association Issue""**Additional Context:**
+**Questions:**	docs/backend-question-visit-transcript-associations.md	/^## **Questions:**$/;"	s	chapter:✅ RESOLVED: Visit Transcript - Appointment Association Issue
+**Suggested Solutions:**	docs/backend-question-visit-transcript-associations.md	/^### **Suggested Solutions:**$/;"	S	section:✅ RESOLVED: Visit Transcript - Appointment Association Issue""**Additional Context:**
+**The Problem:**	docs/backend-question-visit-transcript-associations.md	/^## **The Problem:**$/;"	s	chapter:✅ RESOLVED: Visit Transcript - Appointment Association Issue
+0	HelpPetAI/Assets.xcassets/AccentColor.colorset/Contents.json	/^    {$/;"	o	array:colors
+0	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^        {$/;"	o	array:images.1.appearances
+0	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^        {$/;"	o	array:images.2.appearances
+0	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^    {$/;"	o	array:images
+1	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^    {$/;"	o	array:images
+1. **API Endpoints Updated**	docs/v2-migration-summary.md	/^### 1. **API Endpoints Updated**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed
+1. **APIManager.swift Changes**	docs/v2-migration-summary.md	/^### 1. **APIManager.swift Changes**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details
+1. **Invalid Redeclaration of 'response'** ✅	docs/final-compilation-fixes.md	/^### 1. **Invalid Redeclaration of 'response'** ✅$/;"	S	section:Final Compilation Fixes - v2.0 Migration""🐛 **Remaining Issues Fixed**
+1. **Recordings API Must Always Return `pet_id`**	docs/backend-integration-guide.md	/^### 1. **Recordings API Must Always Return `pet_id`**$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""🚨 Critical Backend Changes Required
+1. **Simplified Data Model**	docs/v2-migration-summary.md	/^### 1. **Simplified Data Model**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🎯 Key Benefits Achieved
+1. **Single Pet Appointment**	docs/v2-migration-summary.md	/^### 1. **Single Pet Appointment**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🧪 Testing Scenarios
+1. **Visit Model Protocol Conformance** ✅	docs/compilation-fixes.md	/^### 1. **Visit Model Protocol Conformance** ✅$/;"	S	section:Compilation Errors Fixed - v2.0 Migration""🐛 Issues Resolved
+1. Appointment Context Setup	doc.md	/^### 1. Appointment Context Setup$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow
+1. AudioUploadRequest - Both IDs Required	docs/ios-data-model-compliance.md	/^### 1. AudioUploadRequest - Both IDs Required$/;"	S	section:iOS Data Model Compliance - Correct Implementation""🔧 Implementation Details
+1. Authorization Checks	docs/backend-integration-guide.md	/^### 1. Authorization Checks$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Security Considerations
+1. Backfill Missing pet_id Values	docs/backend-integration-guide.md	/^### 1. Backfill Missing pet_id Values$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Data Migration Requirements
+1. Database Indexes	docs/backend-integration-guide.md	/^### 1. Database Indexes$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Performance Considerations
+1. Database Migration	doc.md	/^#### 1. Database Migration$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Steps
+1. Duplicate Recording (409 Conflict)	doc.md	/^#### 1. Duplicate Recording (409 Conflict)$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Error Handling""Common Error Scenarios
+1. Fix Recordings API Response - CRITICAL	docs/backend-team-message.md	/^### 1. Fix Recordings API Response - CRITICAL$/;"	S	section:Message for Backend Team - Critical Pet-Recording Association Fix""🔥 Immediate Actions Required (HIGH PRIORITY)
+1. New Visit Model (`Visit.swift`)	docs/pet-recording-association-fix.md	/^### 1. New Visit Model (`Visit.swift`)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Implementation Details
+1. Recording Upload Initiation	docs/backend-integration-guide.md	/^### 1. Recording Upload Initiation$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements
+1. Recordings Table Updates	docs/backend-integration-guide.md	/^### 1. Recordings Table Updates$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Database Schema Requirements
+1. Unit Tests	docs/backend-integration-guide.md	/^### 1. Unit Tests$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Testing Requirements
+1. Validation Error Responses	docs/backend-integration-guide.md	/^### 1. Validation Error Responses$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Error Handling Requirements
+2	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^    {$/;"	o	array:images
+2. **Add Pet-Appointment Validation**	docs/backend-integration-guide.md	/^### 2. **Add Pet-Appointment Validation**$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""🚨 Critical Backend Changes Required
+2. **AudioManager.swift Changes**	docs/v2-migration-summary.md	/^### 2. **AudioManager.swift Changes**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details
+2. **Data Models Replaced**	docs/v2-migration-summary.md	/^### 2. **Data Models Replaced**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed
+2. **Missing RecordingResponse Type** ✅	docs/compilation-fixes.md	/^### 2. **Missing RecordingResponse Type** ✅$/;"	S	section:Compilation Errors Fixed - v2.0 Migration""🐛 Issues Resolved
+2. **Missing RecordingUploadInitiateResponse Type** ✅	docs/final-compilation-fixes.md	/^### 2. **Missing RecordingUploadInitiateResponse Type** ✅$/;"	S	section:Final Compilation Fixes - v2.0 Migration""🐛 **Remaining Issues Fixed**
+2. **Multi-Pet Appointment**	docs/v2-migration-summary.md	/^### 2. **Multi-Pet Appointment**  $/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🧪 Testing Scenarios
+2. **One Recording Per Pet Per Day**	docs/v2-migration-summary.md	/^### 2. **One Recording Per Pet Per Day**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🎯 Key Benefits Achieved
+2. API Endpoint Changes	doc.md	/^#### 2. API Endpoint Changes$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Steps
+2. API Response Optimization	docs/backend-integration-guide.md	/^### 2. API Response Optimization$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Performance Considerations
+2. Add Pet-Appointment Validation	docs/backend-team-message.md	/^### 2. Add Pet-Appointment Validation$/;"	S	section:Message for Backend Team - Critical Pet-Recording Association Fix""🔥 Immediate Actions Required (HIGH PRIORITY)
+2. Data Privacy	docs/backend-integration-guide.md	/^### 2. Data Privacy$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Security Considerations
+2. Data Validation Queries	docs/backend-integration-guide.md	/^### 2. Data Validation Queries$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Data Migration Requirements
+2. Enhanced Audio Models (`AudioModels.swift`)	docs/pet-recording-association-fix.md	/^### 2. Enhanced Audio Models (`AudioModels.swift`)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Implementation Details
+2. Integration Tests	docs/backend-integration-guide.md	/^### 2. Integration Tests$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Testing Requirements
+2. Logging Requirements	docs/backend-integration-guide.md	/^### 2. Logging Requirements$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Error Handling Requirements
+2. Recording Initiation Per Pet	doc.md	/^### 2. Recording Initiation Per Pet$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow
+2. Recording Upload Completion	docs/backend-integration-guide.md	/^### 2. Recording Upload Completion$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements
+2. Upload Function - Per Pet Uploads	docs/ios-data-model-compliance.md	/^### 2. Upload Function - Per Pet Uploads$/;"	S	section:iOS Data Model Compliance - Correct Implementation""🔧 Implementation Details
+2. Upload Timeout (Presigned URL Expired)	doc.md	/^#### 2. Upload Timeout (Presigned URL Expired)$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Error Handling""Common Error Scenarios
+2. Visits Table (NEW - Optional but Recommended)	docs/backend-integration-guide.md	/^### 2. Visits Table (NEW - Optional but Recommended)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Database Schema Requirements
+3. **AudioManager Deprecation Warnings** ✅	docs/compilation-fixes.md	/^### 3. **AudioManager Deprecation Warnings** ✅$/;"	S	section:Compilation Errors Fixed - v2.0 Migration""🐛 Issues Resolved
+3. **Better Pet Association**	docs/v2-migration-summary.md	/^### 3. **Better Pet Association**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🎯 Key Benefits Achieved
+3. **Core Architecture Changes**	docs/v2-migration-summary.md	/^### 3. **Core Architecture Changes**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed
+3. **Database Schema Enhancements**	docs/backend-integration-guide.md	/^### 3. **Database Schema Enhancements**$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""🚨 Critical Backend Changes Required
+3. **One Recording Per Day Enforcement**	docs/v2-migration-summary.md	/^### 3. **One Recording Per Day Enforcement**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🧪 Testing Scenarios
+3. **Outdated Print Statement** ✅	docs/final-compilation-fixes.md	/^### 3. **Outdated Print Statement** ✅$/;"	S	section:Final Compilation Fixes - v2.0 Migration""🐛 **Remaining Issues Fixed**
+3. **UI Component Changes**	docs/v2-migration-summary.md	/^### 3. **UI Component Changes**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details
+3. Add visit_id to Recordings (Optional)	docs/backend-integration-guide.md	/^### 3. Add visit_id to Recordings (Optional)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Database Schema Requirements
+3. Audio Recording	doc.md	/^### 3. Audio Recording$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow
+3. Database Schema Fix	docs/backend-team-message.md	/^### 3. Database Schema Fix$/;"	S	section:Message for Backend Team - Critical Pet-Recording Association Fix""🔥 Immediate Actions Required (HIGH PRIORITY)
+3. Enhanced API Manager (`APIManager.swift`)	docs/pet-recording-association-fix.md	/^### 3. Enhanced API Manager (`APIManager.swift`)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Implementation Details
+3. File Too Large	doc.md	/^#### 3. File Too Large$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Error Handling""Common Error Scenarios
+3. Get Recordings (CRITICAL UPDATE REQUIRED)	docs/backend-integration-guide.md	/^### 3. Get Recordings (CRITICAL UPDATE REQUIRED)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements
+3. UI State Management - Per Pet Tracking	docs/ios-data-model-compliance.md	/^### 3. UI State Management - Per Pet Tracking$/;"	S	section:iOS Data Model Compliance - Correct Implementation""🔧 Implementation Details
+3. iPhone App Code Migration	doc.md	/^#### 3. iPhone App Code Migration$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Steps
+4. **AudioRecordingView.swift Changes**	docs/v2-migration-summary.md	/^### 4. **AudioRecordingView.swift Changes**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details
+4. **Cleaner API Surface**	docs/v2-migration-summary.md	/^### 4. **Cleaner API Surface**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🎯 Key Benefits Achieved
+4. **Visit State Tracking**	docs/v2-migration-summary.md	/^### 4. **Visit State Tracking**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🧪 Testing Scenarios
+4. Backend Validation - Enforced Correctly	docs/ios-data-model-compliance.md	/^### 4. Backend Validation - Enforced Correctly$/;"	S	section:iOS Data Model Compliance - Correct Implementation""🔧 Implementation Details
+4. Data Model Changes	doc.md	/^#### 4. Data Model Changes$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Steps
+4. Direct S3 Upload	doc.md	/^### 4. Direct S3 Upload$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow
+4. Get Appointment Details (NEW REQUIREMENT)	docs/backend-integration-guide.md	/^### 4. Get Appointment Details (NEW REQUIREMENT)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements
+4. Improved Recording View (`VisitRecordingView.swift`)	docs/pet-recording-association-fix.md	/^### 4. Improved Recording View (`VisitRecordingView.swift`)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Implementation Details
+4. Network Connectivity	doc.md	/^#### 4. Network Connectivity$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Error Handling""Common Error Scenarios
+5. **Improved Performance**	docs/v2-migration-summary.md	/^### 5. **Improved Performance**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🎯 Key Benefits Achieved
+5. Mark Upload Complete	doc.md	/^### 5. Mark Upload Complete$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow
+5. Visit Management APIs (NEW FEATURE)	docs/backend-integration-guide.md	/^### 5. Visit Management APIs (NEW FEATURE)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements
+6. Audio Playback	doc.md	/^### 6. Audio Playback$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow
+API Configuration	docs/about.md	/^### API Configuration$/;"	S	section:HelpPetAI - iOS Application Documentation""Configuration
+API Documentation	docs/about.md	/^## API Documentation$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+API Endpoints	CLAUDE.md	/^### API Endpoints$/;"	S	section:CLAUDE.md""Development Guidelines
+API Endpoints & Requirements	docs/backend-integration-guide.md	/^## API Endpoints & Requirements$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+API Error Types	docs/about.md	/^### API Error Types$/;"	S	section:HelpPetAI - iOS Application Documentation""Error Handling
+After Fix (Working)	docs/pet-recording-association-fix.md	/^### After Fix (Working)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Data Flow Architecture
+Appointment	docs/about.md	/^#### Appointment$/;"	t	subsection:HelpPetAI - iOS Application Documentation""Data Models""Core Models
+Appointment Management API	docs/about.md	/^### Appointment Management API$/;"	S	section:HelpPetAI - iOS Application Documentation""API Documentation
+Appointment → Pet → Visit → Recording Relationship	doc.md	/^### Appointment → Pet → Visit → Recording Relationship$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Key Concepts
+Architecture	docs/about.md	/^## Architecture$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Architecture Overview	CLAUDE.md	/^## Architecture Overview$/;"	s	chapter:CLAUDE.md
+Audio Configuration	docs/about.md	/^### Audio Configuration$/;"	S	section:HelpPetAI - iOS Application Documentation""Configuration
+Audio Optimization	docs/about.md	/^### Audio Optimization$/;"	S	section:HelpPetAI - iOS Application Documentation""Performance Considerations
+Audio Recording API	docs/about.md	/^### Audio Recording API$/;"	S	section:HelpPetAI - iOS Application Documentation""API Documentation
+Authentication	doc.md	/^## Authentication$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Authentication & Authorization	docs/about.md	/^## Authentication & Authorization$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Authentication API	docs/about.md	/^### Authentication API$/;"	S	section:HelpPetAI - iOS Application Documentation""API Documentation
+BGTaskSchedulerPermittedIdentifiers	HelpPetAI/Info.plist	/^	<key>BGTaskSchedulerPermittedIdentifiers<\/key>$/;"	k
+Backend Changes	doc.md	/^#### Backend Changes$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Breaking Changes
+Backend Coordination	docs/pet-recording-association-fix.md	/^### Backend Coordination$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Next Steps
+Backend Integration Guide - Pet-Recording Association Fix	docs/backend-integration-guide.md	/^# Backend Integration Guide - Pet-Recording Association Fix$/;"	c
+Backward Compatibility	doc.md	/^### Backward Compatibility$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0
+Backward Compatibility	docs/bug-fixes-summary.md	/^## Backward Compatibility$/;"	s	chapter:Bug Fixes Summary - HelpPetAI iOS App
+Before Fix (Broken)	docs/pet-recording-association-fix.md	/^### Before Fix (Broken)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Data Flow Architecture
+Benefits Achieved	docs/pet-recording-association-fix.md	/^## Benefits Achieved$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Better Performance	doc.md	/^#### Better Performance$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Benefits
+Breaking Changes	doc.md	/^### Breaking Changes$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0
+Bug Fixes Summary - HelpPetAI iOS App	docs/bug-fixes-summary.md	/^# Bug Fixes Summary - HelpPetAI iOS App$/;"	c
+Build and Development Commands	CLAUDE.md	/^## Build and Development Commands$/;"	s	chapter:CLAUDE.md
+CLAUDE.md	CLAUDE.md	/^# CLAUDE.md$/;"	c
+Callback Type Updated:	docs/v2-migration-summary.md	/^#### Callback Type Updated:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""4. **AudioRecordingView.swift Changes**
+Client-Side (iOS)	docs/pet-recording-association-fix.md	/^### Client-Side (iOS)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Validation Rules
+Common Error Scenarios	doc.md	/^### Common Error Scenarios$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Error Handling
+Common Issues	docs/backend-integration-guide.md	/^### Common Issues$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Support & Troubleshooting
+Compilation Errors Fixed - v2.0 Migration	docs/compilation-fixes.md	/^# Compilation Errors Fixed - v2.0 Migration$/;"	c
+Complete Recording Upload	docs/about.md	/^#### Complete Recording Upload$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Audio Recording API
+Complete iPhone Integration Flow	doc.md	/^## Complete iPhone Integration Flow$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Complexity Reduction	doc.md	/^#### Complexity Reduction$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Benefits
+Conclusion	docs/pet-recording-association-fix.md	/^## Conclusion$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Configuration	docs/about.md	/^## Configuration$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Core Architecture Patterns	CLAUDE.md	/^### Core Architecture Patterns$/;"	S	section:CLAUDE.md""Architecture Overview
+Core Models	docs/about.md	/^### Core Models$/;"	S	section:HelpPetAI - iOS Application Documentation""Data Models
+Create Visit	docs/backend-integration-guide.md	/^#### Create Visit$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""5. Visit Management APIs (NEW FEATURE)
+Critical Data Model Concepts	CLAUDE.md	/^### Critical Data Model Concepts$/;"	S	section:CLAUDE.md""Architecture Overview
+Current Constraints	docs/about.md	/^### Current Constraints$/;"	S	section:HelpPetAI - iOS Application Documentation""Known Limitations
+Current Problematic Response	docs/backend-integration-guide.md	/^#### Current Problematic Response$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""3. Get Recordings (CRITICAL UPDATE REQUIRED)
+Data Flow	CLAUDE.md	/^### Data Flow$/;"	S	section:CLAUDE.md""Architecture Overview
+Data Flow Architecture	docs/pet-recording-association-fix.md	/^## Data Flow Architecture$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Data Migration Requirements	docs/backend-integration-guide.md	/^## Data Migration Requirements$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Data Models	docs/about.md	/^## Data Models$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Data Relationship:	docs/v2-migration-summary.md	/^#### Data Relationship:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed""3. **Core Architecture Changes**
+Data Validation	doc.md	/^## Data Validation$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Data Validation & Error Handling	docs/pet-recording-association-fix.md	/^#### Data Validation & Error Handling$/;"	t	subsection:Pet-Recording Association Fix - Implementation Guide""Implementation Details""4. Improved Recording View (`VisitRecordingView.swift`)
+Database Schema Requirements	docs/backend-integration-guide.md	/^## Database Schema Requirements$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Date Fix Architecture:	docs/bug-fixes-summary.md	/^### Date Fix Architecture:$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Implementation Details
+Date Fix Testing:	docs/bug-fixes-summary.md	/^### Date Fix Testing:$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Testing Verification
+Date Handling:	docs/bug-fixes-summary.md	/^### Date Handling:$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Future Considerations
+Dependencies	docs/about.md	/^## Dependencies$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Deployment	docs/backend-integration-guide.md	/^### Deployment$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Deployment Checklist
+Deployment Checklist	docs/backend-integration-guide.md	/^## Deployment Checklist$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Design Patterns	docs/about.md	/^### Design Patterns$/;"	S	section:HelpPetAI - iOS Application Documentation""Architecture
+Development Environment	CLAUDE.md	/^## Development Environment$/;"	s	chapter:CLAUDE.md
+Development Guidelines	CLAUDE.md	/^## Development Guidelines$/;"	s	chapter:CLAUDE.md
+Duplicate Prevention	doc.md	/^#### Duplicate Prevention  $/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Benefits
+Endpoint	docs/backend-integration-guide.md	/^#### Endpoint$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""1. Recording Upload Initiation
+Endpoint	docs/backend-integration-guide.md	/^#### Endpoint$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""2. Recording Upload Completion
+Endpoint	docs/backend-integration-guide.md	/^#### Endpoint$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""3. Get Recordings (CRITICAL UPDATE REQUIRED)
+Endpoint	docs/backend-integration-guide.md	/^#### Endpoint$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""4. Get Appointment Details (NEW REQUIREMENT)
+Endpoint: `GET /api/v1/visit-transcripts/audio/playback/{visit_id}`	doc.md	/^#### Endpoint: `GET \/api\/v1\/visit-transcripts\/audio\/playback\/{visit_id}`$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow""6. Audio Playback
+Endpoint: `POST /api/v1/visit-transcripts/audio/upload/complete/{visit_id}`	doc.md	/^#### Endpoint: `POST \/api\/v1\/visit-transcripts\/audio\/upload\/complete\/{visit_id}`$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow""5. Mark Upload Complete
+Endpoint: `POST /api/v1/visit-transcripts/audio/upload/initiate`	doc.md	/^#### Endpoint: `POST \/api\/v1\/visit-transcripts\/audio\/upload\/initiate`$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Complete iPhone Integration Flow""2. Recording Initiation Per Pet
+Error Handling	doc.md	/^## Error Handling$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Error Handling	docs/about.md	/^## Error Handling$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Error Handling Requirements	docs/backend-integration-guide.md	/^## Error Handling Requirements$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Error Recovery Strategies	docs/about.md	/^### Error Recovery Strategies$/;"	S	section:HelpPetAI - iOS Application Documentation""Error Handling
+Executive Summary	docs/backend-integration-guide.md	/^## Executive Summary$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Expected Response	docs/backend-integration-guide.md	/^#### Expected Response$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""1. Recording Upload Initiation
+External Dependencies	docs/about.md	/^### External Dependencies$/;"	S	section:HelpPetAI - iOS Application Documentation""Dependencies
+File Organization	CLAUDE.md	/^### File Organization$/;"	S	section:CLAUDE.md""Development Guidelines
+Final Compilation Fixes - v2.0 Migration	docs/final-compilation-fixes.md	/^# Final Compilation Fixes - v2.0 Migration$/;"	c
+For System Integrity	docs/pet-recording-association-fix.md	/^### For System Integrity$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Benefits Achieved
+For Veterinarians	docs/pet-recording-association-fix.md	/^### For Veterinarians$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Benefits Achieved
+For iOS Team	docs/pet-recording-association-fix.md	/^### For iOS Team$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Benefits Achieved
+Future Considerations	docs/bug-fixes-summary.md	/^## Future Considerations$/;"	s	chapter:Bug Fixes Summary - HelpPetAI iOS App
+Future Enhancements	docs/pet-recording-association-fix.md	/^### Future Enhancements$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Next Steps
+Future Improvements	docs/about.md	/^## Future Improvements$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Get Current User	docs/about.md	/^#### Get Current User$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Authentication API
+Get Medical Records	docs/about.md	/^#### Get Medical Records$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Pet Information API
+Get Pet Details	docs/about.md	/^#### Get Pet Details$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Pet Information API
+Get Recordings	docs/about.md	/^#### Get Recordings$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Audio Recording API
+Get Today's Schedule	docs/about.md	/^#### Get Today's Schedule$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Appointment Management API
+Get Visits	docs/backend-integration-guide.md	/^#### Get Visits$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""5. Visit Management APIs (NEW FEATURE)
+HelpPetAI - iOS Application Documentation	docs/about.md	/^# HelpPetAI - iOS Application Documentation$/;"	c
+HelpPetAI.xcscheme_^#shared#^_	HelpPetAI.xcodeproj/xcuserdata/justinzollars.xcuserdatad/xcschemes/xcschememanagement.plist	/^		<key>HelpPetAI.xcscheme_^#shared#^_<\/key>$/;"	k	key:SchemeUserState
+Immediate Actions	docs/pet-recording-association-fix.md	/^### Immediate Actions$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Next Steps
+Immediate Actions Required (High Priority)	docs/backend-integration-guide.md	/^### Immediate Actions Required (High Priority)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Summary for Backend Team
+Implementation Details	docs/bug-fixes-summary.md	/^## Implementation Details$/;"	s	chapter:Bug Fixes Summary - HelpPetAI iOS App
+Implementation Details	docs/pet-recording-association-fix.md	/^## Implementation Details$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Initiate Recording Upload	docs/about.md	/^#### Initiate Recording Upload$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Audio Recording API
+Input Validation	doc.md	/^### Input Validation$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Data Validation
+Installation Steps	docs/about.md	/^### Installation Steps$/;"	S	section:HelpPetAI - iOS Application Documentation""Setup & Installation
+Issues Fixed	docs/bug-fixes-summary.md	/^## Issues Fixed$/;"	s	chapter:Bug Fixes Summary - HelpPetAI iOS App
+Key Architectural Components	CLAUDE.md	/^### Key Architectural Components$/;"	S	section:CLAUDE.md""Architecture Overview
+Key Architectural Decisions	docs/about.md	/^### Key Architectural Decisions$/;"	S	section:HelpPetAI - iOS Application Documentation""Architecture
+Key Concepts	doc.md	/^## Key Concepts$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Key Dependencies	CLAUDE.md	/^### Key Dependencies$/;"	S	section:CLAUDE.md""Development Guidelines
+Known Limitations	docs/about.md	/^## Known Limitations$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Legacy Methods Removed:	docs/v2-migration-summary.md	/^#### Legacy Methods Removed:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""1. **APIManager.swift Changes**
+Login	docs/about.md	/^#### Login$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Authentication API
+Long-term Improvements (Low Priority)	docs/backend-integration-guide.md	/^### Long-term Improvements (Low Priority)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Summary for Backend Team
+Medical-Grade Audio Recording System	CLAUDE.md	/^### Medical-Grade Audio Recording System$/;"	S	section:CLAUDE.md""Development Guidelines
+Message for Backend Team - Critical Pet-Recording Association Fix	docs/backend-team-message.md	/^# Message for Backend Team - Critical Pet-Recording Association Fix$/;"	c
+Migration Benefits	doc.md	/^### Migration Benefits$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0
+Migration Steps	doc.md	/^### Migration Steps$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0
+Migration Strategy	docs/pet-recording-association-fix.md	/^## Migration Strategy$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Migration Timeline	doc.md	/^### Migration Timeline$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0
+Migration from v1.0 to v2.0	doc.md	/^## Migration from v1.0 to v2.0$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Monitoring Queries	docs/backend-integration-guide.md	/^### Monitoring Queries$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Support & Troubleshooting
+Multi-Pet Appointment Example	doc.md	/^## Multi-Pet Appointment Example$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Multi-Pet UI Layout	doc.md	/^### Multi-Pet UI Layout$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""UI/UX Considerations
+NEW v2.0 Models (Added):	docs/v2-migration-summary.md	/^#### NEW v2.0 Models (Added):$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed""2. **Data Models Replaced**
+New Error Types	docs/pet-recording-association-fix.md	/^#### New Error Types$/;"	t	subsection:Pet-Recording Association Fix - Implementation Guide""Implementation Details""2. Enhanced Audio Models (`AudioModels.swift`)
+New Methods Added:	docs/v2-migration-summary.md	/^#### New Methods Added:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""1. **APIManager.swift Changes**
+New Playback Method:	docs/v2-migration-summary.md	/^#### New Playback Method:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""2. **AudioManager.swift Changes**
+New VisitPlaybackRow Component:	docs/v2-migration-summary.md	/^#### New VisitPlaybackRow Component:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""3. **UI Component Changes**
+Next Steps	docs/pet-recording-association-fix.md	/^## Next Steps$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+OLD v1.0 Models (Removed):	docs/v2-migration-summary.md	/^#### OLD v1.0 Models (Removed):$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed""2. **Data Models Replaced**
+Optimization Strategies	docs/about.md	/^### Optimization Strategies$/;"	S	section:HelpPetAI - iOS Application Documentation""Performance Considerations
+Optional Enhancements (Medium Priority)	docs/backend-integration-guide.md	/^### Optional Enhancements (Medium Priority)$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Summary for Backend Team
+Overview	doc.md	/^## Overview$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+Overview	docs/about.md	/^## Overview$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Performance Considerations	docs/about.md	/^## Performance Considerations$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Performance Considerations	docs/backend-integration-guide.md	/^## Performance Considerations$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Performance Impact	docs/bug-fixes-summary.md	/^## Performance Impact$/;"	s	chapter:Bug Fixes Summary - HelpPetAI iOS App
+Pet	docs/about.md	/^#### Pet$/;"	t	subsection:HelpPetAI - iOS Application Documentation""Data Models""Core Models
+Pet Information API	docs/about.md	/^### Pet Information API$/;"	S	section:HelpPetAI - iOS Application Documentation""API Documentation
+Pet-Recording Association Fix - Implementation Guide	docs/pet-recording-association-fix.md	/^# Pet-Recording Association Fix - Implementation Guide$/;"	c
+PetRecordingCard Component:	docs/v2-migration-summary.md	/^#### PetRecordingCard Component:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""3. **UI Component Changes**
+Phase 1: Immediate iOS Improvements ✅	docs/pet-recording-association-fix.md	/^### Phase 1: Immediate iOS Improvements ✅$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Migration Strategy
+Phase 1: Preparation	doc.md	/^#### Phase 1: Preparation$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Timeline
+Phase 2: Backend Alignment (Recommended)	docs/pet-recording-association-fix.md	/^### Phase 2: Backend Alignment (Recommended)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Migration Strategy
+Phase 2: Database Migration	doc.md	/^#### Phase 2: Database Migration  $/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Timeline
+Phase 3: Cleanup	doc.md	/^#### Phase 3: Cleanup$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Timeline
+Phase 3: Data Cleanup (If Needed)	docs/pet-recording-association-fix.md	/^### Phase 3: Data Cleanup (If Needed)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Migration Strategy
+Planned Enhancements	docs/about.md	/^### Planned Enhancements$/;"	S	section:HelpPetAI - iOS Application Documentation""Future Improvements
+Post-Deployment	docs/backend-integration-guide.md	/^### Post-Deployment$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Deployment Checklist
+Pre-Deployment	docs/backend-integration-guide.md	/^### Pre-Deployment$/;"	S	section:Backend Integration Guide - Pet-Recording Association Fix""Deployment Checklist
+Prerequisites	docs/about.md	/^### Prerequisites$/;"	S	section:HelpPetAI - iOS Application Documentation""Setup & Installation
+Problem Summary	docs/backend-team-message.md	/^## Problem Summary$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+Problem Summary	docs/pet-recording-association-fix.md	/^## Problem Summary$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Project Structure	docs/about.md	/^## Project Structure$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Recording State:	docs/bug-fixes-summary.md	/^### Recording State:$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Future Considerations
+Recording Status Management	doc.md	/^### Recording Status Management$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""UI/UX Considerations
+Recording Upload with Validation	docs/pet-recording-association-fix.md	/^#### Recording Upload with Validation$/;"	t	subsection:Pet-Recording Association Fix - Implementation Guide""Implementation Details""3. Enhanced API Manager (`APIManager.swift`)
+Request Flow Simplified:	docs/v2-migration-summary.md	/^#### Request Flow Simplified:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed""3. **Core Architecture Changes**
+Required Backend Processing	docs/backend-integration-guide.md	/^#### Required Backend Processing$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""2. Recording Upload Completion
+Required Backend Validation	docs/backend-integration-guide.md	/^#### Required Backend Validation$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""1. Recording Upload Initiation
+Required Fixed Response	docs/backend-integration-guide.md	/^#### Required Fixed Response$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""3. Get Recordings (CRITICAL UPDATE REQUIRED)
+Required Response	docs/backend-integration-guide.md	/^#### Required Response$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""4. Get Appointment Details (NEW REQUIREMENT)
+Response Validation	doc.md	/^### Response Validation$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Data Validation
+Root Cause	docs/pet-recording-association-fix.md	/^### Root Cause$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Problem Summary
+SchemeUserState	HelpPetAI.xcodeproj/xcuserdata/justinzollars.xcuserdatad/xcschemes/xcschememanagement.plist	/^	<key>SchemeUserState<\/key>$/;"	k
+Security Considerations	docs/backend-integration-guide.md	/^## Security Considerations$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Security Implementation	docs/about.md	/^### Security Implementation$/;"	S	section:HelpPetAI - iOS Application Documentation""Authentication & Authorization
+Server-Side (Expected Backend Changes)	docs/pet-recording-association-fix.md	/^### Server-Side (Expected Backend Changes)$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Validation Rules
+Setup & Installation	docs/about.md	/^## Setup & Installation$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+Simplified iPhone Integration	doc.md	/^#### Simplified iPhone Integration$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Migration Benefits
+Smart Recording Filtering	docs/pet-recording-association-fix.md	/^#### Smart Recording Filtering$/;"	t	subsection:Pet-Recording Association Fix - Implementation Guide""Implementation Details""4. Improved Recording View (`VisitRecordingView.swift`)
+Solution Overview	docs/pet-recording-association-fix.md	/^## Solution Overview$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Suggested Technical Improvements	docs/about.md	/^### Suggested Technical Improvements$/;"	S	section:HelpPetAI - iOS Application Documentation""Future Improvements
+Summary	docs/bug-fixes-summary.md	/^## Summary$/;"	s	chapter:Bug Fixes Summary - HelpPetAI iOS App
+Summary for Backend Team	docs/backend-integration-guide.md	/^## Summary for Backend Team$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Support & Troubleshooting	docs/backend-integration-guide.md	/^## Support & Troubleshooting$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Target Audience	docs/about.md	/^### Target Audience$/;"	S	section:HelpPetAI - iOS Application Documentation""What This Application Does
+Technical Debt	docs/about.md	/^### Technical Debt$/;"	S	section:HelpPetAI - iOS Application Documentation""Known Limitations
+Test Credentials	docs/about.md	/^### Test Credentials$/;"	S	section:HelpPetAI - iOS Application Documentation""Setup & Installation
+Testing Notes	CLAUDE.md	/^## Testing Notes$/;"	s	chapter:CLAUDE.md
+Testing Requirements	docs/backend-integration-guide.md	/^## Testing Requirements$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+Testing Scenarios	docs/pet-recording-association-fix.md	/^## Testing Scenarios$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Testing Verification	docs/bug-fixes-summary.md	/^## Testing Verification$/;"	s	chapter:Bug Fixes Summary - HelpPetAI iOS App
+Timer Fix Testing:	docs/bug-fixes-summary.md	/^### Timer Fix Testing:$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Testing Verification
+Timer Reset Architecture:	docs/bug-fixes-summary.md	/^### Timer Reset Architecture:$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Implementation Details
+Token Management	docs/about.md	/^### Token Management$/;"	S	section:HelpPetAI - iOS Application Documentation""Authentication & Authorization
+UI/UX Considerations	doc.md	/^## UI\/UX Considerations$/;"	s	chapter:iPhone Integration v2.0 Guide - Simplified Audio Recording System
+UIBackgroundModes	HelpPetAI/Info.plist	/^	<key>UIBackgroundModes<\/key>$/;"	k
+Update Appointment Status	docs/about.md	/^#### Update Appointment Status$/;"	t	subsection:HelpPetAI - iOS Application Documentation""API Documentation""Appointment Management API
+Updated Upload Method:	docs/v2-migration-summary.md	/^#### Updated Upload Method:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""2. **AudioManager.swift Changes**
+Upload Flow Streamlined:	docs/v2-migration-summary.md	/^#### Upload Flow Streamlined:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""📋 What Changed""3. **Core Architecture Changes**
+User	docs/about.md	/^#### User$/;"	t	subsection:HelpPetAI - iOS Application Documentation""Data Models""Core Models
+Validation Logic	docs/pet-recording-association-fix.md	/^#### Validation Logic$/;"	t	subsection:Pet-Recording Association Fix - Implementation Guide""Implementation Details""2. Enhanced Audio Models (`AudioModels.swift`)
+Validation Rules	docs/pet-recording-association-fix.md	/^## Validation Rules$/;"	s	chapter:Pet-Recording Association Fix - Implementation Guide
+Visit Management APIs	docs/pet-recording-association-fix.md	/^#### Visit Management APIs$/;"	t	subsection:Pet-Recording Association Fix - Implementation Guide""Implementation Details""3. Enhanced API Manager (`APIManager.swift`)
+VisitRecordingView.swift:	docs/v2-migration-summary.md	/^#### VisitRecordingView.swift:$/;"	t	subsection:iOS App v2.0 Migration Complete - Visit Transcript System""🔧 Implementation Details""3. **UI Component Changes**
+What Changed	doc.md	/^### What Changed$/;"	S	section:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0
+What This Application Does	docs/about.md	/^## What This Application Does$/;"	s	chapter:HelpPetAI - iOS Application Documentation
+appearance	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^          "appearance" : "luminosity",$/;"	s	object:images.1.appearances.0
+appearance	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^          "appearance" : "luminosity",$/;"	s	object:images.2.appearances.0
+appearances	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "appearances" : [$/;"	a	object:images.1
+appearances	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "appearances" : [$/;"	a	object:images.2
+author	HelpPetAI/Assets.xcassets/AccentColor.colorset/Contents.json	/^    "author" : "xcode",$/;"	s	object:info
+author	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^    "author" : "xcode",$/;"	s	object:info
+author	HelpPetAI/Assets.xcassets/Contents.json	/^    "author" : "xcode",$/;"	s	object:info
+colors	HelpPetAI/Assets.xcassets/AccentColor.colorset/Contents.json	/^  "colors" : [$/;"	a
+filename	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "filename" : "1024-mac 1.jpg",$/;"	s	object:images.1
+filename	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "filename" : "1024-mac 2.jpg",$/;"	s	object:images.2
+filename	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "filename" : "1024-mac.jpg",$/;"	s	object:images.0
+iOS App v2.0 Migration Complete - Visit Transcript System	docs/v2-migration-summary.md	/^# iOS App v2.0 Migration Complete - Visit Transcript System$/;"	c
+iOS Data Model Compliance - Correct Implementation	docs/ios-data-model-compliance.md	/^# iOS Data Model Compliance - Correct Implementation$/;"	c
+iOS Frameworks	docs/about.md	/^### iOS Frameworks$/;"	S	section:HelpPetAI - iOS Application Documentation""Dependencies
+iOS Request	docs/backend-integration-guide.md	/^#### iOS Request$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""1. Recording Upload Initiation
+iOS Request	docs/backend-integration-guide.md	/^#### iOS Request$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""2. Recording Upload Completion
+iOS Usage	docs/backend-integration-guide.md	/^#### iOS Usage$/;"	t	subsection:Backend Integration Guide - Pet-Recording Association Fix""API Endpoints & Requirements""4. Get Appointment Details (NEW REQUIREMENT)
+iPhone App Updates Required	doc.md	/^#### iPhone App Updates Required$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""Breaking Changes
+iPhone Integration v2.0 Guide - Simplified Audio Recording System	doc.md	/^# iPhone Integration v2.0 Guide - Simplified Audio Recording System$/;"	c
+idiom	HelpPetAI/Assets.xcassets/AccentColor.colorset/Contents.json	/^      "idiom" : "universal"$/;"	s	object:colors.0
+idiom	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "idiom" : "universal",$/;"	s	object:images.0
+idiom	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "idiom" : "universal",$/;"	s	object:images.1
+idiom	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "idiom" : "universal",$/;"	s	object:images.2
+images	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^  "images" : [$/;"	a
+info	HelpPetAI/Assets.xcassets/AccentColor.colorset/Contents.json	/^  "info" : {$/;"	o
+info	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^  "info" : {$/;"	o
+info	HelpPetAI/Assets.xcassets/Contents.json	/^  "info" : {$/;"	o
+orderHint	HelpPetAI.xcodeproj/xcuserdata/justinzollars.xcuserdatad/xcschemes/xcschememanagement.plist	/^			<key>orderHint<\/key>$/;"	k	key:SchemeUserState.HelpPetAI.xcscheme_^#shared#^_
+platform	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "platform" : "ios",$/;"	s	object:images.0
+platform	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "platform" : "ios",$/;"	s	object:images.1
+platform	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "platform" : "ios",$/;"	s	object:images.2
+size	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "size" : "1024x1024"$/;"	s	object:images.0
+size	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "size" : "1024x1024"$/;"	s	object:images.1
+size	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^      "size" : "1024x1024"$/;"	s	object:images.2
+v1.0 (Complex Recordings System)	doc.md	/^#### v1.0 (Complex Recordings System)$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""What Changed
+v2.0 (Simplified Visit_Transcripts)	doc.md	/^#### v2.0 (Simplified Visit_Transcripts)$/;"	t	subsection:iPhone Integration v2.0 Guide - Simplified Audio Recording System""Migration from v1.0 to v2.0""What Changed
+value	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^          "value" : "dark"$/;"	s	object:images.1.appearances.0
+value	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^          "value" : "tinted"$/;"	s	object:images.2.appearances.0
+version	HelpPetAI/Assets.xcassets/AccentColor.colorset/Contents.json	/^    "version" : 1$/;"	n	object:info
+version	HelpPetAI/Assets.xcassets/AppIcon.appiconset/Contents.json	/^    "version" : 1$/;"	n	object:info
+version	HelpPetAI/Assets.xcassets/Contents.json	/^    "version" : 1$/;"	n	object:info
+⏱️ **Bug #2: Recording Timer Persists Between Different Pets**	docs/bug-fixes-summary.md	/^### ⏱️ **Bug #2: Recording Timer Persists Between Different Pets**$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Issues Fixed
+✅ **Ready for Deployment:**	docs/v2-migration-summary.md	/^### ✅ **Ready for Deployment:**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🚀 Production Readiness
+✅ **Verification Complete**	docs/final-compilation-fixes.md	/^## ✅ **Verification Complete**$/;"	s	chapter:Final Compilation Fixes - v2.0 Migration
+✅ Compliance Checklist	docs/ios-data-model-compliance.md	/^## ✅ Compliance Checklist$/;"	s	chapter:iOS Data Model Compliance - Correct Implementation
+✅ Data Validation	docs/pet-recording-association-fix.md	/^### ✅ Data Validation$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Testing Scenarios
+✅ Error Handling	docs/pet-recording-association-fix.md	/^### ✅ Error Handling$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Testing Scenarios
+✅ Multi Pet Appointment	docs/pet-recording-association-fix.md	/^### ✅ Multi Pet Appointment$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Testing Scenarios
+✅ RESOLVED: Visit Transcript - Appointment Association Issue	docs/backend-question-visit-transcript-associations.md	/^# ✅ RESOLVED: Visit Transcript - Appointment Association Issue$/;"	c
+✅ RESOLVED: iOS Now Follows Correct Data Model	docs/ios-data-model-compliance.md	/^## ✅ RESOLVED: iOS Now Follows Correct Data Model$/;"	s	chapter:iOS Data Model Compliance - Correct Implementation
+✅ Single Pet Appointment	docs/pet-recording-association-fix.md	/^### ✅ Single Pet Appointment$/;"	S	section:Pet-Recording Association Fix - Implementation Guide""Testing Scenarios
+🎉 Conclusion	docs/v2-migration-summary.md	/^## 🎉 Conclusion$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+🎉 Migration Status: COMPLETE ✅	docs/v2-migration-summary.md	/^## 🎉 Migration Status: COMPLETE ✅$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+🎉 Result	docs/ios-data-model-compliance.md	/^## 🎉 Result$/;"	s	chapter:iOS Data Model Compliance - Correct Implementation
+🎯 **Expected User Experience:**	docs/v2-migration-summary.md	/^### 🎯 **Expected User Experience:**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🚀 Production Readiness
+🎯 Core Principle: One Pet = One Visit = One Recording	docs/ios-data-model-compliance.md	/^### 🎯 Core Principle: One Pet = One Visit = One Recording$/;"	S	section:iOS Data Model Compliance - Correct Implementation""✅ RESOLVED: iOS Now Follows Correct Data Model
+🎯 Expected Outcome	docs/backend-team-message.md	/^## 🎯 Expected Outcome$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+🎯 Key Benefits Achieved	docs/v2-migration-summary.md	/^## 🎯 Key Benefits Achieved$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+🎯 Result	docs/compilation-fixes.md	/^## 🎯 Result$/;"	s	chapter:Compilation Errors Fixed - v2.0 Migration
+🐛 **Remaining Issues Fixed**	docs/final-compilation-fixes.md	/^## 🐛 **Remaining Issues Fixed**$/;"	s	chapter:Final Compilation Fixes - v2.0 Migration
+🐛 Issues Resolved	docs/compilation-fixes.md	/^## 🐛 Issues Resolved$/;"	s	chapter:Compilation Errors Fixed - v2.0 Migration
+💾 Data Migration Required	docs/backend-team-message.md	/^## 💾 Data Migration Required$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+📊 Data Flow Diagram	docs/ios-data-model-compliance.md	/^## 📊 Data Flow Diagram$/;"	s	chapter:iOS Data Model Compliance - Correct Implementation
+📋 **Backend Requirements:**	docs/v2-migration-summary.md	/^### 📋 **Backend Requirements:**$/;"	S	section:iOS App v2.0 Migration Complete - Visit Transcript System""🚀 Production Readiness
+📋 Required New Endpoint	docs/backend-team-message.md	/^## 📋 Required New Endpoint$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+📋 What Changed	docs/v2-migration-summary.md	/^## 📋 What Changed$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+📞 Questions?	docs/backend-team-message.md	/^## 📞 Questions?$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+🔄 Migration Benefits Summary	docs/v2-migration-summary.md	/^## 🔄 Migration Benefits Summary$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+🔥 Immediate Actions Required (HIGH PRIORITY)	docs/backend-team-message.md	/^## 🔥 Immediate Actions Required (HIGH PRIORITY)$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+🔧 Implementation Details	docs/ios-data-model-compliance.md	/^## 🔧 Implementation Details$/;"	s	chapter:iOS Data Model Compliance - Correct Implementation
+🔧 Implementation Details	docs/v2-migration-summary.md	/^## 🔧 Implementation Details$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+🗓️ **Bug #1: App Shows Old Appointments Instead of Today's Date**	docs/bug-fixes-summary.md	/^### 🗓️ **Bug #1: App Shows Old Appointments Instead of Today's Date**$/;"	S	section:Bug Fixes Summary - HelpPetAI iOS App""Issues Fixed
+🚀 **Final Status: READY FOR TESTING**	docs/final-compilation-fixes.md	/^## 🚀 **Final Status: READY FOR TESTING**$/;"	s	chapter:Final Compilation Fixes - v2.0 Migration
+🚀 Production Readiness	docs/v2-migration-summary.md	/^## 🚀 Production Readiness$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+🚀 Ready for Testing	docs/compilation-fixes.md	/^## 🚀 Ready for Testing$/;"	s	chapter:Compilation Errors Fixed - v2.0 Migration
+🚨 Critical Backend Changes Required	docs/backend-integration-guide.md	/^## 🚨 Critical Backend Changes Required$/;"	s	chapter:Backend Integration Guide - Pet-Recording Association Fix
+🚨 Critical Issue: iOS Recording Display Broken	docs/backend-team-message.md	/^## 🚨 Critical Issue: iOS Recording Display Broken$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+🧪 How to Test the Fix	docs/backend-team-message.md	/^## 🧪 How to Test the Fix$/;"	s	chapter:Message for Backend Team - Critical Pet-Recording Association Fix
+🧪 Testing Scenarios	docs/v2-migration-summary.md	/^## 🧪 Testing Scenarios$/;"	s	chapter:iOS App v2.0 Migration Complete - Visit Transcript System
+🧪 Testing Verification	docs/ios-data-model-compliance.md	/^## 🧪 Testing Verification$/;"	s	chapter:iOS Data Model Compliance - Correct Implementation

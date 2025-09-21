@@ -1,18 +1,19 @@
 {
   "agent_id": "",
   "channel": "voice",
-  "last_modification_timestamp": 1758002489636,
+  "last_modification_timestamp": 1758482464180,
   "agent_name": "HelpPetAI",
   "response_engine": {
     "type": "conversation-flow",
-    "version": 38,
+    "version": 45,
     "conversation_flow_id": "conversation_flow_40876625b4b2"
   },
+  "webhook_url": "https://api.helppet.ai/api/v1/call-analysis/webhook",
   "language": "en-US",
   "opt_out_sensitive_data_storage": false,
   "data_storage_setting": "everything",
   "opt_in_signed_url": false,
-  "version": 38,
+  "version": 45,
   "is_published": false,
   "version_title": "",
   "post_call_analysis_model": "gpt-4o-mini",
@@ -28,7 +29,7 @@
   "retellLlmData": null,
   "conversationFlow": {
     "conversation_flow_id": "conversation_flow_40876625b4b2",
-    "version": 38,
+    "version": 45,
     "global_prompt": "## Objective\nYou are an AI agent LaShonda working for a veterinarian. You are to be kind and helpful.\n\n- if someone has an emergency they aren't talking about a person. They are talking about a pet. Do not suggest to call 911\n\n\nCurrent time is {{current_time}}\n{{practice_id}}= \"934c57e7-4f9c-4d28-aa0f-3cb881e3c225\"\n{{timezone}} = \"US/Pacific\"",
     "nodes": [
       {
@@ -61,10 +62,15 @@
         "display_position": {
           "x": 8.289116372592304,
           "y": 389.61744182997796
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "tool_id": "tool-1757722169294",
+        "instruction": {
+          "type": "prompt",
+          "text": "\"lets see, one moment please\""
+        },
         "name": "Check User",
         "edges": [
           {
@@ -87,10 +93,10 @@
         "id": "node-1757722171113",
         "type": "function",
         "tool_type": "local",
-        "speak_during_execution": false,
+        "speak_during_execution": true,
         "display_position": {
           "x": 832.9166935851066,
-          "y": 427.7810240708486
+          "y": 428.84873332557726
         },
         "wait_for_result": true
       },
@@ -115,7 +121,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- What day would you like to visit the office?\"\n- determine time preference (if there is one, ask first)\n- determine which pets are coming if there are more than one pet"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -146,7 +153,8 @@
         "instruction": {
           "type": "prompt",
           "text": "Looks like you are new around here! Would you like to create a new account for your pet?"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -166,6 +174,22 @@
               "type": "prompt",
               "prompt": "if the user decides not to make an appointment"
             }
+          },
+          {
+            "destination_node_id": "node-1758472272092",
+            "id": "edge-1758472237985",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If there are no available times"
+            }
+          },
+          {
+            "destination_node_id": "node-1757808212089",
+            "id": "edge-1758482115311",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If the User changes their mind and wants to check a different day"
+            }
           }
         ],
         "id": "node-1757808123374",
@@ -177,10 +201,15 @@
         "instruction": {
           "type": "prompt",
           "text": "\"{{message}}\""
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "tool_id": "tool-1757807832923",
+        "instruction": {
+          "type": "prompt",
+          "text": "\"This could take a second\""
+        },
         "name": "Get Available Times",
         "edges": [
           {
@@ -203,7 +232,7 @@
         "id": "node-1757808212089",
         "type": "function",
         "tool_type": "local",
-        "speak_during_execution": false,
+        "speak_during_execution": true,
         "display_position": {
           "x": 1621.4025563655725,
           "y": 909.438199167977
@@ -212,6 +241,10 @@
       },
       {
         "tool_id": "tool-1757886750049",
+        "instruction": {
+          "type": "prompt",
+          "text": "\"This could take a moment\""
+        },
         "name": "Book Appointment",
         "edges": [
           {
@@ -226,7 +259,7 @@
         "id": "node-1757888896343",
         "type": "function",
         "tool_type": "local",
-        "speak_during_execution": false,
+        "speak_during_execution": true,
         "display_position": {
           "x": 2566.2662882734703,
           "y": 771.7769944363631
@@ -262,7 +295,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- Confirm the appointment was made\n- Indicate you are looking forward to seeing the pet\n- Ask if there is anything else they need\n- be brief"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -293,7 +327,8 @@
         "instruction": {
           "type": "prompt",
           "text": "Whats your first and last name?"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Extract Variables",
@@ -350,7 +385,8 @@
         "instruction": {
           "type": "prompt",
           "text": "What is your email address?"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Extract Variables",
@@ -427,7 +463,8 @@
         "instruction": {
           "type": "prompt",
           "text": "What is your Full Address?"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Extract Variables",
@@ -458,6 +495,10 @@
       },
       {
         "tool_id": "tool-1757958213534",
+        "instruction": {
+          "type": "prompt",
+          "text": "\"one moment please\""
+        },
         "name": "Create User",
         "edges": [
           {
@@ -480,7 +521,7 @@
         "id": "node-1757968046486",
         "type": "function",
         "tool_type": "local",
-        "speak_during_execution": false,
+        "speak_during_execution": true,
         "display_position": {
           "x": 3966.975179226445,
           "y": 2248.019777528306
@@ -516,7 +557,8 @@
         "instruction": {
           "type": "prompt",
           "text": "Great I got you. Now lets add your pet. What's your Pet's name?"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -539,7 +581,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- Looks like we are having some trouble.\n- computers today\n- talk about weather\n- call back later"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -578,7 +621,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- inquire what you can help them with\n"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "custom_sip_headers": {},
@@ -630,7 +674,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- This is a demo I can't help check on lab results yet.\n- this is an easy integration"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -653,7 +698,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- This is a demo I can't help check on medications and refills.\n- this is an easy integration"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "End Call",
@@ -689,7 +735,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- Say goodbye\n- have a nice day\n- Say it was a pleasure serving you"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "instruction": {
@@ -715,7 +762,8 @@
         "display_position": {
           "x": 333.75682484087304,
           "y": 2027.5530650630633
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "instruction": {
@@ -741,7 +789,8 @@
         "display_position": {
           "x": -344.84817256571284,
           "y": 2019.6972405037955
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Extract Variables",
@@ -799,6 +848,10 @@
       },
       {
         "tool_id": "tool-1757999977662",
+        "instruction": {
+          "type": "prompt",
+          "text": "\"This could take a sec\""
+        },
         "name": "Create Pet",
         "edges": [
           {
@@ -813,7 +866,7 @@
         "id": "node-1758000462397",
         "type": "function",
         "tool_type": "local",
-        "speak_during_execution": false,
+        "speak_during_execution": true,
         "display_position": {
           "x": 6174.653122454556,
           "y": 2531.332507967956
@@ -841,7 +894,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- Is {{pet_name}} a dog or cat (or something else)"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -872,7 +926,8 @@
         "instruction": {
           "type": "prompt",
           "text": "- {{pet_name}} was added to our system\n- ask if they need to add another pet?"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -895,7 +950,8 @@
         "instruction": {
           "type": "prompt",
           "text": "{{message}}. Now lets add your pet."
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -918,7 +974,8 @@
         "instruction": {
           "type": "static_text",
           "text": "Do you want to set up an appointment?"
-        }
+        },
+        "knowledge_base_ids": []
       },
       {
         "name": "Conversation",
@@ -941,7 +998,40 @@
         "instruction": {
           "type": "prompt",
           "text": "- \"Great! {{message}}. Lets set up an appointment."
-        }
+        },
+        "knowledge_base_ids": []
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757808212089",
+            "id": "edge-1758472272092",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Yes, the user wants to try another day or part of day "
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1758482278255",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "No, the user does not want to try another day"
+            }
+          }
+        ],
+        "id": "node-1758472272092",
+        "type": "conversation",
+        "display_position": {
+          "x": 2489.327729411921,
+          "y": 1222.178629986019
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Would you like to try another day?"
+        },
+        "knowledge_base_ids": []
       }
     ],
     "start_node_id": "start-node-1757721846880",

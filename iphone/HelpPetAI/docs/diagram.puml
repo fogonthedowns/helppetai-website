@@ -1,0 +1,119 @@
+@startuml
+title HelpPetAI - Main User Flow Sequence Diagram
+
+actor "Veterinarian" as Vet
+participant "iOS App" as App
+participant "LoginView" as Login
+participant "APIManager" as API
+participant "KeychainManager" as Keychain
+participant "DashboardView" as Dashboard
+participant "AudioManager" as Audio
+participant "HelpPet Backend" as Backend
+participant "S3 Storage" as S3
+database "Database" as DB
+
+== Authentication Flow ==
+Vet -> App: Launch App
+App -> Keychain: Check for stored token
+alt Token exists
+    Keychain --> App: Return access token
+    App -> API: Set authenticated state
+    App -> Dashboard: Show dashboard
+else No token
+    App -> Login: Show login screen
+    Vet -> Login: Enter credentials (vet1/password123)
+    Login -> API: login(username, password)
+    API -> Backend: POST /auth/login
+    Backend -> DB: Validate credentials
+    DB --> Backend: User authenticated
+    Backend --> API: Return JWT token
+    API -> Keychain: Store access token
+    Keychain --> API: Token stored
+    API -> App: Set authenticated state
+    App -> Dashboard: Show dashboard
+end
+
+== Dashboard Loading Flow ==
+Dashboard -> API: getTodaySchedule(vetId)
+API -> Backend: GET /api/v1/dashboard/today
+Backend -> DB: Query appointments
+DB --> Backend: Today's appointments
+Backend --> API: Return dashboard data
+API --> Dashboard: Display appointments and stats
+
+== Pet Detail Flow ==
+Vet -> Dashboard: Select appointment
+Dashboard -> App: Navigate to PetDetailView
+App -> API: getPetDetails(petId)
+API -> Backend: GET /api/v1/pets/{petId}
+Backend -> DB: Query pet information
+DB --> Backend: Pet details
+Backend --> API: Return pet data
+
+par Parallel API Calls
+    API -> Backend: GET /api/v1/pets/{petId}/medical-records
+    Backend -> DB: Query medical records
+    DB --> Backend: Medical history
+    Backend --> API: Return medical records
+end
+
+API --> App: Display pet information
+
+== Audio Recording Flow ==
+Vet -> App: Start visit recording
+App -> Audio: Request microphone permission
+Audio --> App: Permission granted
+App -> Audio: startRecording(appointmentId)
+Audio -> Audio: Configure AVAudioSession
+Audio -> Audio: Start AVAudioRecorder
+Audio --> App: Recording started
+
+note right: Veterinarian conducts examination<br/>while audio is being recorded
+
+Vet -> App: Stop recording
+App -> Audio: stopRecording()
+Audio -> Audio: Save audio file locally
+Audio --> App: Return audio file URL
+
+== Audio Upload Flow ==
+App -> API: initiateRecordingUpload(request)
+API -> Backend: POST /api/v1/recordings/initiate
+Backend -> S3: Generate pre-signed upload URL
+S3 --> Backend: Return upload credentials
+Backend -> DB: Create recording record
+DB --> Backend: Recording ID created
+Backend --> API: Return upload details
+
+API -> Audio: uploadToS3(audioFile, uploadDetails)
+Audio -> S3: PUT audio file with pre-signed URL
+S3 --> Audio: Upload successful (204)
+Audio -> API: completeRecordingUpload(recordingId)
+API -> Backend: POST /api/v1/recordings/{id}/complete
+Backend -> DB: Update recording status
+DB --> Backend: Status updated
+Backend --> API: Upload completed
+
+note right: Backend triggers async transcription<br/>processing in background
+
+== Error Handling ==
+alt Network Error
+    API -> API: Retry with exponential backoff
+    API -> Backend: Retry request
+end
+
+alt Authentication Error
+    Backend --> API: 401 Unauthorized
+    API -> Keychain: Delete stored token
+    API -> App: Set unauthenticated state
+    App -> Login: Show login screen
+end
+
+alt S3 Upload Error
+    S3 --> Audio: 403 Access Denied
+    Audio -> API: Report upload failure
+    API -> Backend: POST /api/v1/recordings/{id}/failed
+    Backend -> DB: Mark recording as failed
+    API --> App: Show error message
+end
+
+@enduml
