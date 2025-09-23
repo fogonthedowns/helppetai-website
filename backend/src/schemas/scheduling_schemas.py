@@ -4,7 +4,9 @@ Request/response models for practice hours, vet availability, and conflicts
 """
 
 import uuid
-from datetime import datetime, date, time
+import re
+import pytz
+from datetime import datetime, date, time, timedelta
 from typing import Optional, List, Dict, Any
 import datetime as dt
 from pydantic import BaseModel, Field, validator
@@ -117,19 +119,273 @@ class VetAvailabilityBase(BaseModel):
     notes: Optional[str] = Field(None, max_length=500, description="Additional notes")
     is_active: bool = Field(True, description="Whether this availability is active")
 
+    @validator('start_time', pre=True)
+    def parse_start_time(cls, v):
+        """Parse start_time from string if needed (iOS compatibility)"""
+        if isinstance(v, str):
+            return cls._parse_time_string(v)
+        return v
+
+    @validator('end_time', pre=True)
+    def parse_end_time(cls, v):
+        """Parse end_time from string if needed (iOS compatibility)"""
+        if isinstance(v, str):
+            return cls._parse_time_string(v)
+        return v
+
     @validator('end_time')
     def validate_times(cls, v, values):
-        """Validate that end_time is after start_time"""
+        """Validate that end_time is after start_time, handling overnight and boundary cases"""
         start_time = values.get('start_time')
-        if start_time and v and start_time >= v:
-            raise ValueError('start_time must be before end_time')
+        if start_time and v:
+            # Case 1: Normal same-day times (9am-5pm)
+            if start_time < v:
+                return v
+            
+            # Case 2: Overnight times (11pm-3am) - end_time < start_time indicates next day
+            # This is valid for overnight shifts, 24-hour operations, etc.
+            if v < start_time:
+                # End time is earlier in the day = next day
+                # Examples: 23:00-03:00 (11pm-3am), 22:00-01:00 (10pm-1am)
+                return v
+            
+            # Case 3: Same time (start_time == end_time)
+            if start_time == v:
+                # Only allow if it's midnight (represents 24-hour period)
+                if v == dt.time(0, 0):
+                    return v  # 00:00-00:00 = 24 hours
+                else:
+                    raise ValueError('start_time must be before end_time (same times only allowed for midnight 24-hour periods)')
+        
         return v
+
+    @staticmethod
+    def _parse_time_string(time_str: str) -> dt.time:
+        """
+        Parse time string from various formats (iOS compatibility)
+        Supports: HH:MM:SS, HH:MM, H:MM AM/PM, HH:MM AM/PM
+        """
+        if not time_str:
+            raise ValueError("Time string cannot be empty")
+        
+        time_str = time_str.strip().upper()
+        
+        try:
+            # Handle ISO time format: HH:MM:SS or HH:MM:SS.ffffff
+            iso_match = re.match(r'^(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.(\d+))?$', time_str)
+            if iso_match:
+                hour = int(iso_match.group(1))
+                minute = int(iso_match.group(2))
+                second = int(iso_match.group(3) or 0)
+                
+                if 0 <= hour <= 23 and 0 <= minute <= 59 and 0 <= second <= 59:
+                    return dt.time(hour=hour, minute=minute, second=second)
+            
+            # Handle 12-hour format with AM/PM: "9:00 AM", "2:30 PM"
+            twelve_hour_match = re.match(r'^(\d{1,2}):(\d{2})\s*(AM|PM)$', time_str)
+            if twelve_hour_match:
+                hour = int(twelve_hour_match.group(1))
+                minute = int(twelve_hour_match.group(2))
+                period = twelve_hour_match.group(3)
+                
+                # Convert to 24-hour format
+                if period == 'AM':
+                    if hour == 12:
+                        hour = 0
+                else:  # PM
+                    if hour != 12:
+                        hour += 12
+                
+                if 0 <= hour <= 23 and 0 <= minute <= 59:
+                    return dt.time(hour=hour, minute=minute)
+            
+            # Handle hour-only format: "9 AM", "2 PM"
+            hour_only_match = re.match(r'^(\d{1,2})\s*(AM|PM)$', time_str)
+            if hour_only_match:
+                hour = int(hour_only_match.group(1))
+                period = hour_only_match.group(2)
+                
+                # Convert to 24-hour format
+                if period == 'AM':
+                    if hour == 12:
+                        hour = 0
+                else:  # PM
+                    if hour != 12:
+                        hour += 12
+                
+                if 0 <= hour <= 23:
+                    return dt.time(hour=hour, minute=0)
+            
+            raise ValueError(f"Unable to parse time format: {time_str}")
+            
+        except Exception as e:
+            raise ValueError(f"Invalid time format '{time_str}': {str(e)}")
 
 
 class VetAvailabilityCreate(VetAvailabilityBase):
-    """Schema for creating vet availability"""
+    """Schema for creating vet availability with timezone support"""
     vet_user_id: uuid.UUID = Field(..., description="Vet user ID")
     practice_id: uuid.UUID = Field(..., description="Practice ID")
+    timezone: Optional[str] = Field(
+        default="America/Los_Angeles", 
+        description="Timezone for the availability (e.g., 'America/Los_Angeles', 'America/New_York')"
+    )
+    
+    @validator('date', pre=True)
+    def parse_date(cls, v):
+        """Parse date from string if needed (iOS compatibility)"""
+        if isinstance(v, str):
+            return cls._parse_date_string(v)
+        return v
+    
+    @staticmethod
+    def _parse_date_string(date_str: str) -> dt.date:
+        """
+        Parse date string from various formats (iOS compatibility)
+        Supports: YYYY-MM-DD, MM-DD-YYYY, MM/DD/YYYY
+        """
+        if not date_str:
+            raise ValueError("Date string cannot be empty")
+        
+        date_str = date_str.strip()
+        
+        try:
+            # Handle ISO date format: YYYY-MM-DD
+            iso_match = re.match(r'^(\d{4})-(\d{1,2})-(\d{1,2})$', date_str)
+            if iso_match:
+                year = int(iso_match.group(1))
+                month = int(iso_match.group(2))
+                day = int(iso_match.group(3))
+                return dt.date(year, month, day)
+            
+            # Handle US date formats: MM/DD/YYYY or MM-DD-YYYY
+            us_match = re.match(r'^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$', date_str)
+            if us_match:
+                month = int(us_match.group(1))
+                day = int(us_match.group(2))
+                year = int(us_match.group(3))
+                return dt.date(year, month, day)
+            
+            # Handle short date formats: MM/DD or MM-DD (assume current year)
+            short_match = re.match(r'^(\d{1,2})[/-](\d{1,2})$', date_str)
+            if short_match:
+                month = int(short_match.group(1))
+                day = int(short_match.group(2))
+                year = datetime.now().year
+                return dt.date(year, month, day)
+            
+            raise ValueError(f"Unable to parse date format: {date_str}")
+            
+        except ValueError as e:
+            if "Unable to parse" in str(e):
+                raise e
+            raise ValueError(f"Invalid date format '{date_str}': {str(e)}")
+    
+    def to_utc_datetime_range(self) -> tuple[datetime, datetime]:
+        """
+        Convert local date/time to UTC datetime range, handling date boundary shifts
+        
+        Returns:
+            tuple[datetime, datetime]: (start_datetime_utc, end_datetime_utc)
+        """
+        try:
+            # Get the timezone
+            tz = pytz.timezone(self.timezone)
+            
+            # Create local datetime objects
+            local_start = tz.localize(datetime.combine(self.date, self.start_time))
+            
+            # Handle overnight times correctly
+            # If end_time <= start_time, it represents next day (overnight shift)
+            if self.end_time <= self.start_time:
+                # End time is next day (midnight, or overnight like 11pm-3am)
+                next_day = self.date + timedelta(days=1)
+                local_end = tz.localize(datetime.combine(next_day, self.end_time))
+            else:
+                # Normal case - same day (9am-5pm)
+                local_end = tz.localize(datetime.combine(self.date, self.end_time))
+            
+            # Convert to UTC
+            utc_start = local_start.astimezone(pytz.UTC)
+            utc_end = local_end.astimezone(pytz.UTC)
+            
+            return utc_start, utc_end
+            
+        except pytz.UnknownTimeZoneError:
+            raise ValueError(f"Unknown timezone: {self.timezone}")
+        except Exception as e:
+            raise ValueError(f"Error converting to UTC: {str(e)}")
+    
+    def get_local_datetime_range(self) -> tuple[datetime, datetime]:
+        """
+        Get the local datetime range (for logging/debugging)
+        
+        Returns:
+            tuple[datetime, datetime]: (start_datetime_local, end_datetime_local)
+        """
+        try:
+            tz = pytz.timezone(self.timezone)
+            local_start = tz.localize(datetime.combine(self.date, self.start_time))
+            
+            # Handle overnight times correctly
+            # If end_time <= start_time, it represents next day (overnight shift)
+            if self.end_time <= self.start_time:
+                # End time is next day (midnight, or overnight like 11pm-3am)
+                next_day = self.date + timedelta(days=1)
+                local_end = tz.localize(datetime.combine(next_day, self.end_time))
+            else:
+                # Normal case - same day (9am-5pm)
+                local_end = tz.localize(datetime.combine(self.date, self.end_time))
+            
+            return local_start, local_end
+        except Exception as e:
+            raise ValueError(f"Error getting local datetime: {str(e)}")
+    
+    def detect_date_boundary_shift(self) -> Dict[str, Any]:
+        """
+        Detect if timezone conversion causes date boundary shifts
+        
+        Returns:
+            Dict with shift information for logging/debugging
+        """
+        try:
+            utc_start, utc_end = self.to_utc_datetime_range()
+            local_start, local_end = self.get_local_datetime_range()
+            
+            start_date_shifted = utc_start.date() != local_start.date()
+            end_date_shifted = utc_end.date() != local_end.date()
+            
+            return {
+                "original_date": self.date.isoformat(),
+                "local_start": local_start.isoformat(),
+                "local_end": local_end.isoformat(),
+                "utc_start": utc_start.isoformat(),
+                "utc_end": utc_end.isoformat(),
+                "start_date_shifted": start_date_shifted,
+                "end_date_shifted": end_date_shifted,
+                "timezone": self.timezone,
+                "utc_start_date": utc_start.date().isoformat(),
+                "utc_end_date": utc_end.date().isoformat()
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    class Config:
+        # Allow extra fields for timezone handling
+        extra = "forbid"
+        schema_extra = {
+            "example": {
+                "vet_user_id": "123e4567-e89b-12d3-a456-426614174000",
+                "practice_id": "123e4567-e89b-12d3-a456-426614174001", 
+                "date": "2025-09-23",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "timezone": "America/Los_Angeles",
+                "availability_type": "AVAILABLE",
+                "notes": "Regular office hours",
+                "is_active": True
+            }
+        }
 
 
 class VetAvailabilityUpdate(BaseModel):
@@ -141,11 +397,17 @@ class VetAvailabilityUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
-class VetAvailabilityResponse(VetAvailabilityBase):
-    """Schema for vet availability response"""
+class VetAvailabilityResponse(BaseModel):
+    """Schema for vet availability response - inherits from BaseModel to avoid time validation"""
     id: uuid.UUID
     vet_user_id: uuid.UUID
     practice_id: uuid.UUID
+    date: dt.date = Field(..., description="Date of availability")
+    start_time: dt.time = Field(..., description="Start time")
+    end_time: dt.time = Field(..., description="End time")
+    availability_type: AvailabilityType = Field(AvailabilityType.AVAILABLE, description="Type of availability")
+    notes: Optional[str] = Field(None, max_length=500, description="Additional notes")
+    is_active: bool = Field(True, description="Whether this availability is active")
     created_at: dt.datetime
     updated_at: dt.datetime
 

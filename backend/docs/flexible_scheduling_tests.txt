@@ -1,0 +1,39 @@
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "weeks_from_now": 3, "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "afternoon", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "weeks_from_now": 4, "preferred_days": ["wednesday", "friday"], "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "any time", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "weeks_from_now": 2, "timezone": "America/New_York"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "specific_week_of_month": 3, "target_month_offset": 1, "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "afternoon", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "specific_week_of_month": 2, "target_month_offset": 0, "preferred_days": ["tuesday"], "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "evening", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "specific_week_of_month": 4, "target_month_offset": 3, "preferred_days": "monday,wednesday,friday", "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "target_month_offset": 1, "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "afternoon", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "target_month_offset": 2, "preferred_days": ["tuesday", "wednesday", "thursday"], "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "any time", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "date_range_start": "2025-03-15", "date_range_end": "2025-03-30", "preferred_days": ["thursday", "friday"], "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "date_range_start": "next Monday", "date_range_end": "3 weeks from now", "preferred_days": "wednesday,friday", "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "weeks_from_now": 5, "preferred_days": ["tuesday", "wednesday"], "timezone": "America/New_York"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "any time", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "specific_week_of_month": 2, "target_month_offset": 3, "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "afternoon", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "date_range_start": "tomorrow", "date_range_end": "6 weeks from now", "preferred_days": ["friday"], "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "weeks_from_now": 3, "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "weeks_from_now": 2, "timezone": "Invalid/Timezone"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "morning", "weeks_from_now": 2, "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_available_times", "args": {"date": "tomorrow", "time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_next_3_days", "args": {"time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "any time", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "target_month_offset": 1, "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/v1/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_first_available_flexible", "args": {"time_preference": "evening", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "weeks_from_now": 10, "preferred_days": ["sunday"], "timezone": "America/Los_Angeles"}}'

@@ -12,9 +12,9 @@ import sys
 import os
 
 # Add the src directory to the path so we can import our modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from services.phone.scheduling_service import SchedulingService
+from src.services.phone.scheduling_service import SchedulingService
 
 
 class TestDateParsing:
@@ -29,7 +29,7 @@ class TestDateParsing:
         self.mock_now = datetime(2025, 9, 15, 10, 30)  # Monday, September 15, 2025
         self.today = self.mock_now.date()
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_relative_dates(self, mock_datetime):
         """Test relative date expressions"""
         mock_datetime.now.return_value = self.mock_now
@@ -52,7 +52,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected, f"Failed for input: '{input_str}'"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_weekday_names(self, mock_datetime):
         """Test weekday name parsing"""
         mock_datetime.now.return_value = self.mock_now
@@ -90,7 +90,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected, f"Failed for input: '{input_str}' - got {result}, expected {expected}"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_next_weekday_explicit(self, mock_datetime):
         """Test explicit 'next' weekday parsing"""
         mock_datetime.now.return_value = self.mock_now
@@ -111,7 +111,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected, f"Failed for input: '{input_str}' - got {result}, expected {expected}"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_numeric_formats(self, mock_datetime):
         """Test numeric date formats"""
         mock_datetime.now.return_value = self.mock_now
@@ -144,7 +144,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected, f"Failed for input: '{input_str}'"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_month_names(self, mock_datetime):
         """Test month name parsing"""
         mock_datetime.now.return_value = self.mock_now
@@ -175,7 +175,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected, f"Failed for input: '{input_str}'"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_conversational_inputs(self, mock_datetime):
         """Test conversational/natural language inputs that LLMs might generate"""
         mock_datetime.now.return_value = self.mock_now
@@ -204,7 +204,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected, f"Failed for input: '{input_str}'"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_edge_cases_and_variations(self, mock_datetime):
         """Test edge cases and variations in input"""
         mock_datetime.now.return_value = self.mock_now
@@ -235,7 +235,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected, f"Failed for input: '{input_str}'"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_fallback_behavior(self, mock_datetime):
         """Test fallback behavior for unparseable inputs"""
         mock_datetime.now.return_value = self.mock_now
@@ -258,7 +258,7 @@ class TestDateParsing:
             result = self.service._parse_date_string(input_str)
             assert result == expected_fallback, f"Failed fallback for input: '{input_str}'"
     
-    @patch('services.phone.scheduling_service.datetime')
+    @patch('src.services.phone.scheduling_service.datetime')
     def test_year_rollover_logic(self, mock_datetime):
         """Test year rollover logic for dates in the past"""
         # Test from late in the year

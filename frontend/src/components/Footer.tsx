@@ -36,7 +36,7 @@ const Footer = () => {
                 <span className="text-2xl font-bold text-gray-900">HelpPet.ai</span>
               </div>
               <p className="text-gray-600 leading-relaxed mb-6">
-                HelpPet.ai, we are committed to revolutionizing veterinary visit documentation through innovative AI-powered solutions. Our platform empowers veterinary practices to streamline workflows, improve accuracy, and save valuable time, allowing veterinarians to focus on what truly matters, your pets.
+                Our AI voice agent manages routine inbound and outbound calls, from scheduling appointments to answering common questions, taking up to 80% of the load off your staff. With fewer repetitive tasks, your team can spend more time where it matters most: caring for patients and supporting pet owners.
               </p>
             </div>
 

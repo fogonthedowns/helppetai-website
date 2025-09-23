@@ -35,16 +35,13 @@ const AboutUs = () => {
                 Our Mission
               </h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                Veterinary documentation has been stuck in the past handwritten notes, missed details, and fragmented records across multiple practices. We believe technology can revolutionize how veterinarians document visits, ensuring complete, accurate, and shareable medical records.
+                Our AI voice agent takes on up to 80% of call volume, handling both inbound and outbound conversations with intelligence and empathy. From scheduling appointments to answering routine questions, it keeps your office running smoothly while freeing your staff to focus on what matters most: patients and their owners.
+              </p>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                And because veterinary care is never one-size-fits-all, there's always a built-in emergency hatch. If a call requires a human touch, it seamlessly transfers to your team, ensuring safety, trust, and the best possible experience for pet owners.
               </p>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Our iPhone recording platform with AI transcription ensures every conversation is captured, transcribed, and securely stored creating comprehensive documentation that follows pets across their entire healthcare journey.
-              </p>
-
-              <br />
-              
-              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              But we go beyond just recording what happened. Our AI identifies patterns, behavioral changes, and subtle health indicators that might otherwise be overlooked.
+                The result: a smarter, calmer, and more efficient practice where your staff spend less time on the phone and more time providing care.
               </p>
             </div>
             <div className="flex justify-center">

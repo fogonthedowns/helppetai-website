@@ -1,0 +1,9 @@
+curl -X POST "https://api.helppet.ai/webhook/phone" -H "Content-Type: application/json" -d '{"name": "get_available_times", "args": {"date": "tomorrow", "time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/webhook/phone" -H "Content-Type: application/json" -d '{"function_call": {"name": "get_available_times", "arguments": {"date": "tomorrow", "time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "timezone": "America/Los_Angeles"}}}'
+
+curl -X POST "https://api.helppet.ai/phone/webhook" -H "Content-Type: application/json" -d '{"name": "get_available_times", "args": {"date": "tomorrow", "time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/api/phone/webhook" -H "Content-Type: application/json" -d '{"name": "get_available_times", "args": {"date": "tomorrow", "time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "timezone": "America/Los_Angeles"}}'
+
+curl -X POST "https://api.helppet.ai/webhook/phone" -H "Content-Type: application/json" -d '{"event": "function_call", "function_call": {"name": "get_available_times", "arguments": {"date": "tomorrow", "time_preference": "morning", "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225", "timezone": "America/Los_Angeles"}}}'

@@ -249,14 +249,27 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
                         conflicting_type = appointment.appointment_type
                         break
                 
+                # Convert local slot times to UTC for storage consistency
+                local_tz = pytz.timezone(practice.timezone)
+                
+                # Create local datetime objects for the slot
+                local_start_dt = local_tz.localize(current_time)
+                local_end_dt = local_tz.localize(slot_end)
+                
+                # Convert to UTC
+                utc_start_dt = local_start_dt.astimezone(pytz.UTC)
+                utc_end_dt = local_end_dt.astimezone(pytz.UTC)
+                
                 all_slots.append({
-                    'start_time': current_time.time(),
-                    'end_time': slot_end.time(),
+                    'start_time': utc_start_dt.time(),  # Store UTC time
+                    'end_time': utc_end_dt.time(),      # Store UTC time
                     'availability_type': availability.availability_type.value,
                     'available': slot_available,
                     'conflicting_appointment': conflicting_appointment,
                     'conflicting_type': conflicting_type,
-                    'notes': 'Slot already booked' if not slot_available else 'Available'
+                    'notes': 'Slot already booked' if not slot_available else 'Available',
+                    'local_datetime': local_start_dt.isoformat(),  # Include local time for reference
+                    'utc_datetime': utc_start_dt.isoformat()       # Include UTC time for reference
                 })
                 
                 current_time = slot_end

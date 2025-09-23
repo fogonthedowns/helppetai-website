@@ -44,7 +44,6 @@ const Header = () => {
               )}
               {!isAuthenticated && (
                 <>
-                  <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
                   <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
                 </>
               )}

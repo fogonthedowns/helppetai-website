@@ -17,8 +17,8 @@ const Home = () => {
       answer: 'Yes! By automating routine calls, appointment scheduling, prescription refill requests, and basic questions, your staff can focus on patient care instead of phone management.'
     },
     {
-      question: 'How does voice recording work during vet visits?',
-      answer: 'Simply open the HelpPet.ai app on your iPhone and start recording. The AI automatically transcribes the conversation, extracts key medical information, and integrates with your practice records.'
+      question: 'What happens if the call requires a human touch or urgent care?',
+      answer: 'Every call has a built-in emergency hatch. If a call requires a human touch, it seamlessly transfers to your team with full context of the conversation, ensuring safety, trust, and the best possible experience for pet owners.'
     },
     {
       question: 'Is the AI Front Desk Agent secure and compliant?',
@@ -199,10 +199,10 @@ const Home = () => {
                 <h2 className="text-4xl font-light leading-tight mb-4" style={{
                   fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
                 }}>
-                  Voice-Powered<br />
-                  Documentation
+                  Built-in<br />
+                  Escape Hatch
                 </h2>
-                <p className="text-green-100 text-lg">iPhone recording with AI transcription & analysis</p>
+                <p className="text-green-100 text-lg">Seamless transfer to human staff</p>
               </div>
               <Link to="/vets" className="bg-white text-green-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
                 Try Recording

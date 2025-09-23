@@ -167,6 +167,81 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
             )
             logger.info(f"✅ get_available_times result: {result}")
             
+        elif function_name == "get_first_available_next_3_days":
+            logger.info("🎯 SCHEDULING SERVICE: get_first_available_next_3_days CALLED")
+            logger.info(f"📅 Arguments received: {arguments}")
+            result = await scheduling_service.get_first_available_next_3_days(
+                arguments.get("time_preference", "any time"),
+                arguments.get("practice_id"),
+                arguments.get("timezone", "America/Los_Angeles")
+            )
+            logger.info(f"✅ get_first_available_next_3_days result: {result}")
+            
+        elif function_name == "get_first_available_next_week":
+            logger.info("🎯 SCHEDULING SERVICE: get_first_available_next_week CALLED")
+            logger.info(f"📅 Arguments received: {arguments}")
+            
+            # Handle preferred_days parameter (can be a list of strings or comma-separated string)
+            preferred_days = arguments.get("preferred_days")
+            if isinstance(preferred_days, str) and preferred_days:
+                # Convert comma-separated string to list
+                preferred_days = [day.strip() for day in preferred_days.split(",")]
+            elif not preferred_days:
+                preferred_days = None  # Will use default ['tuesday', 'wednesday']
+            
+            result = await scheduling_service.get_first_available_next_week(
+                arguments.get("time_preference", "any time"),
+                arguments.get("practice_id"),
+                arguments.get("timezone", "America/Los_Angeles"),
+                preferred_days
+            )
+            logger.info(f"✅ get_first_available_next_week result: {result}")
+            
+        elif function_name == "get_first_available_next_month":
+            logger.info("🎯 SCHEDULING SERVICE: get_first_available_next_month CALLED")
+            logger.info(f"📅 Arguments received: {arguments}")
+            
+            # Handle preferred_days parameter (can be a list of strings or comma-separated string)
+            preferred_days = arguments.get("preferred_days")
+            if isinstance(preferred_days, str) and preferred_days:
+                # Convert comma-separated string to list
+                preferred_days = [day.strip() for day in preferred_days.split(",")]
+            elif not preferred_days:
+                preferred_days = None  # Will use default ['tuesday', 'wednesday']
+            
+            result = await scheduling_service.get_first_available_next_month(
+                arguments.get("time_preference", "any time"),
+                arguments.get("practice_id"),
+                arguments.get("timezone", "America/Los_Angeles"),
+                preferred_days
+            )
+            logger.info(f"✅ get_first_available_next_month result: {result}")
+            
+        elif function_name == "get_first_available_flexible":
+            logger.info("🎯 SCHEDULING SERVICE: get_first_available_flexible CALLED")
+            logger.info(f"📅 Arguments received: {arguments}")
+            
+            # Handle preferred_days parameter (can be a list of strings or comma-separated string)
+            preferred_days = arguments.get("preferred_days")
+            if isinstance(preferred_days, str) and preferred_days:
+                # Convert comma-separated string to list
+                preferred_days = [day.strip() for day in preferred_days.split(",")]
+            elif not preferred_days:
+                preferred_days = None  # Will use default ['tuesday', 'wednesday']
+            
+            result = await scheduling_service.get_first_available_flexible(
+                time_preference=arguments.get("time_preference", "any time"),
+                practice_id=arguments.get("practice_id"),
+                timezone=arguments.get("timezone", "America/Los_Angeles"),
+                weeks_from_now=arguments.get("weeks_from_now"),
+                specific_week_of_month=arguments.get("specific_week_of_month"),
+                target_month_offset=arguments.get("target_month_offset"),
+                preferred_days=preferred_days,
+                date_range_start=arguments.get("date_range_start"),
+                date_range_end=arguments.get("date_range_end")
+            )
+            logger.info(f"✅ get_first_available_flexible result: {result}")
+            
         else:
             result = {
                 "success": False, 

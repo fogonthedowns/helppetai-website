@@ -116,11 +116,30 @@ struct VetAvailability: Codable, Identifiable, Equatable {
             throw DecodingError.dataCorruptedError(forKey: .startTime, in: container, debugDescription: "Cannot create UTC start time")
         }
         
-        utcDateComponents.hour = endTimeCalendarComponents.hour
-        utcDateComponents.minute = endTimeCalendarComponents.minute
-        utcDateComponents.second = endTimeCalendarComponents.second
+        // CRITICAL FIX: Handle cross-day UTC times correctly
+        // If end_time < start_time, it means the end time is on the next UTC day
+        // Example: start=00:00, end=01:00 on same date = midnight to 1am same day ✅
+        // Example: start=23:00, end=07:00 on same date = 11pm to 7am NEXT day ✅
         
-        guard let utcEndTime = utcCalendar.date(from: utcDateComponents) else {
+        var endUtcDateComponents = utcDateComponents
+        endUtcDateComponents.hour = endTimeCalendarComponents.hour
+        endUtcDateComponents.minute = endTimeCalendarComponents.minute
+        endUtcDateComponents.second = endTimeCalendarComponents.second
+        
+        // If end time is earlier in the day than start time, it's the next day
+        if let endHour = endTimeCalendarComponents.hour,
+           let startHour = startTimeCalendarComponents.hour,
+           endHour < startHour {
+            // End time is next day
+            let nextDay = utcCalendar.date(byAdding: .day, value: 1, to: parsedDate) ?? parsedDate
+            endUtcDateComponents = utcCalendar.dateComponents([.year, .month, .day], from: nextDay)
+            endUtcDateComponents.hour = endTimeCalendarComponents.hour
+            endUtcDateComponents.minute = endTimeCalendarComponents.minute
+            endUtcDateComponents.second = endTimeCalendarComponents.second
+            endUtcDateComponents.timeZone = TimeZone(abbreviation: "UTC")
+        }
+        
+        guard let utcEndTime = utcCalendar.date(from: endUtcDateComponents) else {
             throw DecodingError.dataCorruptedError(forKey: .endTime, in: container, debugDescription: "Cannot create UTC end time")
         }
         

@@ -408,7 +408,7 @@ struct ScheduleEditingView: View {
         
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
-        timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        timeFormatter.timeZone = TimeZone.current  // ✅ Use local timezone, let backend handle UTC conversion
         
         let request = UpdateVetAvailabilityRequest(
             startTime: timeFormatter.string(from: newTime),
@@ -654,7 +654,7 @@ struct NewAvailabilityView: View {
         
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
-        timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        timeFormatter.timeZone = TimeZone.current  // ✅ Use local timezone, let backend handle UTC conversion
         
         let request = CreateVetAvailabilityRequest(
             vetUserId: currentUser.id,
@@ -844,7 +844,7 @@ struct EditAvailabilityView: View {
         
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
-        timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        timeFormatter.timeZone = TimeZone.current  // ✅ Use local timezone, let backend handle UTC conversion
         
         let request = UpdateVetAvailabilityRequest(
             startTime: timeFormatter.string(from: startTime),

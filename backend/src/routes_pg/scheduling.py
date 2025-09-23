@@ -4,7 +4,7 @@ Practice hours, vet availability, and appointment conflict management
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +34,7 @@ from ..schemas.scheduling_schemas import (
 )
 from ..schemas.base import BaseResponse
 from ..auth.jwt_auth_pg import get_current_user
+from ..utils.timezone_utils import TimezoneHandler, log_timezone_analysis
 
 router = APIRouter(prefix="/api/v1/scheduling", tags=["scheduling"])
 
@@ -222,12 +223,173 @@ async def create_vet_availability(
     current_user: User = Depends(get_current_user),
     repo: VetAvailabilityRepository = Depends(get_vet_availability_repository)
 ):
-    """Create new vet availability"""
+    """Create new vet availability with comprehensive timezone support"""
     # TODO: Add proper authorization - only the vet or practice admin should be able to create
     
-    availability = VetAvailability(**availability_data.dict())
-    created_availability = await repo.create(availability)
-    return VetAvailabilityResponse.from_orm(created_availability)
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Log the incoming request for debugging
+        logger.info("=" * 80)
+        logger.info("🔍 CREATING VET AVAILABILITY WITH TIMEZONE SUPPORT")
+        logger.info(f"📅 Input data: {availability_data.dict()}")
+        
+        # Comprehensive timezone analysis using our utility
+        log_timezone_analysis(
+            availability_data.date,
+            availability_data.start_time,
+            availability_data.end_time,
+            availability_data.timezone,
+            context="iOS_vet_availability_creation"
+        )
+        
+        # Get storage strategy recommendation
+        storage_strategy = TimezoneHandler.get_safe_storage_strategy(
+            availability_data.date,
+            availability_data.start_time,
+            availability_data.end_time,
+            availability_data.timezone
+        )
+        
+        logger.info(f"📋 Storage strategy: {storage_strategy['strategy']}")
+        logger.info(f"📋 Reason: {storage_strategy['reason']}")
+        
+        # Warn about potential issues
+        if storage_strategy.get("warning"):
+            logger.warning(f"⚠️  TIMEZONE WARNING: {storage_strategy['warning']}")
+        
+        # For critical date boundary issues, we could implement special handling
+        if storage_strategy["strategy"] == "timezone_aware_storage":
+            logger.warning("🚨 CRITICAL: This availability spans UTC date boundaries!")
+            logger.warning("🚨 Consider implementing timezone-aware datetime storage in the future.")
+            # For now, we'll proceed with local storage but with full logging
+        
+        # Get timezone-aware datetime range for future use
+        try:
+            utc_start, utc_end = availability_data.to_utc_datetime_range()
+            local_start, local_end = availability_data.get_local_datetime_range()
+            
+            logger.info(f"🕐 Local time range: {local_start} to {local_end}")
+            logger.info(f"🌐 UTC time range: {utc_start} to {utc_end}")
+            
+        except Exception as tz_error:
+            logger.error(f"❌ Timezone conversion error: {tz_error}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid timezone or time conversion: {str(tz_error)}"
+            )
+        
+        # Convert local times to UTC for database storage
+        data_dict = availability_data.model_dump()
+        timezone_info = data_dict.pop('timezone', None)
+        
+        # Convert local date/time to UTC times for storage
+        try:
+            logger.info("🔍 DETAILED TIMEZONE CONVERSION DEBUG:")
+            logger.info(f"📥 Input data: {availability_data.model_dump()}")
+            
+            local_start, local_end = availability_data.get_local_datetime_range()
+            utc_start, utc_end = availability_data.to_utc_datetime_range()
+            
+            logger.info(f"🌍 Local times: {local_start} to {local_end}")
+            logger.info(f"🌐 UTC times: {utc_start} to {utc_end}")
+            logger.info(f"📅 UTC dates: start={utc_start.date()}, end={utc_end.date()}")
+            logger.info(f"⏰ UTC times only: start={utc_start.time()}, end={utc_end.time()}")
+            
+            # Store UTC times in the database
+            data_dict['start_time'] = utc_start.time()
+            
+            # ALWAYS STORE IN UTC - NEVER BREAK THIS RULE
+            # Store UTC times on UTC dates - this is the correct approach
+            # The display issue needs to be fixed in the iOS app, not by breaking UTC storage
+            
+            if utc_start.date() != utc_end.date():
+                logger.warning(f"⚠️ DATE BOUNDARY SHIFT: UTC spans {utc_start.date()} to {utc_end.date()}")
+                
+                # Store on UTC start date with proper end time handling
+                data_dict['date'] = utc_start.date()
+                data_dict['end_time'] = utc_end.time()
+                
+                logger.warning(f"🗄️ UTC STORAGE (boundary shift):")
+                logger.warning(f"   UTC date: {utc_start.date()}")
+                logger.warning(f"   UTC times: {utc_start.time()} to {utc_end.time()}")
+                logger.warning(f"   Note: iOS app must handle cross-day UTC times correctly")
+            else:
+                # No date boundary shift - simple case
+                data_dict['date'] = utc_start.date()
+                data_dict['end_time'] = utc_end.time()
+                logger.info(f"✅ NO BOUNDARY SHIFT - simple UTC storage")
+            
+            logger.info(f"🗄️ FINAL STORAGE VALUES:")
+            logger.info(f"   date: {data_dict['date']}")
+            logger.info(f"   start_time: {data_dict['start_time']}")
+            logger.info(f"   end_time: {data_dict['end_time']}")
+            logger.info(f"   vet_user_id: {data_dict['vet_user_id']}")
+            logger.info(f"   practice_id: {data_dict['practice_id']}")
+            
+            # Check for potential duplicate before attempting to create
+            logger.info(f"🔍 DUPLICATE CHECK:")
+            logger.info(f"   Unique key would be: ({data_dict['vet_user_id']}, {data_dict['date']}, {data_dict['start_time']}, {data_dict['end_time']})")
+            
+        except Exception as conversion_error:
+            logger.error(f"❌ Failed to convert to UTC: {conversion_error}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Timezone conversion failed: {str(conversion_error)}"
+            )
+        
+        # Store the availability record with UTC times
+        availability = VetAvailability(**data_dict)
+        
+        try:
+            logger.info(f"🔄 ATTEMPTING TO CREATE AVAILABILITY RECORD...")
+            created_availability = await repo.create(availability)
+            
+            logger.info(f"✅ Successfully created availability: {created_availability.id}")
+            logger.info(f"   Stored as: {created_availability.date} {created_availability.start_time}-{created_availability.end_time}")
+            logger.info("=" * 80)
+            
+            return VetAvailabilityResponse.from_orm(created_availability)
+            
+        except Exception as db_error:
+            logger.error("🚨 DATABASE ERROR OCCURRED:")
+            logger.error(f"   Error type: {type(db_error).__name__}")
+            logger.error(f"   Error message: {str(db_error)}")
+            
+            # Check if it's a unique constraint violation
+            if "duplicate key value violates unique constraint" in str(db_error):
+                logger.error("🔍 DUPLICATE KEY ANALYSIS:")
+                logger.error(f"   Attempted key: ({data_dict['vet_user_id']}, {data_dict['date']}, {data_dict['start_time']}, {data_dict['end_time']})")
+                logger.error("   This exact combination already exists in the database!")
+                logger.error("   Possible causes:")
+                logger.error("   1. User tried to create the same availability twice")
+                logger.error("   2. Timezone conversion created an unexpected duplicate")
+                logger.error("   3. Previous failed request left a partial record")
+                
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Availability already exists for this vet on {data_dict['date']} from {data_dict['start_time']} to {data_dict['end_time']}"
+                )
+            else:
+                # Re-raise other database errors
+                raise
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        logger.error("=" * 80)
+        logger.error("❌ ERROR CREATING VET AVAILABILITY")
+        logger.error(f"Error: {str(e)}")
+        logger.error(f"Input data: {availability_data.model_dump()}")
+        logger.exception("Full traceback:")
+        logger.error("=" * 80)
+        
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Failed to create availability: {str(e)}"
+        )
 
 
 @router.put("/vet-availability/{availability_id}", response_model=VetAvailabilityResponse)

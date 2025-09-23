@@ -49,6 +49,16 @@ install:
 test:
 	pytest
 
+.PHONY: test-timezone
+test-timezone:
+	@echo "🧪 Running timezone-specific tests..."
+	python run_timezone_tests.py
+
+.PHONY: test-all
+test-all:
+	@echo "🧪 Running all tests (including legacy)..."
+	pytest
+
 # Docker Commands
 .PHONY: build
 build:
