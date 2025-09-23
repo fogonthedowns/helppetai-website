@@ -1,11 +1,11 @@
 {
   "agent_id": "",
   "channel": "voice",
-  "last_modification_timestamp": 1758482464180,
+  "last_modification_timestamp": 1758601040106,
   "agent_name": "HelpPetAI",
   "response_engine": {
     "type": "conversation-flow",
-    "version": 45,
+    "version": 47,
     "conversation_flow_id": "conversation_flow_40876625b4b2"
   },
   "webhook_url": "https://api.helppet.ai/api/v1/call-analysis/webhook",
@@ -13,7 +13,7 @@
   "opt_out_sensitive_data_storage": false,
   "data_storage_setting": "everything",
   "opt_in_signed_url": false,
-  "version": 45,
+  "version": 47,
   "is_published": false,
   "version_title": "",
   "post_call_analysis_model": "gpt-4o-mini",
@@ -29,7 +29,7 @@
   "retellLlmData": null,
   "conversationFlow": {
     "conversation_flow_id": "conversation_flow_40876625b4b2",
-    "version": 45,
+    "version": 47,
     "global_prompt": "## Objective\nYou are an AI agent LaShonda working for a veterinarian. You are to be kind and helpful.\n\n- if someone has an emergency they aren't talking about a person. They are talking about a pet. Do not suggest to call 911\n\n\nCurrent time is {{current_time}}\n{{practice_id}}= \"934c57e7-4f9c-4d28-aa0f-3cb881e3c225\"\n{{timezone}} = \"US/Pacific\"",
     "nodes": [
       {
@@ -253,6 +253,14 @@
             "transition_condition": {
               "type": "prompt",
               "prompt": "If it is successful"
+            }
+          },
+          {
+            "destination_node_id": "node-1758586761261",
+            "id": "edge-1758586682820",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If it is not successful"
             }
           }
         ],
@@ -644,8 +652,19 @@
         "name": "Transfer Call",
         "id": "node-1757974811339",
         "transfer_option": {
-          "type": "cold_transfer",
-          "show_transferee_as_caller": false
+          "opt_out_initial_message": false,
+          "on_hold_music": "relaxing_sound",
+          "public_handoff_option": {
+            "type": "prompt",
+            "prompt": ""
+          },
+          "opt_out_human_detection": false,
+          "type": "warm_transfer",
+          "agent_detection_timeout_ms": 30000,
+          "private_handoff_option": {
+            "type": "prompt",
+            "prompt": ""
+          }
         },
         "type": "transfer_call",
         "display_position": {
@@ -985,7 +1004,15 @@
             "id": "edge-1758001557734",
             "transition_condition": {
               "type": "prompt",
-              "prompt": "Transition immediately"
+              "prompt": "Yes, there is a specific date"
+            }
+          },
+          {
+            "destination_node_id": "node-1758586168849",
+            "id": "edge-1758586151702",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "No, there is not a specific date"
             }
           }
         ],
@@ -997,7 +1024,7 @@
         },
         "instruction": {
           "type": "prompt",
-          "text": "- \"Great! {{message}}. Lets set up an appointment."
+          "text": "- \"Great! {{message}}. Lets set up an appointment. \n- When would you like to come in? (don't offer any other suggestions)"
         },
         "knowledge_base_ids": []
       },
@@ -1030,6 +1057,176 @@
         "instruction": {
           "type": "prompt",
           "text": "Would you like to try another day?"
+        },
+        "knowledge_base_ids": []
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1758586301351",
+            "id": "edge-1758586168849",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information has been confirmed correct"
+            }
+          }
+        ],
+        "id": "node-1758586168849",
+        "type": "conversation",
+        "display_position": {
+          "x": 1613.5601216173764,
+          "y": -35.077025806105205
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "- When would you like to visit?\n- determine time preference (if there is one, ask first)\n- determine which pets are coming if there are more than one pet"
+        },
+        "knowledge_base_ids": []
+      },
+      {
+        "tool_id": "tool-1758585987628",
+        "instruction": {
+          "type": "prompt",
+          "text": "\"This could take a few moments\""
+        },
+        "name": "Get First Available Flexible",
+        "edges": [
+          {
+            "destination_node_id": "node-1758586405306",
+            "id": "edge-1758586335363",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The information responded with success"
+            }
+          },
+          {
+            "destination_node_id": "node-1758586405306",
+            "id": "edge-1758586419650",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The status is not successful "
+            }
+          },
+          {
+            "id": "edge-1758586532684",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If there are no available times"
+            }
+          }
+        ],
+        "id": "node-1758586301351",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": true,
+        "display_position": {
+          "x": 2089.15017356684,
+          "y": 90.86816055883925
+        },
+        "wait_for_result": true
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757888896343",
+            "id": "edge-1758586405306",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If the user selects a time\n"
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1758586501673",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "if the user decides not to make an appointment"
+            }
+          },
+          {
+            "destination_node_id": "node-1758586566011",
+            "id": "edge-1758586581268",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If there are no available times"
+            }
+          }
+        ],
+        "id": "node-1758586405306",
+        "type": "conversation",
+        "display_position": {
+          "x": 2531.187126096131,
+          "y": -8.267214937482809
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "\"{{message}}\""
+        },
+        "knowledge_base_ids": []
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1758586301351",
+            "id": "edge-1758586566011",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Yes, the user wants to try another day or part of day "
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1758586641377",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "No, the user does not want to try another day"
+            }
+          }
+        ],
+        "id": "node-1758586566011",
+        "type": "conversation",
+        "display_position": {
+          "x": 2355.3177362220304,
+          "y": -541.7725734784517
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Would you like to try another day?"
+        },
+        "knowledge_base_ids": []
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757974811339",
+            "id": "edge-1758586761261",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If its okay"
+            }
+          },
+          {
+            "destination_node_id": "node-1757974757638",
+            "id": "edge-1758586831418",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If they do not wish to be transfered"
+            }
+          }
+        ],
+        "id": "node-1758586761261",
+        "type": "conversation",
+        "display_position": {
+          "x": 3117.4758361360086,
+          "y": 1047.500296649284
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Something isn't right, we need to connect you with another agent who can help"
         },
         "knowledge_base_ids": []
       }
@@ -1283,6 +1480,71 @@
             "pet_owner_id",
             "pet_name",
             "species"
+          ]
+        }
+      },
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "",
+        "type": "custom",
+        "url": "https://api.helppet.ai/api/v1/webhook/phone",
+        "tool_id": "tool-1758585987628",
+        "args_at_root": false,
+        "timeout_ms": 120000,
+        "name": "get_first_available_flexible",
+        "response_variables": {
+          "message": "message",
+          "success": "success",
+          "available_times": "appointments"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date_range_end": {
+              "type": "string",
+              "description": "End date for custom range (ISO format or natural language)"
+            },
+            "time_preference": {
+              "type": "string",
+              "description": "Time of day preference (e.g., 'morning', 'afternoon', 'evening', 'any time')"
+            },
+            "timezone": {
+              "type": "string",
+              "description": "Practice timezone (e.g., 'America/New_York', 'US/Pacific', 'US/Mountain')"
+            },
+            "preferred_days": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of preferred day names (e.g., ['wednesday', 'friday'])"
+            },
+            "practice_id": {
+              "type": "string",
+              "description": "Practice UUID - use the practice_id variable exactly as provided"
+            },
+            "specific_week_of_month": {
+              "type": "integer",
+              "description": "Specific week of target month (1-4, e.g., 3 for 'week 3')"
+            },
+            "date_range_start": {
+              "type": "string",
+              "description": "Start date for custom range (ISO format or natural language)"
+            },
+            "weeks_from_now": {
+              "type": "integer",
+              "description": "Number of weeks from now (e.g., 3 for 'in 3 weeks')"
+            },
+            "target_month_offset": {
+              "type": "integer",
+              "description": "Month offset (0=this month, 1=next month, 2=month after next)"
+            }
+          },
+          "required": [
+            "practice_id"
           ]
         }
       }

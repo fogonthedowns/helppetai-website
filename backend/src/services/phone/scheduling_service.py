@@ -118,7 +118,8 @@ class SchedulingService:
                     vet_user_id=vet_user_id,
                     practice_id=practice_uuid,
                     date=utc_date,
-                    slot_duration_minutes=45
+                    slot_duration_minutes=45,
+                    timezone_str=timezone
                 )
                 all_slot_data.extend(daily_slots)
             
@@ -546,7 +547,7 @@ class SchedulingService:
             
             for check_date in next_3_days:
                 # Get slots for this date
-                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz)
+                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz, timezone)
                 
                 # Filter by time preference
                 filtered_slots = self._filter_slots_by_time_preference(daily_slots, cleaned_time_pref)
@@ -645,7 +646,7 @@ class SchedulingService:
             for check_date in next_week_dates:
                 day_name = check_date.strftime('%A').lower()
                 if day_name in [day.lower() for day in preferred_days]:
-                    daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz)
+                    daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz, timezone)
                     filtered_slots = self._filter_slots_by_time_preference(daily_slots, cleaned_time_pref)
                     
                     if filtered_slots:
@@ -682,7 +683,7 @@ class SchedulingService:
             # If no preferred days available, check all days of next week
             all_appointments = []
             for check_date in next_week_dates:
-                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz)
+                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz, timezone)
                 filtered_slots = self._filter_slots_by_time_preference(daily_slots, cleaned_time_pref)
                 
                 if filtered_slots:
@@ -795,7 +796,7 @@ class SchedulingService:
             for check_date in next_month_dates:
                 day_name = check_date.strftime('%A').lower()
                 if day_name in [day.lower() for day in preferred_days]:
-                    daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz)
+                    daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz, timezone)
                     filtered_slots = self._filter_slots_by_time_preference(daily_slots, cleaned_time_pref)
                     
                     if filtered_slots:
@@ -837,7 +838,7 @@ class SchedulingService:
             # If no preferred days available, check all days of next month (limit search to avoid performance issues)
             all_appointments = []
             for check_date in next_month_dates[:14]:  # Check first 2 weeks of next month
-                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz)
+                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, check_date, tz, timezone)
                 filtered_slots = self._filter_slots_by_time_preference(daily_slots, cleaned_time_pref)
                 
                 if filtered_slots:
@@ -886,7 +887,7 @@ class SchedulingService:
             logger.exception("Full traceback:")
             return {"success": False, "message": "I'm having trouble checking our calendar. Let me try again or get a human to help you."}
     
-    async def _get_slots_for_date(self, repo: VetAvailabilityRepository, vet_user_id: UUID, practice_uuid: UUID, check_date: date, tz: pytz.BaseTzInfo) -> List[Dict]:
+    async def _get_slots_for_date(self, repo: VetAvailabilityRepository, vet_user_id: UUID, practice_uuid: UUID, check_date: date, tz: pytz.BaseTzInfo, timezone_str: str = "America/Los_Angeles") -> List[Dict]:
         """
         Helper method to get available slots for a specific date with timezone conversion
         """
@@ -910,7 +911,8 @@ class SchedulingService:
                 vet_user_id=vet_user_id,
                 practice_id=practice_uuid,
                 date=utc_date,
-                slot_duration_minutes=45
+                slot_duration_minutes=45,
+                timezone_str=timezone_str
             )
             all_slot_data.extend(daily_slots)
         
@@ -1025,7 +1027,7 @@ class SchedulingService:
             while current_date <= end_date:
                 day_name = current_date.strftime('%A').lower()
                 if day_name in [day.lower() for day in preferred_days]:
-                    daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, current_date, tz)
+                    daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, current_date, tz, timezone)
                     filtered_slots = self._filter_slots_by_time_preference(daily_slots, cleaned_time_pref)
                     
                     if filtered_slots:
@@ -1075,7 +1077,7 @@ class SchedulingService:
             max_days_to_check = 21  # Limit to avoid performance issues
             
             while current_date <= end_date and checked_days < max_days_to_check:
-                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, current_date, tz)
+                daily_slots = await self._get_slots_for_date(repo, vet_user_id, practice_uuid, current_date, tz, timezone)
                 filtered_slots = self._filter_slots_by_time_preference(daily_slots, cleaned_time_pref)
                 
                 if filtered_slots:

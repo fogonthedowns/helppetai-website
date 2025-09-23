@@ -209,7 +209,8 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         vet_user_id: uuid.UUID, 
         practice_id: uuid.UUID,
         date: date, 
-        slot_duration_minutes: int = 30
+        slot_duration_minutes: int = 30,
+        timezone_str: str = None
     ) -> List[Dict]:
         """
         Get actual available time slots for a vet on a specific date.
@@ -233,12 +234,38 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         current_date_practice = current_datetime_practice.date()
         current_time_practice = current_datetime_practice.time()
         
-        # First, get the vet's availability for this date
+        # Use practice timezone if not provided
+        if timezone_str is None:
+            timezone_str = practice.timezone if hasattr(practice, 'timezone') else "America/Los_Angeles"
+        
+        # TIMEZONE-AWARE QUERY: Check multiple UTC dates for local date query
+        from ..utils.timezone_utils import TimezoneHandler
+        from datetime import time as dt_time
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"🔍 VOICE ENDPOINT - TIMEZONE-AWARE SLOT QUERY: date={date}, timezone={timezone_str}")
+        
+        # Calculate which UTC dates might contain records for this local date
+        test_times = [dt_time(0, 0), dt_time(12, 0), dt_time(23, 59)]
+        utc_dates_to_check = set()
+        
+        for test_time in test_times:
+            try:
+                utc_dt = TimezoneHandler.convert_to_utc(date, test_time, timezone_str)
+                utc_dates_to_check.add(utc_dt.date())
+            except Exception as e:
+                logger.warning(f"⚠️ Timezone conversion error for {test_time}: {e}")
+                utc_dates_to_check.add(date)
+        
+        logger.info(f"🔍 VOICE ENDPOINT - Checking UTC dates: {sorted(utc_dates_to_check)}")
+        
+        # Query availability records across timezone boundaries
         availability_query = select(VetAvailability).where(
             and_(
                 VetAvailability.vet_user_id == vet_user_id,
                 VetAvailability.practice_id == practice_id,
-                VetAvailability.date == date,
+                VetAvailability.date.in_(list(utc_dates_to_check)),
                 VetAvailability.is_active == True,
                 VetAvailability.availability_type.in_(['AVAILABLE', 'EMERGENCY_ONLY'])
             )
