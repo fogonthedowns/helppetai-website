@@ -1646,7 +1646,9 @@ extension APIManager {
     }
     
     func getVetAvailability(vetUserId: String, date: String) async throws -> [VetAvailability] {
-        let url = URL(string: "\(baseURL)/api/v1/scheduling/vet-availability/\(vetUserId)?date=\(date)")!
+        // Get the device's current timezone
+        let deviceTimezone = TimeZone.current.identifier
+        let url = URL(string: "\(baseURL)/api/v1/scheduling/vet-availability/\(vetUserId)?date=\(date)&timezone=\(deviceTimezone)")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
@@ -1655,6 +1657,7 @@ extension APIManager {
         print("🔍 URL: \(url.absoluteString)")
         print("🔍 Method: \(request.httpMethod ?? "nil")")
         print("🔍 Headers: \(request.allHTTPHeaderFields ?? [:])")
+        print("🌍 Device Timezone: \(deviceTimezone)")
         
         let (data, response) = try await session.data(for: request)
         

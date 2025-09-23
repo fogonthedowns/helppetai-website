@@ -656,13 +656,19 @@ struct NewAvailabilityView: View {
         timeFormatter.dateFormat = "HH:mm:ss"
         timeFormatter.timeZone = TimeZone.current  // ✅ Use local timezone, let backend handle UTC conversion
         
+        let deviceTimezone = TimeZone.current.identifier
+        print("🌍 Creating availability with device timezone: \(deviceTimezone)")
+        print("📅 Local date: \(dateFormatter.string(from: selectedDate))")
+        print("⏰ Local times: \(timeFormatter.string(from: startTime)) - \(timeFormatter.string(from: endTime))")
+        
         let request = CreateVetAvailabilityRequest(
             vetUserId: currentUser.id,
             practiceId: currentUser.practiceId ?? "",
             date: dateFormatter.string(from: selectedDate),
             startTime: timeFormatter.string(from: startTime),
             endTime: timeFormatter.string(from: endTime),
-            availabilityType: availabilityType
+            availabilityType: availabilityType,
+            timezone: deviceTimezone
         )
         
         do {

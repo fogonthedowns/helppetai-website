@@ -75,14 +75,14 @@ struct VetAvailability: Codable, Identifiable, Equatable {
         let startTimeString = try container.decode(String.self, forKey: .startTime)
         let endTimeString = try container.decode(String.self, forKey: .endTime)
         
-        // Parse date (API sends in local timezone context)
+        // Parse date (API sends UTC storage date, but we need to derive the original local date)
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.timeZone = TimeZone.current
+        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")  // Parse as UTC since that's how it's stored
         guard let parsedDate = dateFormatter.date(from: dateString) else {
             throw DecodingError.dataCorruptedError(forKey: .date, in: container, debugDescription: "Cannot decode date string \(dateString)")
         }
-        date = parsedDate
+        // Note: parsedDate is the UTC storage date, we'll derive the local date after time conversion
         
         // Parse time strings (API sends in UTC, need to convert to local)
         let timeFormatter = DateFormatter()
@@ -147,18 +147,23 @@ struct VetAvailability: Codable, Identifiable, Equatable {
         startTime = utcStartTime
         endTime = utcEndTime
         
+        // CRITICAL FIX: Set the date to the LOCAL date (derived from converted start time)
+        // This ensures calendar filtering works correctly
+        let localCalendar = Calendar.current
+        date = localCalendar.startOfDay(for: startTime)
+        
         // Debug logging for timezone conversion
         let debugFormatter = DateFormatter()
         debugFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         debugFormatter.timeZone = TimeZone.current
         print("🔍 VetAvailability Decoding:")
-        print("🔍 API Date: \(dateString)")
-        print("🔍 API Start: \(startTimeString) UTC")
-        print("🔍 API End: \(endTimeString) UTC")
+        print("🔍 UTC Storage Date: \(dateString)")
+        print("🔍 UTC Start: \(startTimeString)")
+        print("🔍 UTC End: \(endTimeString)")
         print("🔍 Local Start: \(debugFormatter.string(from: startTime))")
         print("🔍 Local End: \(debugFormatter.string(from: endTime))")
-        print("🔍 Parsed Date: \(debugFormatter.string(from: parsedDate))")
-        print("🔍 Same Day Check: Start=\(calendar.isDate(startTime, inSameDayAs: parsedDate)), End=\(calendar.isDate(endTime, inSameDayAs: parsedDate))")
+        print("🔍 Derived Local Date: \(debugFormatter.string(from: date))")
+        print("🔍 Same Day Check: Start=\(localCalendar.isDate(startTime, inSameDayAs: date)), End=\(localCalendar.isDate(endTime, inSameDayAs: date))")
         print("🔍 ---")
         
         // Decode created_at and updated_at using the existing APIManager date decoder logic
@@ -244,6 +249,7 @@ struct CreateVetAvailabilityRequest: Codable {
     let startTime: String
     let endTime: String
     let availabilityType: AvailabilityType
+    let timezone: String
     
     enum CodingKeys: String, CodingKey {
         case vetUserId = "vet_user_id"
@@ -252,6 +258,7 @@ struct CreateVetAvailabilityRequest: Codable {
         case startTime = "start_time"
         case endTime = "end_time"
         case availabilityType = "availability_type"
+        case timezone
     }
 }
 

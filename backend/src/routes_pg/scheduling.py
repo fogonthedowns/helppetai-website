@@ -155,7 +155,8 @@ async def create_bulk_practice_hours(
 @router.get("/vet-availability/{vet_user_id}")
 async def get_vet_availability(
     vet_user_id: uuid.UUID,
-    date: date = Query(..., description="Date to get availability for"),
+    date: date = Query(..., description="Date to get availability for (LOCAL date in practice timezone)"),
+    timezone: str = Query("America/Los_Angeles", description="Practice timezone for date interpretation"),
     include_inactive: bool = Query(False, description="Include inactive availability"),
     slots: bool = Query(False, description="Return bookable time slots instead of broad windows"),
     slot_duration: int = Query(30, ge=15, le=120, description="Duration of each slot in minutes"),
@@ -165,11 +166,21 @@ async def get_vet_availability(
     """Get vet availability for a specific date - can return broad windows or specific time slots"""
     # TODO: Add proper authorization
     
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info("=" * 80)
+    logger.info("🔍 GET VET AVAILABILITY - TIMEZONE-AWARE QUERY")
+    logger.info(f"📅 Local date requested: {date}")
+    logger.info(f"🌍 Timezone: {timezone}")
+    logger.info(f"👩‍⚕️ Vet ID: {vet_user_id}")
+    logger.info("=" * 80)
+    
     if slots:
         # Return actual bookable time slots (NEW FUNCTIONALITY)
         
         # First get the practice_id from existing availability
-        availability = await repo.get_by_vet_and_date(vet_user_id, date, include_inactive)
+        availability = await repo.get_by_vet_and_date(vet_user_id, date, include_inactive, timezone)
         if not availability:
             # No availability data found
             return VetAvailabilitySlots(
@@ -212,8 +223,8 @@ async def get_vet_availability(
             available_slots=available_count
         )
     else:
-        # Return broad availability windows (EXISTING FUNCTIONALITY)
-        availability = await repo.get_by_vet_and_date(vet_user_id, date, include_inactive)
+        # Return broad availability windows (EXISTING FUNCTIONALITY) 
+        availability = await repo.get_by_vet_and_date(vet_user_id, date, include_inactive, timezone)
         return [VetAvailabilityResponse.from_orm(avail) for avail in availability]
 
 
