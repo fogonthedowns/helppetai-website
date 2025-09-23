@@ -20,6 +20,8 @@ struct CalendarView: View {
     let onAvailabilityTap: (VetAvailability) -> Void
     let onAvailabilityLongPress: (Date) -> Void
     let onAvailabilityMoved: (VetAvailability, Date) -> Void
+    // New: optionally overlay availability blocks on top of appointments
+    let showAvailabilityOverlay: Bool = false
     
     @State private var optimisticAppointments: [Appointment] = []
     @State private var optimisticAvailabilities: [VetAvailability] = []
@@ -74,13 +76,11 @@ struct CalendarView: View {
                         // Time labels
                         timeLabels
                         
-                        // Appointment blocks (only in normal mode)
-                        if !isScheduleEditingMode {
-                            appointmentBlocks(width: geometry.size.width)
-                        }
+                        // Appointment blocks (always show; appointment screen passes default behavior)
+                        appointmentBlocks(width: geometry.size.width)
                         
-                        // Availability blocks (only in schedule editing mode)
-                        if isScheduleEditingMode {
+                        // Availability blocks (in editing mode OR when overlay is enabled)
+                        if isScheduleEditingMode || showAvailabilityOverlay {
                             availabilityBlocks(width: geometry.size.width)
                         }
                         
@@ -309,11 +309,10 @@ struct CalendarView: View {
         let visibleAvailabilities = currentAvailabilities.filter { availability in
             var calendar = Calendar.current
             calendar.timeZone = TimeZone.current
-            let hour = calendar.component(.hour, from: availability.startTime)
+            let hour = calendar.component(.hour, from: availability.localStartTime)
             
-            // Use the original date field from the API instead of converted startTime date
-            // This handles cases where UTC->local conversion changes the date
-            let isCorrectDate = calendar.isDate(availability.date, inSameDayAs: selectedDate)
+            // Compare using computed localDate derived from startAt
+            let isCorrectDate = calendar.isDate(availability.localDate, inSameDayAs: selectedDate)
             let inTimeRange = hour >= startHour && hour < endHour
             
             // Debug logging for availability filtering
@@ -322,8 +321,8 @@ struct CalendarView: View {
                 debugFormatter.dateFormat = "yyyy-MM-dd HH:mm"
                 debugFormatter.timeZone = TimeZone.current
                 print("🔍 Calendar Filter - Including availability:")
-                print("🔍 Date: \(debugFormatter.string(from: availability.date))")
-                print("🔍 Start: \(debugFormatter.string(from: availability.startTime))")
+                print("🔍 Date: \(debugFormatter.string(from: availability.localDate))")
+                print("🔍 Start: \(debugFormatter.string(from: availability.localStartTime))")
                 print("🔍 Selected: \(debugFormatter.string(from: selectedDate))")
                 print("🔍 Hour: \(hour), InRange: \(inTimeRange)")
             }
@@ -445,9 +444,9 @@ struct CalendarView: View {
     }
     
     private func availabilityBlock(availability: VetAvailability, width: CGFloat) -> some View {
-        let startTime = availability.startTime
+        let startTime = availability.localStartTime
         let startOffset = timeToOffset(startTime)
-        let endTime = availability.endTime
+        let endTime = availability.localEndTime
         let duration = endTime.timeIntervalSince(startTime)
         let height = CGFloat(duration / 3600) * hourHeight // Convert seconds to hours
         let isDragged = draggedAvailability?.id == availability.id
@@ -524,10 +523,11 @@ struct CalendarView: View {
                         id: availability.id,
                         vetUserId: availability.vetUserId,
                         practiceId: availability.practiceId,
-                        date: availability.date,
-                        startTime: newTime,
-                        endTime: newTime.addingTimeInterval(duration),
+                        startAt: newTime,
+                        endAt: newTime.addingTimeInterval(duration),
                         availabilityType: availability.availabilityType,
+                        notes: availability.notes,
+                        isActive: availability.isActive,
                         createdAt: availability.createdAt,
                         updatedAt: availability.updatedAt
                     )
@@ -737,9 +737,9 @@ struct CalendarView: View {
     
     private func isLocationOnAvailability(_ location: CGPoint) -> Bool {
         for availability in currentAvailabilities {
-            let availabilityOffset = timeToOffset(availability.startTime)
-            let endTime = availability.endTime
-            let duration = endTime.timeIntervalSince(availability.startTime)
+            let availabilityOffset = timeToOffset(availability.localStartTime)
+            let endTime = availability.localEndTime
+            let duration = endTime.timeIntervalSince(availability.localStartTime)
             let availabilityHeight = CGFloat(duration / 3600) * hourHeight
             let availabilityX = timeColumnWidth + 16
             let availabilityWidth = 300.0
@@ -1027,9 +1027,9 @@ struct CalendarView: View {
     }
     
     private func phantomAvailability(for availability: VetAvailability, width: CGFloat) -> some View {
-        let startOffset = timeToOffset(availability.startTime)
-        let endTime = availability.endTime
-        let duration = endTime.timeIntervalSince(availability.startTime)
+        let startOffset = timeToOffset(availability.localStartTime)
+        let endTime = availability.localEndTime
+        let duration = endTime.timeIntervalSince(availability.localStartTime)
         let height = CGFloat(duration / 3600) * hourHeight
         let availabilityWidth = width - timeColumnWidth - 10
 
@@ -1045,7 +1045,7 @@ struct CalendarView: View {
     }
 
     private func availabilityDragTimePreview(for availability: VetAvailability, width: CGFloat) -> some View {
-        let originalOffset = timeToOffset(availability.startTime)
+        let originalOffset = timeToOffset(availability.localStartTime)
         let newOffset = originalOffset + dragOffset.height
         let newTime = offsetToTime(newOffset)
 
@@ -1119,7 +1119,7 @@ struct CalendarView_Previews: PreviewProvider {
             onAppointmentTap: { _ in },
             onLongPress: { _ in },
             onAppointmentMoved: { _, _ in },
-            isScheduleEditingMode: .constant(false),
+            isScheduleEditingMode: Binding.constant(false),
             vetAvailabilities: [],
             onAvailabilityTap: { _ in },
             onAvailabilityLongPress: { _ in },

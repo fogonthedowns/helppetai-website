@@ -86,6 +86,8 @@ run:
 		--name $(CONTAINER_NAME) \
 		-p $(PORT):$(PORT) \
 		--env-file .env \
+		-e POSTGRESQL_URL=postgresql+asyncpg://justinzollars@host.docker.internal:5432/helppet_dev \
+		-e POSTGRESQL_SYNC_URL=postgresql+psycopg2://justinzollars@host.docker.internal:5432/helppet_dev \
 		$(IMAGE_NAME):$(IMAGE_TAG)
 	@echo "✅ Container started at http://localhost:$(PORT)"
 	@echo "📄 API docs: http://localhost:$(PORT)/docs"
@@ -132,6 +134,8 @@ shell:
 # Database Commands
 .PHONY: migrate
 migrate:
+	POSTGRESQL_URL=postgresql+asyncpg://justinzollars@localhost:5432/helppet_dev \
+	POSTGRESQL_SYNC_URL=postgresql+psycopg2://justinzollars@localhost:5432/helppet_dev \
 	alembic upgrade head
 
 .PHONY: migrate-create

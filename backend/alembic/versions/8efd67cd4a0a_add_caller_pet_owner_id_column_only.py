@@ -21,8 +21,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add caller_pet_owner_id column to call_records table."""
-    # Add the column without foreign key constraint for now
-    op.add_column('call_records', sa.Column('caller_pet_owner_id', postgresql.UUID(as_uuid=True), nullable=True))
+    # Idempotent add (handles fresh DBs where column may already exist)
+    op.execute("ALTER TABLE call_records ADD COLUMN IF NOT EXISTS caller_pet_owner_id UUID")
 
 
 def downgrade() -> None:

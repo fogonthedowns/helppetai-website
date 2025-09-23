@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .user_service import UserService
 from .scheduling_service import SchedulingService
+from .scheduling_service_unix import UnixTimestampSchedulingService
 from .appointment_service import AppointmentService
 
 logger = logging.getLogger(__name__)
@@ -87,7 +88,8 @@ async def handle_phone_webhook(request: RetellWebhookRequest, db_session: AsyncS
     
     # Initialize specialized services with database session
     user_service = UserService(db_session)
-    scheduling_service = SchedulingService(db_session)
+    # 🔄 UNIX TIMESTAMP REFACTOR: Use new service for ultimate timezone accuracy
+    scheduling_service = UnixTimestampSchedulingService(db_session)
     appointment_service = AppointmentService(db_session)
     
     try:

@@ -2,21 +2,25 @@
 //  VetAvailability.swift
 //  HelpPetAI
 //
-//  Created by Justin Zollars on 9/12/25.
+//  CLEAN Unix Timestamp Implementation
+//  Eliminates complex timezone conversion logic
 //
 
 import Foundation
+import SwiftUI
 
-// MARK: - Vet Availability Models
+// MARK: - Clean Unix Timestamp Vet Availability Models
 
 enum AvailabilityType: String, Codable, CaseIterable {
     case available = "AVAILABLE"
+    case surgeryBlock = "SURGERY_BLOCK"
     case unavailable = "UNAVAILABLE"
     case emergencyOnly = "EMERGENCY_ONLY"
     
     var displayName: String {
         switch self {
         case .available: return "Available"
+        case .surgeryBlock: return "Surgery Block"
         case .unavailable: return "Unavailable"
         case .emergencyOnly: return "Emergency Only"
         }
@@ -24,15 +28,17 @@ enum AvailabilityType: String, Codable, CaseIterable {
     
     var color: Color {
         switch self {
-        case .available: return Color.availabilityGreen
-        case .unavailable: return Color.availabilityRed
-        case .emergencyOnly: return Color.availabilityOrange
+        case .available: return .green
+        case .surgeryBlock: return .blue
+        case .unavailable: return .red
+        case .emergencyOnly: return .orange
         }
     }
     
     var systemIcon: String {
         switch self {
         case .available: return "checkmark.circle.fill"
+        case .surgeryBlock: return "scissors"
         case .unavailable: return "xmark.circle.fill"
         case .emergencyOnly: return "exclamationmark.triangle.fill"
         }
@@ -43,10 +49,11 @@ struct VetAvailability: Codable, Identifiable, Equatable {
     let id: String
     let vetUserId: String
     let practiceId: String
-    let date: Date
-    let startTime: Date
-    let endTime: Date
+    let startAt: Date        // 🔑 CLEAN: Direct UTC timestamp
+    let endAt: Date          // 🔑 CLEAN: Direct UTC timestamp
     let availabilityType: AvailabilityType
+    let notes: String?
+    let isActive: Bool
     let createdAt: Date
     let updatedAt: Date
     
@@ -54,235 +61,220 @@ struct VetAvailability: Codable, Identifiable, Equatable {
         case id
         case vetUserId = "vet_user_id"
         case practiceId = "practice_id"
-        case date
-        case startTime = "start_time"
-        case endTime = "end_time"
+        case startAt = "start_at"
+        case endAt = "end_at"
         case availabilityType = "availability_type"
+        case notes
+        case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
     
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        id = try container.decode(String.self, forKey: .id)
-        vetUserId = try container.decode(String.self, forKey: .vetUserId)
-        practiceId = try container.decode(String.self, forKey: .practiceId)
-        availabilityType = try container.decode(AvailabilityType.self, forKey: .availabilityType)
-        
-        // Decode date string
-        let dateString = try container.decode(String.self, forKey: .date)
-        let startTimeString = try container.decode(String.self, forKey: .startTime)
-        let endTimeString = try container.decode(String.self, forKey: .endTime)
-        
-        // Parse date (API sends UTC storage date, but we need to derive the original local date)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")  // Parse as UTC since that's how it's stored
-        guard let parsedDate = dateFormatter.date(from: dateString) else {
-            throw DecodingError.dataCorruptedError(forKey: .date, in: container, debugDescription: "Cannot decode date string \(dateString)")
-        }
-        // Note: parsedDate is the UTC storage date, we'll derive the local date after time conversion
-        
-        // Parse time strings (API sends in UTC, need to convert to local)
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        
-        guard let startTimeComponents = timeFormatter.date(from: startTimeString) else {
-            throw DecodingError.dataCorruptedError(forKey: .startTime, in: container, debugDescription: "Cannot decode start time string \(startTimeString)")
-        }
-        
-        guard let endTimeComponents = timeFormatter.date(from: endTimeString) else {
-            throw DecodingError.dataCorruptedError(forKey: .endTime, in: container, debugDescription: "Cannot decode end time string \(endTimeString)")
-        }
-        
-        // Combine date with UTC time components and convert to local timezone
+    // 🔥 ELIMINATED: 150+ lines of complex timezone conversion logic
+    // Unix timestamps decode directly from API - no conversion needed!
+    
+    // Equatable implementation
+    static func == (lhs: VetAvailability, rhs: VetAvailability) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    // MARK: - Computed Properties for Local Display
+    
+    /// Get the local date this availability represents
+    var localDate: Date {
+        Calendar.current.startOfDay(for: startAt)
+    }
+    
+    /// Get local start time for display
+    var localStartTime: Date {
+        startAt  // SwiftUI automatically converts UTC to local for display
+    }
+    
+    /// Get local end time for display
+    var localEndTime: Date {
+        endAt  // SwiftUI automatically converts UTC to local for display
+    }
+    
+    /// Get time range string for display
+    var timeRangeString: String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return "\(formatter.string(from: localStartTime)) - \(formatter.string(from: localEndTime))"
+    }
+    
+    /// Get duration in minutes
+    var durationMinutes: Int {
+        Int(endAt.timeIntervalSince(startAt) / 60)
+    }
+    
+    /// Check if availability is on a specific local date
+    func isOn(localDate: Date) -> Bool {
+        Calendar.current.isDate(startAt, inSameDayAs: localDate)
+    }
+    
+    /// Check if availability overlaps with a time range
+    func overlaps(with startTime: Date, endTime: Date) -> Bool {
+        return !(endTime <= startAt || startTime >= endAt)
+    }
+    
+    // MARK: - Creation Helpers
+    
+    /// Create availability from local time components
+    static func create(
+        vetUserId: String,
+        practiceId: String,
+        localDate: Date,
+        startTime: Date,
+        endTime: Date,
+        availabilityType: AvailabilityType = .available,
+        notes: String? = nil
+    ) -> VetAvailabilityCreateRequest {
+        // Convert local times to UTC for API
         let calendar = Calendar.current
-        var utcCalendar = Calendar(identifier: .gregorian)
-        utcCalendar.timeZone = TimeZone(abbreviation: "UTC")!
+        let startComponents = calendar.dateComponents([.hour, .minute], from: startTime)
+        let endComponents = calendar.dateComponents([.hour, .minute], from: endTime)
         
-        let startTimeCalendarComponents = utcCalendar.dateComponents([.hour, .minute, .second], from: startTimeComponents)
-        let endTimeCalendarComponents = utcCalendar.dateComponents([.hour, .minute, .second], from: endTimeComponents)
+        let localStartDateTime = calendar.date(bySettingHour: startComponents.hour ?? 0,
+                                             minute: startComponents.minute ?? 0,
+                                             second: 0,
+                                             of: localDate) ?? localDate
         
-        // Create UTC datetime by combining date with UTC time components
-        var utcDateComponents = utcCalendar.dateComponents([.year, .month, .day], from: parsedDate)
-        utcDateComponents.hour = startTimeCalendarComponents.hour
-        utcDateComponents.minute = startTimeCalendarComponents.minute
-        utcDateComponents.second = startTimeCalendarComponents.second
-        utcDateComponents.timeZone = TimeZone(abbreviation: "UTC")
+        let localEndDateTime = calendar.date(bySettingHour: endComponents.hour ?? 0,
+                                           minute: endComponents.minute ?? 0,
+                                           second: 0,
+                                           of: localDate) ?? localDate
         
-        guard let utcStartTime = utcCalendar.date(from: utcDateComponents) else {
-            throw DecodingError.dataCorruptedError(forKey: .startTime, in: container, debugDescription: "Cannot create UTC start time")
-        }
-        
-        // CRITICAL FIX: Handle cross-day UTC times correctly
-        // If end_time < start_time, it means the end time is on the next UTC day
-        // Example: start=00:00, end=01:00 on same date = midnight to 1am same day ✅
-        // Example: start=23:00, end=07:00 on same date = 11pm to 7am NEXT day ✅
-        
-        var endUtcDateComponents = utcDateComponents
-        endUtcDateComponents.hour = endTimeCalendarComponents.hour
-        endUtcDateComponents.minute = endTimeCalendarComponents.minute
-        endUtcDateComponents.second = endTimeCalendarComponents.second
-        
-        // If end time is earlier in the day than start time, it's the next day
-        if let endHour = endTimeCalendarComponents.hour,
-           let startHour = startTimeCalendarComponents.hour,
-           endHour < startHour {
-            // End time is next day
-            let nextDay = utcCalendar.date(byAdding: .day, value: 1, to: parsedDate) ?? parsedDate
-            endUtcDateComponents = utcCalendar.dateComponents([.year, .month, .day], from: nextDay)
-            endUtcDateComponents.hour = endTimeCalendarComponents.hour
-            endUtcDateComponents.minute = endTimeCalendarComponents.minute
-            endUtcDateComponents.second = endTimeCalendarComponents.second
-            endUtcDateComponents.timeZone = TimeZone(abbreviation: "UTC")
-        }
-        
-        guard let utcEndTime = utcCalendar.date(from: endUtcDateComponents) else {
-            throw DecodingError.dataCorruptedError(forKey: .endTime, in: container, debugDescription: "Cannot create UTC end time")
-        }
-        
-        // Convert UTC times to local timezone
-        startTime = utcStartTime
-        endTime = utcEndTime
-        
-        // CRITICAL FIX: Set the date to the LOCAL date (derived from converted start time)
-        // This ensures calendar filtering works correctly
-        let localCalendar = Calendar.current
-        date = localCalendar.startOfDay(for: startTime)
-        
-        // Debug logging for timezone conversion
-        let debugFormatter = DateFormatter()
-        debugFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        debugFormatter.timeZone = TimeZone.current
-        print("🔍 VetAvailability Decoding:")
-        print("🔍 UTC Storage Date: \(dateString)")
-        print("🔍 UTC Start: \(startTimeString)")
-        print("🔍 UTC End: \(endTimeString)")
-        print("🔍 Local Start: \(debugFormatter.string(from: startTime))")
-        print("🔍 Local End: \(debugFormatter.string(from: endTime))")
-        print("🔍 Derived Local Date: \(debugFormatter.string(from: date))")
-        print("🔍 Same Day Check: Start=\(localCalendar.isDate(startTime, inSameDayAs: date)), End=\(localCalendar.isDate(endTime, inSameDayAs: date))")
-        print("🔍 ---")
-        
-        // Decode created_at and updated_at using the existing APIManager date decoder logic
-        let createdAtString = try container.decode(String.self, forKey: .createdAt)
-        let updatedAtString = try container.decode(String.self, forKey: .updatedAt)
-        
-        let isoFormatter = DateFormatter()
-        isoFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        isoFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        
-        // Try different ISO formats
-        if let parsedCreatedAt = isoFormatter.date(from: createdAtString) {
-            createdAt = parsedCreatedAt
-        } else {
-            isoFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-            if let parsedCreatedAt = isoFormatter.date(from: createdAtString) {
-                createdAt = parsedCreatedAt
-            } else {
-                throw DecodingError.dataCorruptedError(forKey: .createdAt, in: container, debugDescription: "Cannot decode created_at string \(createdAtString)")
-            }
-        }
-        
-        if let parsedUpdatedAt = isoFormatter.date(from: updatedAtString) {
-            updatedAt = parsedUpdatedAt
-        } else {
-            isoFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-            if let parsedUpdatedAt = isoFormatter.date(from: updatedAtString) {
-                updatedAt = parsedUpdatedAt
-            } else {
-                throw DecodingError.dataCorruptedError(forKey: .updatedAt, in: container, debugDescription: "Cannot decode updated_at string \(updatedAtString)")
-            }
-        }
-    }
-    
-    // Standard initializer for creating VetAvailability objects in code
-    init(id: String, vetUserId: String, practiceId: String, date: Date, startTime: Date, endTime: Date, availabilityType: AvailabilityType, createdAt: Date, updatedAt: Date) {
-        self.id = id
-        self.vetUserId = vetUserId
-        self.practiceId = practiceId
-        self.date = date
-        self.startTime = startTime
-        self.endTime = endTime
-        self.availabilityType = availabilityType
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-    }
-    
-    // Custom encoder for API requests
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        try container.encode(id, forKey: .id)
-        try container.encode(vetUserId, forKey: .vetUserId)
-        try container.encode(practiceId, forKey: .practiceId)
-        try container.encode(availabilityType, forKey: .availabilityType)
-        
-        // Encode date as string
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.timeZone = TimeZone.current
-        try container.encode(dateFormatter.string(from: date), forKey: .date)
-        
-        // Encode times as UTC strings (convert local to UTC)
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
-        timeFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        try container.encode(timeFormatter.string(from: startTime), forKey: .startTime)
-        try container.encode(timeFormatter.string(from: endTime), forKey: .endTime)
-        
-        // Encode timestamps as ISO strings
-        let isoFormatter = DateFormatter()
-        isoFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        isoFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        try container.encode(isoFormatter.string(from: createdAt), forKey: .createdAt)
-        try container.encode(isoFormatter.string(from: updatedAt), forKey: .updatedAt)
+        return VetAvailabilityCreateRequest(
+            vetUserId: vetUserId,
+            practiceId: practiceId,
+            startAt: localStartDateTime,
+            endAt: localEndDateTime,
+            availabilityType: availabilityType,
+            notes: notes
+        )
     }
 }
 
-struct CreateVetAvailabilityRequest: Codable {
+// MARK: - API Request Models
+
+struct VetAvailabilityCreateRequest: Codable {
     let vetUserId: String
     let practiceId: String
-    let date: String
-    let startTime: String
-    let endTime: String
+    let startAt: Date
+    let endAt: Date
     let availabilityType: AvailabilityType
-    let timezone: String
+    let notes: String?
     
     enum CodingKeys: String, CodingKey {
         case vetUserId = "vet_user_id"
         case practiceId = "practice_id"
-        case date
-        case startTime = "start_time"
-        case endTime = "end_time"
+        case startAt = "start_at"
+        case endAt = "end_at"
         case availabilityType = "availability_type"
-        case timezone
+        case notes
     }
 }
 
-struct UpdateVetAvailabilityRequest: Codable {
-    let startTime: String
-    let endTime: String
-    let availabilityType: AvailabilityType
+struct VetAvailabilityUpdateRequest: Codable {
+    let startAt: Date?
+    let endAt: Date?
+    let availabilityType: AvailabilityType?
     let notes: String?
-    let isActive: Bool
+    let isActive: Bool?
     
     enum CodingKeys: String, CodingKey {
-        case startTime = "start_time"
-        case endTime = "end_time"
+        case startAt = "start_at"
+        case endAt = "end_at"
         case availabilityType = "availability_type"
         case notes
         case isActive = "is_active"
     }
 }
 
-// MARK: - SwiftUI Color Extension
-import SwiftUI
+// MARK: - Response Models
 
-extension Color {
-    static let availabilityGreen = Color.green.opacity(0.7)
-    static let availabilityRed = Color.red.opacity(0.7)
-    static let availabilityOrange = Color.orange.opacity(0.7)
+struct VetAvailabilityListResponse: Codable {
+    let availabilities: [VetAvailability]
+    let totalCount: Int
+    let page: Int
+    let pageSize: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case availabilities = "data"
+        case totalCount = "total_count"
+        case page
+        case pageSize = "page_size"
+    }
+}
+
+struct VetAvailabilitySlotsResponse: Codable {
+    let vetUserId: String
+    let date: Date
+    let practiceId: String
+    let slots: [TimeSlot]
+    let totalSlots: Int
+    let availableSlots: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case vetUserId = "vet_user_id"
+        case date
+        case practiceId = "practice_id"
+        case slots
+        case totalSlots = "total_slots"
+        case availableSlots = "available_slots"
+    }
+}
+
+struct TimeSlot: Codable, Identifiable {
+    let id = UUID()
+    let startTime: Date
+    let endTime: Date
+    let available: Bool
+    let availabilityType: AvailabilityType
+    let conflictingAppointment: String?
+    let notes: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case startTime = "start_time"
+        case endTime = "end_time"
+        case available
+        case availabilityType = "availability_type"
+        case conflictingAppointment = "conflicting_appointment"
+        case notes
+    }
+    
+    /// Get time range string for display
+    var timeRangeString: String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return "\(formatter.string(from: startTime)) - \(formatter.string(from: endTime))"
+    }
+}
+
+// MARK: - Extensions for Calendar Integration
+
+extension VetAvailability {
+    /// Convert to calendar event for local display
+    var calendarTitle: String {
+        switch availabilityType {
+        case .available:
+            return "Available"
+        case .surgeryBlock:
+            return "Surgery Block"
+        case .unavailable:
+            return "Unavailable"
+        case .emergencyOnly:
+            return "Emergency Only"
+        }
+    }
+    
+    /// Get background color for calendar display
+    var calendarColor: Color {
+        availabilityType.color.opacity(0.3)
+    }
+    
+    /// Get text color for calendar display
+    var textColor: Color {
+        availabilityType.color
+    }
 }

@@ -142,14 +142,36 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         
         logger.info(f"✅ Found {len(all_records)} total records across UTC dates")
         
-        # Filter to only include records that actually represent the target local date
-        # For now, return all records - in a more sophisticated implementation,
-        # we could convert each record back to local time and verify the date
+        # CRITICAL: Filter to only include records that actually represent the target local date
+        # Convert each record back to local time and verify it falls on the target date
+        filtered_records = []
         
-        # TODO: Add more precise filtering by converting UTC times back to local
-        # and checking if they fall within the target local date
+        for record in all_records:
+            try:
+                # Convert UTC record back to local time to check if it belongs to target date
+                utc_start_dt = TimezoneHandler.create_local_datetime(record.date, record.start_time, "UTC")
+                local_start_dt = utc_start_dt.astimezone(pytz.timezone(timezone_str))
+                
+                # Check if this record actually represents the target local date
+                if local_start_dt.date() == date:
+                    filtered_records.append(record)
+                    logger.info(f"  ✅ Record {record.id[:8]} belongs to {date}: UTC {record.date} {record.start_time} → Local {local_start_dt.date()} {local_start_dt.time()}")
+                else:
+                    logger.info(f"  ❌ Record {record.id[:8]} does NOT belong to {date}: UTC {record.date} {record.start_time} → Local {local_start_dt.date()} {local_start_dt.time()}")
+            except Exception as e:
+                logger.warning(f"  ⚠️ Error filtering record {record.id[:8]}: {e}")
+                # Include record if we can't verify (safer)
+                filtered_records.append(record)
         
-        return all_records
+        logger.info(f"✅ After filtering: {len(filtered_records)} records actually belong to {date}")
+        
+        # CRITICAL: If no records belong to the target date, return empty immediately
+        # This prevents generating artificial slots from records that represent other dates
+        if len(filtered_records) == 0:
+            logger.info(f"✅ NO AVAILABILITY RECORDS for local date {date} - this is normal if no slots are scheduled")
+            return []
+        
+        return filtered_records
     
     async def get_by_practice_and_date_range(
         self, 
@@ -209,8 +231,7 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         vet_user_id: uuid.UUID, 
         practice_id: uuid.UUID,
         date: date, 
-        slot_duration_minutes: int = 30,
-        timezone_str: str = None
+        slot_duration_minutes: int = 30
     ) -> List[Dict]:
         """
         Get actual available time slots for a vet on a specific date.
@@ -234,38 +255,13 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         current_date_practice = current_datetime_practice.date()
         current_time_practice = current_datetime_practice.time()
         
-        # Use practice timezone if not provided
-        if timezone_str is None:
-            timezone_str = practice.timezone if hasattr(practice, 'timezone') else "America/Los_Angeles"
         
-        # TIMEZONE-AWARE QUERY: Check multiple UTC dates for local date query
-        from ..utils.timezone_utils import TimezoneHandler
-        from datetime import time as dt_time
-        import logging
-        
-        logger = logging.getLogger(__name__)
-        logger.info(f"🔍 VOICE ENDPOINT - TIMEZONE-AWARE SLOT QUERY: date={date}, timezone={timezone_str}")
-        
-        # Calculate which UTC dates might contain records for this local date
-        test_times = [dt_time(0, 0), dt_time(12, 0), dt_time(23, 59)]
-        utc_dates_to_check = set()
-        
-        for test_time in test_times:
-            try:
-                utc_dt = TimezoneHandler.convert_to_utc(date, test_time, timezone_str)
-                utc_dates_to_check.add(utc_dt.date())
-            except Exception as e:
-                logger.warning(f"⚠️ Timezone conversion error for {test_time}: {e}")
-                utc_dates_to_check.add(date)
-        
-        logger.info(f"🔍 VOICE ENDPOINT - Checking UTC dates: {sorted(utc_dates_to_check)}")
-        
-        # Query availability records across timezone boundaries
+        # Get availability for the exact date
         availability_query = select(VetAvailability).where(
             and_(
                 VetAvailability.vet_user_id == vet_user_id,
                 VetAvailability.practice_id == practice_id,
-                VetAvailability.date.in_(list(utc_dates_to_check)),
+                VetAvailability.date == date,
                 VetAvailability.is_active == True,
                 VetAvailability.availability_type.in_(['AVAILABLE', 'EMERGENCY_ONLY'])
             )
@@ -276,7 +272,6 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         
         if not availability_records:
             return []
-        
         
         # Get existing appointments for this vet on this date
         from ..models_pg.appointment import Appointment
@@ -292,7 +287,7 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         appointments_result = await self.session.execute(appointments_query)
         existing_appointments = list(appointments_result.scalars().all())
         
-        # Process ALL availability records and merge overlapping time windows
+        # Process availability records and generate slots
         all_slots = []
         slot_duration = timedelta(minutes=slot_duration_minutes)
         

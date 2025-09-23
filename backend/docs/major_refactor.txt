@@ -1,0 +1,55 @@
+HelpPet.ai Timezone Handling Refactor Request
+
+You are tasked with performing a MAJOR REFACTOR and ANALYSIS of our timezone handling across the HelpPet.ai system. The goal is to ENSURE ABSOLUTE CONSISTENCY and CLARITY, especially since we receive voice input in natural times ("9pm Oct 3 PST") that MUST always be correctly translated to UTC and back to local times.
+
+Here is what you MUST deliver:
+
+1. Analyze our current database timezone configuration and confirm whether all datetime fields are stored in UTC.
+   - Explicitly check for DateTime(timezone=True) usage.
+   - Confirm Postgres defaults (func.now()) are stored as UTC.
+
+2. Audit ALL scheduling-related API endpoints and describe how each handles timezone input and output.
+   - vet-availability POST
+   - get_available_times
+   - book_appointment
+   - get_first_available_*
+   - recurring_availability
+   - Any other relevant scheduling or availability endpoints
+
+3. Audit the iPhone app timezone handling.
+   - How it sends times to the API (local → UTC conversion)
+   - How it displays times from the API (UTC → local conversion)
+   - Verify if TimeZone.current is being used consistently
+
+4. Audit the voice interface timezone handling.
+   - How voice input (local time strings with timezone parameter) is processed
+   - How voice responses are generated (backend converts UTC → local)
+
+5. Produce a comprehensive TIMEZONE HANDLING TABLE with the following columns:
+   Component | Function/Endpoint | Input Format | Database Storage | UTC Conversion | Output Format | Translation Location
+
+6. Identify ALL translation points and make a clear table:
+   Translation Point | Location | Direction | Purpose
+
+7. Provide a written findings section with:
+   - What’s working correctly
+   - Critical observations (gaps or risks)
+   - Clear best practice recommendations
+
+8. Provide a final conclusion:
+   - Explicitly state whether the current architecture follows best practices
+   - Recommend if Unix timestamps should be adopted universally as the canonical form for storage and transmission
+
+Constraints:
+- Voice input must ALWAYS be translated correctly (local time + timezone → UTC → local display).
+- Database must ALWAYS remain in UTC.
+- API must ALWAYS act as the layer of translation between local inputs and UTC storage.
+- Frontend (iPhone app, voice) must NEVER do timezone math beyond local display.
+
+Deliverable format:
+- A detailed structured report
+- A filled-out Timezone Handling Table
+- A translation points table
+- Recommendations with ✅ / ⚠️ markers
+
+End goal: a crystal-clear authoritative document on how HelpPet.ai should handle timezones moving forward, suitable for onboarding new engineers and avoiding timezone-related bugs.

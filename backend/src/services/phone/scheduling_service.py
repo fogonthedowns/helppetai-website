@@ -49,9 +49,9 @@ class SchedulingService:
         logger.info("=" * 80)
         
         try:
-            # Step 1: Parse and clean the date
-            parsed_date = self._parse_date_string(date_str)
-            logger.info(f"✅ Parsed date: {parsed_date}")
+            # Step 1: Parse and clean the date with timezone context
+            parsed_date = self._parse_date_string(date_str, timezone)
+            logger.info(f"✅ Parsed date: {parsed_date} in timezone: {timezone}")
             
             # Step 2: Clean time preference
             cleaned_time_pref = self._clean_time_preference(time_preference)
@@ -91,6 +91,32 @@ class SchedulingService:
             
             # Step 4: Get actual available slots using our slot system
             repo = VetAvailabilityRepository(self.db)
+            
+            # 🔧 QUICK FIX: Check if we have any availability data at all
+            try:
+                # Quick check for any availability records for this practice
+                sample_availability = await repo.get_by_practice_and_date_range(
+                    practice_uuid, 
+                    parsed_date - timedelta(days=1), 
+                    parsed_date + timedelta(days=7)
+                )
+                
+                if not sample_availability:
+                    logger.warning(f"⚠️ No availability records found for practice {practice_uuid}")
+                    return {
+                        "success": False,
+                        "message": f"I don't see any availability set up for {parsed_date.strftime('%A, %B %d')}. Our veterinarians may not have scheduled their hours yet. Would you like me to have someone call you back to schedule an appointment?",
+                        "available_times": [],
+                        "date": parsed_date.isoformat(),
+                        "timezone": timezone,
+                        "debug_info": "No availability records in database"
+                    }
+                    
+                logger.info(f"✅ Found {len(sample_availability)} availability records in date range")
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Error checking availability records: {e}")
+                # Continue with normal flow
             
             # Step 4: Convert local date to UTC date range for database lookup
             # The parsed_date is in local timezone, but availability might be stored in UTC
@@ -198,21 +224,26 @@ class SchedulingService:
             }
     
     # Scheduling helper methods
-    def _parse_date_string(self, date_str: str) -> date:
+    def _parse_date_string(self, date_str: str, timezone_str: str = "America/Los_Angeles") -> date:
         """
-        Parse various date formats from phone callers
+        Parse various date formats from phone callers with timezone context
         
         Examples: '9-14', 'September 14', 'tomorrow', 'next Friday'
+        
+        Args:
+            date_str: Raw date input from caller
+            timezone_str: Practice timezone for relative date calculations
         """
-        logger.info(f"🔍 Parsing date string: '{date_str}'")
+        logger.info(f"🔍 Parsing date string: '{date_str}' in timezone: {timezone_str}")
         
         from datetime import date as dt_date
         
         # Clean the input
         date_str = date_str.lower().strip()
         
-        # Handle relative dates
-        now = datetime.now()
+        # 🔧 FIX: Handle relative dates in practice timezone, not system timezone
+        tz = pytz.timezone(timezone_str)
+        now = datetime.now(tz)
         
         if 'today' in date_str:
             return now.date()
@@ -456,35 +487,41 @@ class SchedulingService:
         
         Example: "2:30 PM" or "10:00 AM" (converted to practice local time)
         """
-        from datetime import datetime as dt
-        
-        start_time = slot['start_time']
-        
-        # Handle both datetime.time objects and string formats
-        if hasattr(start_time, 'hour'):
-            # It's a datetime.time object
-            utc_hour = start_time.hour
-            utc_minute = start_time.minute
+        # PRIORITY: Use corrected local time if available (from timezone filtering)
+        if 'local_datetime' in slot and hasattr(slot['local_datetime'], 'hour'):
+            local_dt = slot['local_datetime']
+            hour = local_dt.hour
+            minute = local_dt.minute
+            logger.info(f"🌍 Using corrected local time: {hour:02d}:{minute:02d} {practice_timezone}")
         else:
-            # It's a string like "14:30:00"
-            utc_hour, utc_minute = map(int, str(start_time).split(':')[:2])
-        
-        # Create UTC datetime for the slot
-        utc_datetime = dt.combine(date, dt.min.time().replace(hour=utc_hour, minute=utc_minute))
-        utc_datetime = pytz.UTC.localize(utc_datetime)
-        
-        # Convert to practice timezone
-        try:
-            practice_tz = pytz.timezone(practice_timezone)
-            local_datetime = utc_datetime.astimezone(practice_tz)
-            hour = local_datetime.hour
-            minute = local_datetime.minute
+            # Fallback to UTC conversion (original logic)
+            from datetime import datetime as dt
             
-            logger.info(f"🌍 UTC→Local conversion: {utc_hour:02d}:{utc_minute:02d} UTC → {hour:02d}:{minute:02d} {practice_timezone}")
-        except Exception as e:
-            logger.warning(f"⚠️ Timezone conversion failed for {practice_timezone}: {e}, using UTC")
-            hour = utc_hour
-            minute = utc_minute
+            start_time = slot['start_time']
+            
+            # Handle both datetime.time objects and string formats
+            if hasattr(start_time, 'hour'):
+                utc_hour = start_time.hour
+                utc_minute = start_time.minute
+            else:
+                utc_hour, utc_minute = map(int, str(start_time).split(':')[:2])
+            
+            # Create UTC datetime for the slot
+            utc_datetime = dt.combine(date, dt.min.time().replace(hour=utc_hour, minute=utc_minute))
+            utc_datetime = pytz.UTC.localize(utc_datetime)
+            
+            # Convert to practice timezone
+            try:
+                practice_tz = pytz.timezone(practice_timezone)
+                local_datetime = utc_datetime.astimezone(practice_tz)
+                hour = local_datetime.hour
+                minute = local_datetime.minute
+                
+                logger.info(f"🌍 UTC→Local conversion: {utc_hour:02d}:{utc_minute:02d} UTC → {hour:02d}:{minute:02d} {practice_timezone}")
+            except Exception as e:
+                logger.warning(f"⚠️ Timezone conversion failed for {practice_timezone}: {e}, using UTC")
+                hour = utc_hour
+                minute = utc_minute
         
         # Convert to 12-hour format
         if hour == 0:
@@ -907,16 +944,22 @@ class SchedulingService:
         # Get slots for all relevant UTC dates
         all_slot_data = []
         for utc_date in utc_dates_to_check:
+            logger.info(f"🔍 VOICE ENDPOINT: Calling get_available_slots for UTC date {utc_date}")
             daily_slots = await repo.get_available_slots(
                 vet_user_id=vet_user_id,
                 practice_id=practice_uuid,
                 date=utc_date,
-                slot_duration_minutes=45,
-                timezone_str=timezone_str
+                slot_duration_minutes=45
             )
+            logger.info(f"📊 VOICE ENDPOINT: Got {len(daily_slots)} slots from UTC date {utc_date}")
+            for i, slot in enumerate(daily_slots[:3]):  # Log first 3 slots
+                logger.info(f"   Slot {i+1}: {slot.get('start_time')} UTC")
             all_slot_data.extend(daily_slots)
         
-        # Filter slots to only include those within the requested local date
+        logger.info(f"📊 VOICE ENDPOINT: Total slots before filtering: {len(all_slot_data)}")
+        
+        # CRITICAL: Filter slots to only include those within the requested local date
+        # This prevents phantom availability on dates that don't actually have records
         valid_slots = []
         for slot in all_slot_data:
             if not slot['available']:
@@ -929,18 +972,37 @@ class SchedulingService:
             else:
                 utc_hour, utc_minute = map(int, str(start_time).split(':')[:2])
             
-            # Create UTC datetime for this slot
+            # Create UTC datetime for this slot and convert to local
+            # We need to figure out which UTC date this slot actually belongs to
+            slot_found = False
             for check_utc_date in utc_dates_to_check:
                 utc_slot_datetime = pytz.UTC.localize(
                     datetime.combine(check_utc_date, time(hour=utc_hour, minute=utc_minute))
                 )
                 local_slot_datetime = utc_slot_datetime.astimezone(tz)
                 
-                # Check if this slot falls within our target local date
+                # CRITICAL CHECK: Only include if slot actually falls on target local date
                 if local_slot_datetime.date() == check_date:
+                    # FINAL FIX: Store the correct local datetime and override the date assignment
                     slot['local_datetime'] = local_slot_datetime
+                    slot['corrected_date'] = check_date  # Ensure date matches query
+                    slot['corrected_time'] = local_slot_datetime.time()  # Local time
                     valid_slots.append(slot)
+                    logger.info(f"  ✅ Valid slot: UTC {utc_hour:02d}:{utc_minute:02d} on {check_utc_date} → Local {local_slot_datetime.strftime('%H:%M on %Y-%m-%d')}")
+                    slot_found = True
                     break
+            
+            if not slot_found:
+                logger.info(f"  ❌ Rejected phantom slot: UTC {utc_hour:02d}:{utc_minute:02d} does not belong to local date {check_date}")
+        
+        logger.info(f"📊 VOICE ENDPOINT FILTERING COMPLETE:")
+        logger.info(f"   🔍 Target local date: {check_date}")
+        logger.info(f"   📊 Total slots found: {len(all_slot_data)}")
+        logger.info(f"   ✅ Valid slots after filtering: {len(valid_slots)}")
+        logger.info(f"   🚨 Phantom slots rejected: {len(all_slot_data) - len(valid_slots)}")
+        
+        if len(valid_slots) == 0:
+            logger.warning(f"⚠️ VOICE ENDPOINT: NO VALID SLOTS for {check_date} - should return failure")
         
         return valid_slots
 
@@ -1034,10 +1096,13 @@ class SchedulingService:
                         first_slot = filtered_slots[0]
                         formatted_time = self._format_slot_for_caller(first_slot, current_date, timezone)
                         
+                        # Use corrected date if available, otherwise use current_date
+                        display_date = first_slot.get('corrected_date', current_date)
+                        
                         preferred_appointments.append({
-                            "date": current_date.strftime('%Y-%m-%d'),
-                            "day_name": current_date.strftime('%A'),
-                            "formatted_date": current_date.strftime('%A, %B %d'),
+                            "date": display_date.strftime('%Y-%m-%d'),
+                            "day_name": display_date.strftime('%A'),
+                            "formatted_date": display_date.strftime('%A, %B %d'),
                             "time": formatted_time,
                             "slot_data": first_slot,
                             "is_preferred_day": True

@@ -459,6 +459,155 @@ class APIManager: ObservableObject {
         return try decoder.decode(Appointment.self, from: data)
     }
     
+    // MARK: - Unix Timestamp Vet Availability (CLEAN IMPLEMENTATION)
+    
+    func getVetAvailabilityUnix(vetId: String, date: Date) async throws -> [VetAvailability] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone.current
+        let dateString = dateFormatter.string(from: date)
+        let deviceTimezone = TimeZone.current.identifier
+
+        let url = URL(string: "\(baseURL)/api/v1/scheduling-unix/vet-availability/\(vetId)?date=\(dateString)&timezone=\(deviceTimezone)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        print("🔍 UNIX AVAILABILITY REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Date: \(dateString) (local timezone)")
+        print("🔍 Timezone: \(deviceTimezone)")
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        print("🔍 UNIX AVAILABILITY RESPONSE:")
+        print("🔍 Status Code: \(httpResponse.statusCode)")
+        
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("🔍 Response: \(responseString)")
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode([VetAvailability].self, from: data)
+    }
+    
+    func createVetAvailabilityUnix(_ request: VetAvailabilityCreateRequest) async throws -> VetAvailability {
+        let url = URL(string: "\(baseURL)/api/v1/scheduling-unix/vet-availability")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        authHeaders.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
+        
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        // Use standard ISO8601 encoder - Unix timestamps handle timezone automatically
+        encoder.dateEncodingStrategy = .iso8601
+        
+        urlRequest.httpBody = try encoder.encode(request)
+        
+        print("🔍 CREATE UNIX AVAILABILITY REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Start: \(request.startAt) (local)")
+        print("🔍 End: \(request.endAt) (local)")
+        
+        if let requestBody = urlRequest.httpBody,
+           let requestString = String(data: requestBody, encoding: .utf8) {
+            print("🔍 Request Body: \(requestString)")
+        }
+        
+        let (data, response) = try await session.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        print("🔍 CREATE UNIX AVAILABILITY RESPONSE:")
+        print("🔍 Status Code: \(httpResponse.statusCode)")
+        
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("🔍 Response: \(responseString)")
+        }
+        
+        guard httpResponse.statusCode == 201 else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode(VetAvailability.self, from: data)
+    }
+    
+    func updateVetAvailabilityUnix(id: String, request: VetAvailabilityUpdateRequest) async throws -> VetAvailability {
+        let url = URL(string: "\(baseURL)/api/v1/scheduling-unix/vet-availability/\(id)")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "PUT"
+        authHeaders.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
+        
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        encoder.dateEncodingStrategy = .iso8601
+        
+        urlRequest.httpBody = try encoder.encode(request)
+        
+        let (data, response) = try await session.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode(VetAvailability.self, from: data)
+    }
+    
+    func deleteVetAvailabilityUnix(id: String) async throws {
+        let url = URL(string: "\(baseURL)/api/v1/scheduling-unix/vet-availability/\(id)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        let (_, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 204 else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+    }
+    
+    func getAvailableSlotsUnix(vetId: String, date: Date) async throws -> VetAvailabilitySlotsResponse {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone.current
+        let dateString = dateFormatter.string(from: date)
+        let deviceTimezone = TimeZone.current.identifier
+
+        let url = URL(string: "\(baseURL)/api/v1/scheduling-unix/vet-availability/\(vetId)?date=\(dateString)&timezone=\(deviceTimezone)&slots=true")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode(VetAvailabilitySlotsResponse.self, from: data)
+    }
+
     // MARK: - Pet Owners
     func getPetOwners() async throws -> [PetOwnerResponse] {
         let url = URL(string: "\(baseURL)/api/v1/pet_owners/")!
@@ -1551,7 +1700,7 @@ extension APIManager {
     }
     
     // MARK: - Vet Availability
-    func createVetAvailability(_ request: CreateVetAvailabilityRequest) async throws -> VetAvailability {
+    func createVetAvailability(_ request: VetAvailabilityCreateRequest) async throws -> VetAvailability {
         let url = URL(string: "\(baseURL)/api/v1/scheduling/vet-availability")!
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
@@ -1598,7 +1747,7 @@ extension APIManager {
         return try decoder.decode(VetAvailability.self, from: data)
     }
     
-    func updateVetAvailability(availabilityId: String, request: UpdateVetAvailabilityRequest) async throws -> VetAvailability {
+    func updateVetAvailability(availabilityId: String, request: VetAvailabilityUpdateRequest) async throws -> VetAvailability {
         let url = URL(string: "\(baseURL)/api/v1/scheduling/vet-availability/\(availabilityId)")!
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "PUT"
