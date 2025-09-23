@@ -21,6 +21,9 @@ struct ScheduleEditingView: View {
     @State private var newAvailabilityTime: Date? = nil
     @State private var editingAvailability: VetAvailability? = nil
     @State private var loadingTask: Task<Void, Never>? = nil
+    // Date Picker Sheet
+    @State private var showDatePickerSheet = false
+    @State private var tempSelectedDate = Date()
 
     private var dateFormatter: DateFormatter {
         let f = DateFormatter()
@@ -96,6 +99,23 @@ struct ScheduleEditingView: View {
         .onChange(of: selectedDate) { _, _ in loadSafely() }
         .onDisappear { loadingTask?.cancel() }
         .onChange(of: apiManager.currentUser) { oldUser, newUser in if oldUser == nil && newUser != nil { loadSafely() } }
+        .sheet(isPresented: $showDatePickerSheet) {
+            NavigationView {
+                VStack {
+                    DatePicker("Select Date", selection: $tempSelectedDate, displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .labelsHidden()
+                        .padding()
+                    Spacer()
+                }
+                .navigationTitle("Select Date")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) { Button("Cancel") { showDatePickerSheet = false } }
+                    ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { showDatePickerSheet = false; selectedDate = tempSelectedDate } }
+                }
+            }
+        }
     }
 
     private var dateNavigationHeader: some View {
@@ -111,6 +131,7 @@ struct ScheduleEditingView: View {
                     Text("Tap to return to today").font(.caption2).foregroundColor(.secondary).onTapGesture { selectedDate = Date() }
                 }
             }
+            .onTapGesture { tempSelectedDate = selectedDate; showDatePickerSheet = true }
             Spacer()
             Button(action: { navigate(byDays: 1) }) { Image(systemName: "chevron.right").font(.title2).foregroundColor(.primary) }
         }

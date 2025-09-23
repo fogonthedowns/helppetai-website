@@ -70,14 +70,14 @@ const AboutUs = () => {
               const teamMembers = [
                 {
                   name: 'Justin Zollars',
-                  role: 'Machine Learning Engineer',
+                  role: 'Forward Deployed ML Engineer',
                   bio: 'Machine learning engineer with experience building predictive models and PyTorch-based systems at Eat Just. Specialized in applied AI, and production ML pipelines that translate complex data into actionable insights for real-world applications.',
                   avatar: 'J',
                   image: JustinImage,
                 },
                 {
                   name: 'Robynne Merguerdijian',
-                  role: 'Information Engineer',
+                  role: 'Customer Success',
                   bio: 'Information architect who curates and structures veterinary knowledge for our Expert AI system. Transforms complex medical research, clinical studies, and treatment protocols into accessible data that powers evidence-based pet care recommendations.',
                   avatar: 'R',
                   image: RobynneImage,

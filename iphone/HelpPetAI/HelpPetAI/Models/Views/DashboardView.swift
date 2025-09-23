@@ -311,6 +311,9 @@ struct DashboardView: View {
     @State private var selectedAppointment: Appointment? = nil // For navigation to appointment details
     @State private var appointmentSheetMode: AppointmentSheetMode = .simple // Track which sheet to show
     @State private var completionStatusTask: Task<Void, Never>? = nil // Track completion status task for cancellation
+    // Date Picker Sheet
+    @State private var showDatePickerSheet = false
+    @State private var tempSelectedDate = Date()
     
     
     // MARK: - Date Navigation Properties
@@ -433,6 +436,23 @@ struct DashboardView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showDatePickerSheet) {
+                NavigationView {
+                    VStack {
+                        DatePicker("Select Date", selection: $tempSelectedDate, displayedComponents: .date)
+                            .datePickerStyle(.graphical)
+                            .labelsHidden()
+                            .padding()
+                        Spacer()
+                    }
+                    .navigationTitle("Select Date")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) { Button("Cancel") { showDatePickerSheet = false } }
+                        ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { showDatePickerSheet = false; navigateToDate(tempSelectedDate) } }
+                    }
+                }
+            }
             .background(
                 Group {
                     if selectedAppointment != nil {
@@ -495,6 +515,10 @@ struct DashboardView: View {
                             navigateToDate(Date())
                         }
                 }
+            }
+            .onTapGesture {
+                tempSelectedDate = selectedDate
+                showDatePickerSheet = true
             }
             
             Spacer()

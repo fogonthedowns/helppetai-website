@@ -137,7 +137,7 @@ const Home = () => {
                       <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <Mic className="w-4 h-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800">Voice Recording</span>
+                          <span className="text-xs font-medium text-green-800">Call Transcripts</span>
                         </div>
                         <div className="text-lg font-bold">Amira • Golden Retriever</div>
                         <div className="text-xs text-gray-500">Visit Recording • Auto-transcribing</div>
@@ -238,9 +238,9 @@ const Home = () => {
             <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
               <div className="flex items-center mb-3">
                 <Mic className="w-6 h-6 mr-2" />
-                <h3 className="text-lg font-light">Voice Recording</h3>
+                <h3 className="text-lg font-light">Call Transcripts</h3>
               </div>
-              <p className="text-green-100 text-sm font-medium">iPhone to cloud</p>
+              <p className="text-green-100 text-sm font-medium">phone calls to the cloud</p>
             </div>
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
               <div className="flex items-center mb-3">

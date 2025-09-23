@@ -44,8 +44,8 @@ const TransformSection = () => {
           {/* 1-2 hrs Box - Top Right */}
           <div className="absolute top-12 right-0 lg:right-8 transform rotate-2 z-10">
             <div className="bg-amber-400 rounded-2xl p-8 w-72 h-56 flex flex-col justify-center items-center relative shadow-lg border-4 border-gray-800 transform hover:scale-105 transition-transform duration-300">
-              <div className="text-5xl font-black text-gray-800 mb-2">Automate</div>
-              <div className="text-base font-semibold text-gray-800 text-center leading-tight">SOAP</div>
+              <div className="text-5xl font-black text-gray-800 mb-2">80%</div>
+              <div className="text-base font-semibold text-gray-800 text-center leading-tight">Less Phone Time</div>
               
               {/* Simple decorative dots */}
               <div className="absolute top-4 right-4 w-3 h-3 bg-gray-800 rounded-full opacity-30"></div>
