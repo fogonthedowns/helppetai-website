@@ -307,7 +307,6 @@ class UserService:
             parsed_date = None
             if date_of_birth and date_of_birth.strip():
                 try:
-                    from datetime import datetime
                     parsed_date = datetime.strptime(date_of_birth.strip(), "%Y-%m-%d").date()
                 except ValueError:
                     logger.warning(f"Invalid date format: {date_of_birth}")
@@ -317,9 +316,9 @@ class UserService:
             pet = Pet(
                 owner_id=owner_uuid,
                 name=pet_name.strip(),
-                species=species.strip().lower(),
+                species=species.strip().capitalize(),  # Capitalize to match schema enum format
                 breed=breed.strip() if breed else None,
-                gender=gender.strip() if gender else None,
+                gender=gender.strip().capitalize() if gender else None,  # Also capitalize gender
                 weight=weight if weight and weight > 0 else None,
                 date_of_birth=parsed_date,
                 is_active=True

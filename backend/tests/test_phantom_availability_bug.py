@@ -69,14 +69,23 @@ class TestPhantomAvailabilityBug:
                 start_time=time(0, 0),
                 end_time=time(1, 0)
             ),
-            # Record on Oct 3: 16:00:00-00:00:00 UTC (9am-5pm PST on Oct 2)
+            # Record on Oct 3: 16:00:00-00:00:00 UTC (9am-5pm PST on Oct 3)
             MockVetAvailability(
                 id="c7aa9ce3-dd1c-4b82-b758-77ded2d4fbfb",
                 vet_user_id=self.vet_id,
                 practice_id=self.practice_id,
                 date=date(2025, 10, 3),
                 start_time=time(16, 0),
-                end_time=time(0, 0)
+                end_time=time(0, 0)  # End time of 0 means it spans to midnight (next day)
+            ),
+            # Record on Oct 2: 16:00:00-00:00:00 UTC (9am-5pm PST on Oct 2)
+            MockVetAvailability(
+                id="d8bb0df4-ee2d-45d3-bf59-88efe3e4cegg",
+                vet_user_id=self.vet_id,
+                practice_id=self.practice_id,
+                date=date(2025, 10, 2),
+                start_time=time(16, 0),
+                end_time=time(0, 0)  # End time of 0 means it spans to midnight (next day)
             )
         ]
     
@@ -254,8 +263,8 @@ class TestPhantomAvailabilityBug:
             {
                 "name": "Query Oct 2 (should find 9am-5pm PST record)",
                 "query_date": date(2025, 10, 2),
-                "expected_records": 1,  # The 16:00-00:00 UTC record on Oct 3
-                "description": "9am-5pm PST stored as 16:00-00:00 UTC next day"
+                "expected_records": 1,  # The 16:00-00:00 UTC record on Oct 2
+                "description": "9am-5pm PST stored as 16:00-00:00 UTC same day"
             },
             {
                 "name": "Query Oct 5 (no records should exist)",
@@ -341,15 +350,39 @@ class TestPhantomAvailabilityBug:
             MockVetAvailability("36fcc643", self.vet_id, self.practice_id, date(2025, 10, 6), time(0, 0), time(1, 0))
         ]
         
+        timezone_str = "US/Pacific"
+        
         # Test problematic queries that would show phantom availability
         problematic_queries = [
             date(2025, 10, 1),  # No records exist
-            date(2025, 10, 5),  # No records exist  
-            date(2025, 9, 24),  # No records exist
+            date(2025, 9, 24),  # No records exist  
             date(2025, 9, 28)   # No records exist
         ]
         
-        timezone_str = "US/Pacific"
+        # Oct 5 DOES have availability: 5pm-6pm PST stored as Oct 6 00:00-01:00 UTC
+        oct5_query_date = date(2025, 10, 5)
+        print(f"\n🔍 Testing query for {oct5_query_date} (should find 1 record)...")
+        
+        test_times = [time(0, 0), time(12, 0), time(23, 59)]
+        utc_dates_to_check = set()
+        for test_time in test_times:
+            utc_dt = TimezoneHandler.convert_to_utc(oct5_query_date, test_time, timezone_str)
+            utc_dates_to_check.add(utc_dt.date())
+        
+        found_by_utc = [r for r in real_records if r.date in utc_dates_to_check]
+        filtered_records = []
+        for record in found_by_utc:
+            try:
+                utc_start_dt = TimezoneHandler.create_local_datetime(record.date, record.start_time, "UTC")
+                local_start_dt = utc_start_dt.astimezone(pytz.timezone(timezone_str))
+                if local_start_dt.date() == oct5_query_date:
+                    filtered_records.append(record)
+            except Exception:
+                pass
+        
+        print(f"   📊 Found by UTC query: {len(found_by_utc)}")
+        print(f"   ✅ After filtering: {len(filtered_records)}")
+        assert len(filtered_records) == 1, f"Query for {oct5_query_date} should return 1 record (5pm-6pm PST)"
         
         for query_date in problematic_queries:
             print(f"\n🔍 Testing query for {query_date}...")

@@ -1,0 +1,56 @@
+curl -X POST https://api.helppet.ai/api/v1/webhook/phone \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqd2FkZSIsImV4cCI6MTc1ODc2NTE3Mn0.id6WkAUI3g3It33lqB6b_4d4cur8izCJm2_MCsVvx7M" \
+  -d '{
+    "function_call": {
+      "name": "get_first_available_flexible",
+      "arguments": {
+        "time_preference": "any time",
+        "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225",
+        "timezone": "US/Pacific",
+        "preferred_days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "start_date": "2025-10-01",
+        "end_date": "2025-10-14"
+      }
+    },
+    "call": {
+      "call_id": "test-call-id",
+      "call_type": "web_call",
+      "agent_id": "test-agent-id",
+      "agent_version": 1,
+      "agent_name": "test-agent",
+      "call_status": "in_progress",
+      "start_timestamp": 1727202000
+    }
+  }'
+
+
+  {
+  "response": {
+    "success": true,
+    "appointments": [
+      {
+        "date": "2025-10-01",
+        "day_name": "Wednesday",
+        "formatted_date": "Wednesday, October 01",
+        "time": "9:00 AM",
+        "slot_data": {
+          "utc_start": "2025-10-01T16:00:00+00:00",
+          "utc_end": "2025-10-01T16:30:00+00:00",
+          "vet_user_id": "e1e3991b-4efa-464b-9bae-f94c74d0a20f",
+          "vet_name": "Jason Wade",
+          "available": true,
+          "availability_type": "AVAILABLE"
+        }
+      }
+    ],
+    "message": "Great news! I found appointments on your preferred days in the next week: 9:00 AM on Wednesday, October 01",
+    "time_preference": "any time",
+    "preferred_days_used": true,
+    "date_range_start": "2025-09-25",
+    "date_range_end": "2025-10-01",
+    "range_description": "in the next week",
+    "timezone_used": "US/Pacific",
+    "version": "unix_flexible_v1"
+  }
+}

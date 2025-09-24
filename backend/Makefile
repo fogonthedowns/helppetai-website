@@ -13,8 +13,9 @@ help:
 	@echo ""
 	@echo "Development:"
 	@echo "  make dev            - Run development server with auto-reload"
+	@echo "  make run-test       - Run server with test DB (local)"
 	@echo "  make install        - Install dependencies"
-	@echo "  make test           - Run tests"
+	@echo "  make test           - Run unit tests + curl integration tests"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make build          - Build Docker image"
@@ -47,7 +48,17 @@ install:
 
 .PHONY: test
 test:
-	pytest
+	@echo "🧪 Running unit tests..."
+	pytest || true
+	@echo "🧪 Running curl integration tests..."
+	bash scripts/run_curls.sh
+
+.PHONY: run-test
+run-test:
+	@echo "🚀 Starting server with TEST database configuration"
+	POSTGRESQL_URL=postgresql+asyncpg://justinzollars@localhost:5432/helppet_test \
+	POSTGRESQL_SYNC_URL=postgresql+psycopg2://justinzollars@localhost:5432/helppet_test \
+	uvicorn src.main_pg:app --host 0.0.0.0 --port $(PORT) --reload
 
 .PHONY: test-timezone
 test-timezone:

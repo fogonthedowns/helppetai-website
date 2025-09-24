@@ -190,23 +190,58 @@ class UnixTimestampSchedulingService:
             logger.info(f"✅ Local appointment time: {local_datetime}")
             logger.info(f"🌐 UTC storage time: {utc_datetime}")
             
-            # Step 3: Check availability using UTC timestamps
-            is_available = await self._check_utc_slot_availability(
-                UUID(practice_id), utc_datetime, duration_minutes=30
-            )
-            
-            if not is_available:
-                local_time_str = local_datetime.strftime('%-I:%M %p on %A, %B %d')
-                return {
-                    "success": False,
-                    "message": f"That time slot at {local_time_str} is not available. Would you like me to suggest other times?",
-                    "local_datetime": local_datetime.isoformat(),
-                    "utc_datetime": utc_datetime.isoformat()
-                }
-            
-            # Step 4: Create appointment using CLEAN repository
-            if not assigned_vet_user_id:
-                assigned_vet_user_id = await self._get_available_vet(UUID(practice_id))
+            # Step 3: Select an available vet for this time (capacity-aware across vets)
+            practice_uuid = UUID(practice_id)
+            selected_vet_uuid: Optional[UUID] = None
+
+            if assigned_vet_user_id:
+                candidate_vet_uuid = UUID(assigned_vet_user_id)
+                appointment_end = utc_datetime + timedelta(minutes=30)
+
+                # Ensure specified vet has an availability window and no conflict
+                vet_avail_query = select(VetAvailability).where(
+                    VetAvailability.practice_id == practice_uuid,
+                    VetAvailability.vet_user_id == candidate_vet_uuid,
+                    VetAvailability.start_at <= utc_datetime,
+                    VetAvailability.end_at >= appointment_end,
+                    VetAvailability.is_active == True,
+                )
+                vet_avail_result = await self.db.execute(vet_avail_query)
+                if vet_avail_result.scalars().first() is not None:
+                    vet_conflict_query = select(AppointmentUnix).where(
+                        AppointmentUnix.practice_id == practice_uuid,
+                        AppointmentUnix.assigned_vet_user_id == candidate_vet_uuid,
+                        AppointmentUnix.appointment_at < appointment_end,
+                        AppointmentUnix.appointment_at + timedelta(minutes=30) > utc_datetime,
+                        AppointmentUnix.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+                    )
+                    vet_conflict_result = await self.db.execute(vet_conflict_query)
+                    if vet_conflict_result.scalars().first() is None:
+                        selected_vet_uuid = candidate_vet_uuid
+
+                if selected_vet_uuid is None:
+                    local_time_str = local_datetime.strftime('%-I:%M %p on %A, %B %d')
+                    return {
+                        "success": False,
+                        "message": f"The selected veterinarian is not available at {local_time_str}. Would you like me to find another available vet at that time?",
+                        "local_datetime": local_datetime.isoformat(),
+                        "utc_datetime": utc_datetime.isoformat(),
+                    }
+            else:
+                selected_vet_uuid = await self._find_available_vet_for_time(
+                    practice_uuid, utc_datetime, duration_minutes=30
+                )
+                if selected_vet_uuid is None:
+                    local_time_str = local_datetime.strftime('%-I:%M %p on %A, %B %d')
+                    return {
+                        "success": False,
+                        "message": f"That time slot at {local_time_str} is not available. Would you like me to suggest other times?",
+                        "local_datetime": local_datetime.isoformat(),
+                        "utc_datetime": utc_datetime.isoformat(),
+                    }
+
+            # Step 4: Create appointment using CLEAN repository with selected vet
+            assigned_vet_user_id = str(selected_vet_uuid)
             
             # Use clean repository for appointment creation
             appointment_repo = AppointmentUnixRepository(self.db)
@@ -314,35 +349,79 @@ class UnixTimestampSchedulingService:
         utc_appointment_time: datetime,
         duration_minutes: int = 30
     ) -> bool:
-        """Check if a specific UTC time slot is available"""
+        """Capacity-aware check: True if at least one vet is free at this time."""
         appointment_end = utc_appointment_time + timedelta(minutes=duration_minutes)
-        
-        # Check for availability windows
-        availability_query = select(VetAvailability).where(
-            VetAvailability.practice_id == practice_id,
-            VetAvailability.start_at <= utc_appointment_time,
-            VetAvailability.end_at >= appointment_end,
-            VetAvailability.is_active == True
+
+        # Find vets whose availability windows cover the requested slot
+        available_vets_query = (
+            select(VetAvailability.vet_user_id)
+            .where(
+                VetAvailability.practice_id == practice_id,
+                VetAvailability.start_at <= utc_appointment_time,
+                VetAvailability.end_at >= appointment_end,
+                VetAvailability.is_active == True,
+            )
+            .distinct()
         )
-        
-        result = await self.db.execute(availability_query)
-        availability = result.scalars().first()
-        
-        if not availability:
+
+        result = await self.db.execute(available_vets_query)
+        vet_ids = [row[0] for row in result.all()]
+        if not vet_ids:
             return False
-        
-        # Check for conflicting appointments
-        conflict_query = select(AppointmentUnix).where(
-            AppointmentUnix.practice_id == practice_id,
-            AppointmentUnix.appointment_at < appointment_end,
-            AppointmentUnix.appointment_at + timedelta(minutes=30) > utc_appointment_time,  # Assume 30min default
-            AppointmentUnix.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+
+        # Return True if any available vet has no conflicting appointment at that time
+        for vet_id in vet_ids:
+            vet_conflict_query = select(AppointmentUnix).where(
+                AppointmentUnix.practice_id == practice_id,
+                AppointmentUnix.assigned_vet_user_id == vet_id,
+                AppointmentUnix.appointment_at < appointment_end,
+                AppointmentUnix.appointment_at + timedelta(minutes=duration_minutes) > utc_appointment_time,
+                AppointmentUnix.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+            )
+            vet_conflict_result = await self.db.execute(vet_conflict_query)
+            if vet_conflict_result.scalars().first() is None:
+                return True
+
+        return False
+
+    async def _find_available_vet_for_time(
+        self,
+        practice_id: UUID,
+        utc_appointment_time: datetime,
+        duration_minutes: int = 30,
+    ) -> Optional[UUID]:
+        """Return an available vet ID for the requested time, or None if none available."""
+        appointment_end = utc_appointment_time + timedelta(minutes=duration_minutes)
+
+        available_vets_query = (
+            select(VetAvailability.vet_user_id)
+            .where(
+                VetAvailability.practice_id == practice_id,
+                VetAvailability.start_at <= utc_appointment_time,
+                VetAvailability.end_at >= appointment_end,
+                VetAvailability.is_active == True,
+            )
+            .distinct()
         )
-        
-        result = await self.db.execute(conflict_query)
-        conflicts = result.scalars().first()
-        
-        return conflicts is None
+
+        result = await self.db.execute(available_vets_query)
+        vet_ids = [row[0] for row in result.all()]
+        if not vet_ids:
+            return None
+
+        for vet_id in vet_ids:
+            vet_conflict_query = select(AppointmentUnix).where(
+                AppointmentUnix.practice_id == practice_id,
+                AppointmentUnix.assigned_vet_user_id == vet_id,
+                AppointmentUnix.appointment_at < appointment_end,
+                AppointmentUnix.appointment_at + timedelta(minutes=duration_minutes) > utc_appointment_time,
+                AppointmentUnix.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+            )
+            vet_conflict_result = await self.db.execute(vet_conflict_query)
+            if vet_conflict_result.scalars().first() is None:
+                return vet_id
+
+        return None
     
     def _parse_voice_date(self, date_str: str, timezone_str: str) -> date:
         """
