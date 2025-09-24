@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, text, func
 from sqlalchemy.orm import selectinload
 import pytz
-
+import logging
 
 from .base_repository import BaseRepository
 from ..models_pg.scheduling import (
@@ -20,6 +20,7 @@ from ..models_pg.scheduling import (
     AvailabilityType, ConflictType, ConflictSeverity
 )
 from ..models_pg.practice import VeterinaryPractice
+logger = logging.getLogger(__name__)
 
 
 class PracticeHoursRepository(BaseRepository[PracticeHours]):
@@ -244,7 +245,8 @@ class VetAvailabilityRepository(BaseRepository[VetAvailability]):
         practice_query = select(VeterinaryPractice).where(VeterinaryPractice.id == practice_id)
         practice_result = await self.session.execute(practice_query)
         practice = practice_result.scalar_one_or_none()
-        
+        logger.info("💩!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
         if not practice:
             return []
         

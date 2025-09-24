@@ -326,31 +326,3 @@ async def check_practice_open(
     
     is_open = await repo.is_practice_open(practice_id, check_datetime)
     return {"practice_id": practice_id, "datetime": check_datetime, "is_open": is_open}
-
-
-# TODO: Implement these advanced scheduling endpoints
-# @router.post("/available-slots", response_model=AvailableSlotsResponse)
-# async def get_available_slots(
-#     request: AvailableSlotRequest,
-#     current_user: User = Depends(get_current_user)
-# ):
-#     """Get available appointment slots for a practice/vet on a specific date"""
-#     # This would require complex logic to:
-#     # 1. Check practice hours
-#     # 2. Check vet availability
-#     # 3. Check existing appointments
-#     # 4. Generate available slots
-#     pass
-
-# @router.post("/check-conflicts", response_model=ConflictCheckResponse)
-# async def check_appointment_conflicts(
-#     request: ConflictCheckRequest,
-#     current_user: User = Depends(get_current_user)
-# ):
-#     """Check for conflicts when scheduling an appointment"""
-#     # This would check for:
-#     # 1. Double booking
-#     # 2. Outside practice hours
-#     # 3. Outside vet availability
-#     # 4. Overlapping appointments
-#     pass

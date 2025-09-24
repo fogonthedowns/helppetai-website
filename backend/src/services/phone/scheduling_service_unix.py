@@ -304,6 +304,7 @@ class UnixTimestampSchedulingService:
         
         if not availability_records:
             logger.info(f"🔧 NO UNIX TIMESTAMP AVAILABILITY - Create availability first!")
+            logger.info(f"🔍 DEBUG: practice_id={practice_id}, utc_start={utc_start}, utc_end={utc_end}")
             return []
         
         # Use repository to get slots for each vet
@@ -336,6 +337,10 @@ class UnixTimestampSchedulingService:
                             'available': slot['available'],
                             'availability_type': slot['availability_type']
                         })
+                        
+                        # CRITICAL: Log when we're adding slots that claim to be available
+                        if slot['available']:
+                            logger.info(f"🎯 ADDING AVAILABLE SLOT: {slot['utc_start']} for vet {vet_name} - was conflict check performed?")
                 
                 processed_vets.add(availability.vet_user_id)
         
@@ -372,6 +377,8 @@ class UnixTimestampSchedulingService:
 
         # Return True if any available vet has no conflicting appointment at that time
         for vet_id in vet_ids:
+            logger.info(f"🔍 CONFLICT CHECK: vet_id={vet_id}, time={utc_appointment_time}")
+            
             # Check conflicts against regular appointments table (not deprecated AppointmentUnix)
             # Regular appointments use appointment_date and duration_minutes fields
             vet_conflict_query = select(Appointment).where(
@@ -386,8 +393,14 @@ class UnixTimestampSchedulingService:
                 Appointment.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
             )
             vet_conflict_result = await self.db.execute(vet_conflict_query)
-            if vet_conflict_result.scalars().first() is None:
+            conflicting_appointment = vet_conflict_result.scalars().first()
+            
+            if conflicting_appointment is None:
+                logger.info(f"✅ NO CONFLICT for vet {vet_id} at {utc_appointment_time}")
                 return True
+            else:
+                logger.info(f"❌ CONFLICT FOUND for vet {vet_id}: appointment at {conflicting_appointment.appointment_date}")
+                logger.info(f"🔍 Conflicting appointment details: id={conflicting_appointment.id}, duration={conflicting_appointment.duration_minutes}min")
 
         return False
 
@@ -843,10 +856,19 @@ class UnixTimestampSchedulingService:
         utc_end = local_end.astimezone(pytz.UTC)
         
         slots = await self._get_utc_availability_slots(practice_id, utc_start, utc_end, time_range, timezone)
+        logger.info(f"🔍 _first_available_for_day DEBUG: date={local_date}, slots_found={len(slots)}")
+        if slots:
+            logger.info(f"🔍 First slot details: {slots[0] if slots else 'None'}")
+        
         available = [s for s in slots if s.get('available')]
+        logger.info(f"🔍 Available slots after filtering: {len(available)}")
+        
         if not available:
+            logger.info(f"🔍 NO AVAILABLE SLOTS for {local_date} - returning None")
             return None
+            
         first = sorted(available, key=lambda s: s['utc_start'])[0]
+        logger.info(f"🔍 RETURNING SLOT: {first}")
         local_time = first['utc_start'].astimezone(tz)
         return {
             "date": local_date.strftime('%Y-%m-%d'),

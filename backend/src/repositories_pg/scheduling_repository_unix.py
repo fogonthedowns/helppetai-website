@@ -122,16 +122,28 @@ class VetAvailabilityUnixRepository(BaseRepository[VetAvailability]):
         availability_records = await self.get_by_vet_and_date_range(
             vet_user_id, utc_start, utc_end
         )
-        
+        logger.info("⚡️!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         if not availability_records:
             return []
         
-        # DEPRECATED: AppointmentUnixRepository not available
-        # appointment_repo = AppointmentUnixRepository(self.session)
-        # appointments = await appointment_repo.get_by_vet_and_time_range(
-        #     vet_user_id, practice_id, utc_start, utc_end
-        # )
-        appointments = []  # Empty list since AppointmentUnix is deprecated
+        # Get appointments from the ACTIVE Appointment table (not deprecated AppointmentUnix)
+        from ..models_pg.appointment import Appointment
+        appointment_query = select(Appointment).where(
+            and_(
+                Appointment.assigned_vet_user_id == vet_user_id,
+                Appointment.practice_id == practice_id,
+                Appointment.appointment_date < utc_end,
+                # Calculate appointment end time using duration
+                Appointment.appointment_date + text("INTERVAL '30 minutes'") > utc_start,
+                Appointment.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+            )
+        )
+        appointment_result = await self.session.execute(appointment_query)
+        appointments = list(appointment_result.scalars().all())
+        
+        logger.info(f"🔍 CONFLICT CHECK: Found {len(appointments)} appointments for vet {vet_user_id} in range {utc_start} to {utc_end}")
+        for apt in appointments:
+            logger.info(f"   📅 Appointment: {apt.appointment_date} duration={apt.duration_minutes}min")
         
         # Generate slots
         slots = []
@@ -148,10 +160,12 @@ class VetAvailabilityUnixRepository(BaseRepository[VetAvailability]):
                 conflicting_appointment = None
                 
                 for appointment in appointments:
-                    appt_end = appointment.appointment_at + timedelta(minutes=appointment.duration_minutes)
-                    if current_time < appt_end and slot_end > appointment.appointment_at:
+                    # Use the correct field names for the active Appointment model
+                    appt_end = appointment.appointment_date + timedelta(minutes=appointment.duration_minutes)
+                    if current_time < appt_end and slot_end > appointment.appointment_date:
                         is_available = False
-                        conflicting_appointment = appointment.title
+                        conflicting_appointment = getattr(appointment, 'title', f'Appointment {appointment.id}')
+                        logger.info(f"🚫 SLOT CONFLICT: {current_time} conflicts with appointment at {appointment.appointment_date}")
                         break
                 
                 # Convert to local time for display
