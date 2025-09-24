@@ -11,6 +11,14 @@ PET_OWNER_ID=$(curl -sS -X POST "http://localhost:8000/api/v1/pet_owners/" -H "A
 PET_ID=$(curl -sS -X POST "http://localhost:8000/api/v1/pets" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"owner_id\":\"$PET_OWNER_ID\",\"name\":\"Fido\",\"species\":\"dog\",\"breed\":\"mutt\",\"gender\":\"male\"}" | jq -r '.uuid')
 NOW_UTC=$(date -u +"%Y-%m-%dT%H:00:00Z")
 TOMORROW_UTC=$(date -u -v+1d +"%Y-%m-%dT%H:00:00Z")
-curl -sS -X POST "http://localhost:8000/api/v1/scheduling-unix/vet-availability" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"vet_user_id\":\"$VET1_ID\",\"practice_id\":\"$PRACTICE_ID\",\"start_at\":\"$NOW_UTC\",\"end_at\":\"$(date -u -v+2H +\"%Y-%m-%dT%H:00:00Z\")\"}"
-curl -sS -X POST "http://localhost:8000/api/v1/scheduling-unix/vet-availability" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"vet_user_id\":\"$VET2_ID\",\"practice_id\":\"$PRACTICE_ID\",\"start_at\":\"$TOMORROW_UTC\",\"end_at\":\"$(date -u -v+1d -v+3H +\"%Y-%m-%dT%H:00:00Z\")\"}"
-curl -sS -X POST "http://localhost:8000/webhook/phone" -H "Content-Type: application/json" -d "{\"name\":\"get_first_available_flexible\",\"args\":{\"time_preference\":\"morning\",\"practice_id\":\"$PRACTICE_ID\",\"timezone\":\"America/Los_Angeles\",\"weeks_from_now\":1}}"
+CONFLICT_DATE=$(date -u -v+3d +"%Y-%m-%dT09:00:00Z")
+CONFLICT_END=$(date -u -v+3d +"%Y-%m-%dT17:00:00Z")
+curl -sS -X POST "http://localhost:8000/api/v1/scheduling-unix/vet-availability" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"vet_user_id\":\"$VET1_ID\",\"practice_id\":\"$PRACTICE_ID\",\"start_at\":\"$CONFLICT_DATE\",\"end_at\":\"$CONFLICT_END\"}"
+CONFLICT_APPOINTMENT_DATE=$(date -u -v+3d +"%Y-%m-%dT16:00:00Z")
+APPOINTMENT_ID=$(curl -sS -X POST "http://localhost:8000/api/v1/appointments" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"pet_id\":\"$PET_ID\",\"practice_id\":\"$PRACTICE_ID\",\"assigned_vet_user_id\":\"$VET1_ID\",\"appointment_date\":\"$CONFLICT_APPOINTMENT_DATE\",\"duration_minutes\":30,\"title\":\"Test Conflict Appointment\",\"appointment_type\":\"checkup\",\"status\":\"scheduled\"}" | jq -r '.id')
+echo "=== CONFLICT TEST: Checking if 9:00 AM PST appears as available when appointment exists at 9:00 AM PST ==="
+CONFLICT_TEST_DATE=$(date -v+3d +"%Y-%m-%d")
+AVAILABLE_TIMES=$(curl -sS -X POST "http://localhost:8000/api/v1/webhook/phone" -H "Content-Type: application/json" -d "{\"name\":\"get_first_available_flexible\",\"args\":{\"time_preference\":\"any time\",\"practice_id\":\"$PRACTICE_ID\",\"timezone\":\"US/Pacific\",\"date_range_start\":\"$CONFLICT_TEST_DATE\",\"date_range_end\":\"$CONFLICT_TEST_DATE\"}}")
+echo "Available times response: $AVAILABLE_TIMES"
+if echo "$AVAILABLE_TIMES" | grep -q "9:00 AM"; then echo "❌ BUG: 9:00 AM appears as available despite conflict!"; else echo "✅ GOOD: 9:00 AM correctly excluded due to conflict"; fi
+if echo "$AVAILABLE_TIMES" | grep -q "9:30 AM"; then echo "✅ GOOD: 9:30 AM appears as available (no conflict)"; else echo "⚠️  Expected 9:30 AM to be available"; fi

@@ -25,8 +25,25 @@ fi
 
 echo "✅ Test server is running, executing curls..."
 
-# shellcheck disable=SC1090
-source "$TESTS_FILE"
+# Create a temporary file to capture errors
+ERROR_LOG=$(mktemp)
+trap 'rm -f "$ERROR_LOG"' EXIT
+
+# Execute the curl sequence and capture any errors
+if ! source "$TESTS_FILE" 2>"$ERROR_LOG"; then
+  echo "❌ Integration test failed!"
+  if [ -s "$ERROR_LOG" ]; then
+    echo "Error details:"
+    cat "$ERROR_LOG"
+  fi
+  exit 1
+fi
+
+# Show any captured output
+if [ -s "$ERROR_LOG" ]; then
+  echo "⚠️  Test warnings/output:"
+  cat "$ERROR_LOG"
+fi
 
 echo "✅ Curl integration sequence completed"
 

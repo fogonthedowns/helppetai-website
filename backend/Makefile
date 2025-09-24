@@ -15,7 +15,8 @@ help:
 	@echo "  make dev            - Run development server with auto-reload"
 	@echo "  make run-test       - Run server with test DB (local)"
 	@echo "  make install        - Install dependencies"
-	@echo "  make test           - Run unit tests + curl integration tests"
+	@echo "  make test           - Run unit tests + conflict test + curl integration tests"
+	@echo "  make test-conflict  - Run conflict detection test only"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make build          - Build Docker image"
@@ -50,8 +51,14 @@ install:
 test:
 	@echo "🧪 Running unit tests..."
 	pytest || true
+	@echo "🧪 Running conflict detection integration test..."
+	pytest tests/test_conflict_detection_integration.py -v || true
 	@echo "🧪 Running curl integration tests..."
 	bash scripts/run_curls.sh
+
+test-conflict:
+	@echo "🎯 Running conflict detection test specifically..."
+	pytest tests/test_conflict_detection_integration.py -v -s
 
 .PHONY: run-test
 run-test:

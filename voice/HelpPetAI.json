@@ -1,11 +1,11 @@
 {
   "agent_id": "",
   "channel": "voice",
-  "last_modification_timestamp": 1758601040106,
+  "last_modification_timestamp": 1758748172789,
   "agent_name": "HelpPetAI",
   "response_engine": {
     "type": "conversation-flow",
-    "version": 47,
+    "version": 57,
     "conversation_flow_id": "conversation_flow_40876625b4b2"
   },
   "webhook_url": "https://api.helppet.ai/api/v1/call-analysis/webhook",
@@ -13,7 +13,7 @@
   "opt_out_sensitive_data_storage": false,
   "data_storage_setting": "everything",
   "opt_in_signed_url": false,
-  "version": 47,
+  "version": 57,
   "is_published": false,
   "version_title": "",
   "post_call_analysis_model": "gpt-4o-mini",
@@ -29,7 +29,7 @@
   "retellLlmData": null,
   "conversationFlow": {
     "conversation_flow_id": "conversation_flow_40876625b4b2",
-    "version": 47,
+    "version": 57,
     "global_prompt": "## Objective\nYou are an AI agent LaShonda working for a veterinarian. You are to be kind and helpful.\n\n- if someone has an emergency they aren't talking about a person. They are talking about a pet. Do not suggest to call 911\n\n\nCurrent time is {{current_time}}\n{{practice_id}}= \"934c57e7-4f9c-4d28-aa0f-3cb881e3c225\"\n{{timezone}} = \"US/Pacific\"",
     "nodes": [
       {
@@ -576,7 +576,7 @@
             "id": "edge-1757969077463",
             "transition_condition": {
               "type": "prompt",
-              "prompt": "Describe the transition condition"
+              "prompt": "Any condition"
             }
           }
         ],
@@ -617,6 +617,14 @@
             "transition_condition": {
               "type": "prompt",
               "prompt": "If they want to check on Medications & Refills\n"
+            }
+          },
+          {
+            "destination_node_id": "node-1758732742871",
+            "id": "edge-1758732713614",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If they want to make an appointment"
             }
           }
         ],
@@ -687,8 +695,8 @@
         "id": "node-1757974918427",
         "type": "conversation",
         "display_position": {
-          "x": 209.26371267078036,
-          "y": 1542.3217135023256
+          "x": 428.1110086323065,
+          "y": 1509.0790862676636
         },
         "instruction": {
           "type": "prompt",
@@ -741,7 +749,7 @@
             "id": "edge-1757977307710",
             "transition_condition": {
               "type": "prompt",
-              "prompt": "Describe the transition condition"
+              "prompt": "Any condition"
             }
           }
         ],
@@ -753,7 +761,7 @@
         },
         "instruction": {
           "type": "prompt",
-          "text": "- Say goodbye\n- have a nice day\n- Say it was a pleasure serving you"
+          "text": "- Say goodbye\n- have a nice day"
         },
         "knowledge_base_ids": []
       },
@@ -1004,7 +1012,7 @@
             "id": "edge-1758001557734",
             "transition_condition": {
               "type": "prompt",
-              "prompt": "Yes, there is a specific date"
+              "prompt": "The user provides a numerical date and a month."
             }
           },
           {
@@ -1012,7 +1020,7 @@
             "id": "edge-1758586151702",
             "transition_condition": {
               "type": "prompt",
-              "prompt": "No, there is not a specific date"
+              "prompt": "Any other response"
             }
           }
         ],
@@ -1065,10 +1073,10 @@
         "edges": [
           {
             "destination_node_id": "node-1758586301351",
-            "id": "edge-1758586168849",
+            "id": "edge-1758657000992",
             "transition_condition": {
               "type": "prompt",
-              "prompt": "The information has been confirmed correct"
+              "prompt": "Any response"
             }
           }
         ],
@@ -1080,7 +1088,7 @@
         },
         "instruction": {
           "type": "prompt",
-          "text": "- When would you like to visit?\n- determine time preference (if there is one, ask first)\n- determine which pets are coming if there are more than one pet"
+          "text": "- When would you like to visit?\n- determine which pets are coming if there are more than one pet"
         },
         "knowledge_base_ids": []
       },
@@ -1151,6 +1159,22 @@
             "transition_condition": {
               "type": "prompt",
               "prompt": "If there are no available times"
+            }
+          },
+          {
+            "destination_node_id": "node-1757888896343",
+            "id": "edge-1758601853752",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The user agrees, or says okay"
+            }
+          },
+          {
+            "destination_node_id": "node-1758586168849",
+            "id": "edge-1758733428343",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The user asks for a different time, or appointment, or wants to try again"
             }
           }
         ],
@@ -1227,6 +1251,30 @@
         "instruction": {
           "type": "prompt",
           "text": "Something isn't right, we need to connect you with another agent who can help"
+        },
+        "knowledge_base_ids": []
+      },
+      {
+        "name": "Conversation",
+        "edges": [
+          {
+            "destination_node_id": "node-1757967782582",
+            "id": "edge-1758732742871",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "any response"
+            }
+          }
+        ],
+        "id": "node-1758732742871",
+        "type": "conversation",
+        "display_position": {
+          "x": 456.52549916343685,
+          "y": -150.520511794392
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Whats your phone number?"
         },
         "knowledge_base_ids": []
       }
@@ -1551,7 +1599,8 @@
     ],
     "model_choice": {
       "type": "cascading",
-      "model": "gpt-4.1"
+      "model": "gpt-4.1-mini",
+      "high_priority": false
     },
     "kb_config": {
       "top_k": 3,
