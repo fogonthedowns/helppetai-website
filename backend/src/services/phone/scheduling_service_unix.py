@@ -17,14 +17,13 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta, date, time
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select, text, func
 
 from ...models_pg.user import User
 from ...models_pg.practice import VeterinaryPractice
 from ...models_pg.scheduling_unix import VetAvailability
-# AppointmentUnix is deprecated - voice system uses regular AppointmentRepository
+from ...models_pg.appointment import Appointment  # Use regular appointments table
 from ...repositories_pg.scheduling_repository_unix import VetAvailabilityUnixRepository
-# AppointmentUnixRepository is deprecated - voice system uses regular AppointmentRepository
 
 logger = logging.getLogger(__name__)
 
@@ -373,12 +372,18 @@ class UnixTimestampSchedulingService:
 
         # Return True if any available vet has no conflicting appointment at that time
         for vet_id in vet_ids:
-            vet_conflict_query = select(AppointmentUnix).where(
-                AppointmentUnix.practice_id == practice_id,
-                AppointmentUnix.assigned_vet_user_id == vet_id,
-                AppointmentUnix.appointment_at < appointment_end,
-                AppointmentUnix.appointment_at + timedelta(minutes=duration_minutes) > utc_appointment_time,
-                AppointmentUnix.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+            # Check conflicts against regular appointments table (not deprecated AppointmentUnix)
+            # Regular appointments use appointment_date and duration_minutes fields
+            vet_conflict_query = select(Appointment).where(
+                Appointment.practice_id == practice_id,
+                Appointment.assigned_vet_user_id == vet_id,
+                # Convert duration to end time for overlap check: appointment_date + INTERVAL duration_minutes MINUTE
+                Appointment.appointment_date < appointment_end,
+                Appointment.appointment_date + func.cast(
+                    func.concat(Appointment.duration_minutes, ' minutes'), 
+                    text('INTERVAL')
+                ) > utc_appointment_time,
+                Appointment.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
             )
             vet_conflict_result = await self.db.execute(vet_conflict_query)
             if vet_conflict_result.scalars().first() is None:
@@ -412,12 +417,18 @@ class UnixTimestampSchedulingService:
             return None
 
         for vet_id in vet_ids:
-            vet_conflict_query = select(AppointmentUnix).where(
-                AppointmentUnix.practice_id == practice_id,
-                AppointmentUnix.assigned_vet_user_id == vet_id,
-                AppointmentUnix.appointment_at < appointment_end,
-                AppointmentUnix.appointment_at + timedelta(minutes=duration_minutes) > utc_appointment_time,
-                AppointmentUnix.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+            # Check conflicts against regular appointments table (not deprecated AppointmentUnix)
+            # Regular appointments use appointment_date and duration_minutes fields
+            vet_conflict_query = select(Appointment).where(
+                Appointment.practice_id == practice_id,
+                Appointment.assigned_vet_user_id == vet_id,
+                # Convert duration to end time for overlap check: appointment_date + INTERVAL duration_minutes MINUTE
+                Appointment.appointment_date < appointment_end,
+                Appointment.appointment_date + func.cast(
+                    func.concat(Appointment.duration_minutes, ' minutes'), 
+                    text('INTERVAL')
+                ) > utc_appointment_time,
+                Appointment.status.notin_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
             )
             vet_conflict_result = await self.db.execute(vet_conflict_query)
             if vet_conflict_result.scalars().first() is None:
