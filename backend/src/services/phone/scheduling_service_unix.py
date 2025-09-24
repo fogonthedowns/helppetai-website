@@ -21,8 +21,10 @@ from sqlalchemy import select, text
 
 from ...models_pg.user import User
 from ...models_pg.practice import VeterinaryPractice
-from ...models_pg.scheduling_unix import VetAvailability, AppointmentUnix
-from ...repositories_pg.scheduling_repository_unix import VetAvailabilityUnixRepository, AppointmentUnixRepository
+from ...models_pg.scheduling_unix import VetAvailability
+# AppointmentUnix is deprecated - voice system uses regular AppointmentRepository
+from ...repositories_pg.scheduling_repository_unix import VetAvailabilityUnixRepository
+# AppointmentUnixRepository is deprecated - voice system uses regular AppointmentRepository
 
 logger = logging.getLogger(__name__)
 

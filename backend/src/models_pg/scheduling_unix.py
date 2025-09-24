@@ -222,136 +222,152 @@ class VetAvailability(Base):
         )
 
 
-class AppointmentUnix(Base):
-    """
-    REFACTORED: Appointment model using Unix timestamp
-    
-    🔑 Same principle: store appointment_at as UTC timestamp
-    """
-    
-    __tablename__ = "appointments_unix"
-    
-    # Primary key
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    
-    # Foreign keys
-    practice_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
-        ForeignKey("veterinary_practices.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
-    pet_owner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
-        ForeignKey("pet_owners.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
-    assigned_vet_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), 
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
-    )
-    created_by_user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=False
-    )
-    
-    # 🎯 UNIX TIMESTAMP - Single source of truth for appointment time
-    appointment_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
-        nullable=False, 
-        index=True,
-        comment="UTC timestamp when appointment is scheduled"
-    )
-    duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
-    
-    # Appointment details
-    appointment_type: Mapped[str] = mapped_column(String(50), nullable=False, default="CHECKUP")
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="SCHEDULED", index=True)
-    
-    # Content
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
-    # Audit fields
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
-    def __repr__(self) -> str:
-        return f"<Appointment(id={self.id}, title='{self.title}', appointment_at={self.appointment_at}, status={self.status})>"
-    
-    @property
-    def end_at(self) -> datetime:
-        """Calculate when appointment ends"""
-        return self.appointment_at + timedelta(minutes=self.duration_minutes)
-    
-    def to_local_timezone(self, timezone_str: str) -> datetime:
-        """Convert UTC appointment time to local timezone"""
-        tz = pytz.timezone(timezone_str)
-        return self.appointment_at.astimezone(tz)
-    
-    def overlaps_with_utc_range(self, utc_start: datetime, utc_end: datetime) -> bool:
-        """Check if appointment overlaps with a UTC time range"""
-        appointment_end = self.end_at
-        return not (utc_end <= self.appointment_at or utc_start >= appointment_end)
-    
-    @classmethod
-    def from_voice_booking(
-        cls,
-        practice_id: uuid.UUID,
-        pet_owner_id: uuid.UUID,
-        assigned_vet_user_id: uuid.UUID,
-        created_by_user_id: uuid.UUID,
-        local_date_str: str,
-        local_time_str: str,
-        timezone_str: str,
-        duration_minutes: int = 30,
-        title: str = "Veterinary Appointment",
-        appointment_type: str = "CHECKUP",
-        notes: Optional[str] = None
-    ) -> 'AppointmentUnix':
-        """
-        🎯 CREATE APPOINTMENT FROM VOICE INPUT
-        
-        Args:
-            local_date_str: "Oct 3, 2025" 
-            local_time_str: "9pm"
-            timezone_str: "America/Los_Angeles"
-            
-        Returns:
-            Appointment instance ready for DB storage
-        """
-        from dateutil import parser
-        from zoneinfo import ZoneInfo
-        
-        # Parse with timezone context
-        tz = ZoneInfo(timezone_str)
-        
-        # Parse date and time
-        parsed_date = parser.parse(local_date_str).date()
-        parsed_time = parser.parse(local_time_str).time()
-        
-        # Create timezone-aware local datetime
-        local_dt = datetime.combine(parsed_date, parsed_time).replace(tzinfo=tz)
-        
-        # Convert to UTC for storage
-        utc_dt = local_dt.astimezone(pytz.UTC)
-        
-        return cls(
-            practice_id=practice_id,
-            pet_owner_id=pet_owner_id,
-            assigned_vet_user_id=assigned_vet_user_id,
-            created_by_user_id=created_by_user_id,
-            appointment_at=utc_dt,
-            duration_minutes=duration_minutes,
-            title=title,
-            appointment_type=appointment_type,
-            notes=notes
-        )
+# ============================================================================
+# DEPRECATED: AppointmentUnix Model
+# ============================================================================
+# 
+# This model was created as part of the Unix timestamp refactor but is NOT used
+# by any production systems. The voice system and all other appointment booking
+# continues to use the regular appointments table via AppointmentRepository.
+# 
+# Status: DEPRECATED (2025-09-24)
+# Reason: No endpoints or services use this model
+# Active Table: appointments (via AppointmentRepository)
+# 
+# ORIGINAL IMPLEMENTATION (COMMENTED FOR REFERENCE):
+# ============================================================================
+
+# class AppointmentUnix(Base):
+#     """
+#     DEPRECATED: Appointment model using Unix timestamp
+#     
+#     This model exists but is not used by any production systems.
+#     The voice system and iPhone continue to use the regular appointments table.
+#     """
+#     
+#     __tablename__ = "appointments_unix"
+#     
+#     # Primary key
+#     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     
+#     # Foreign keys
+#     practice_id: Mapped[uuid.UUID] = mapped_column(
+#         UUID(as_uuid=True), 
+#         ForeignKey("veterinary_practices.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True
+#     )
+#     pet_owner_id: Mapped[uuid.UUID] = mapped_column(
+#         UUID(as_uuid=True), 
+#         ForeignKey("pet_owners.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True
+#     )
+#     assigned_vet_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+#         UUID(as_uuid=True), 
+#         ForeignKey("users.id", ondelete="SET NULL"),
+#         nullable=True,
+#         index=True
+#     )
+#     created_by_user_id: Mapped[uuid.UUID] = mapped_column(
+#         UUID(as_uuid=True), 
+#         ForeignKey("users.id", ondelete="SET NULL"),
+#         nullable=False
+#     )
+#     
+#     # 🎯 UNIX TIMESTAMP - Single source of truth for appointment time
+#     appointment_at: Mapped[datetime] = mapped_column(
+#         DateTime(timezone=True), 
+#         nullable=False, 
+#         index=True,
+#         comment="UTC timestamp when appointment is scheduled"
+#     )
+#     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
+#     
+#     # Appointment details
+#     appointment_type: Mapped[str] = mapped_column(String(50), nullable=False, default="CHECKUP")
+#     status: Mapped[str] = mapped_column(String(20), nullable=False, default="SCHEDULED", index=True)
+#     
+#     # Content
+#     title: Mapped[str] = mapped_column(String(200), nullable=False)
+#     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+#     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+#     
+#     # Audit fields
+#     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+#     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+#     
+#     def __repr__(self) -> str:
+#         return f"<Appointment(id={self.id}, title='{self.title}', appointment_at={self.appointment_at}, status={self.status})>"
+#     
+#     @property
+#     def end_at(self) -> datetime:
+#         """Calculate when appointment ends"""
+#         return self.appointment_at + timedelta(minutes=self.duration_minutes)
+#     
+#     def to_local_timezone(self, timezone_str: str) -> datetime:
+#         """Convert UTC appointment time to local timezone"""
+#         tz = pytz.timezone(timezone_str)
+#         return self.appointment_at.astimezone(tz)
+#     
+#     def overlaps_with_utc_range(self, utc_start: datetime, utc_end: datetime) -> bool:
+#         """Check if appointment overlaps with a UTC time range"""
+#         appointment_end = self.end_at
+#         return not (utc_end <= self.appointment_at or utc_start >= appointment_end)
+#     
+#     @classmethod
+#     def from_voice_booking(
+#         cls,
+#         practice_id: uuid.UUID,
+#         pet_owner_id: uuid.UUID,
+#         assigned_vet_user_id: uuid.UUID,
+#         created_by_user_id: uuid.UUID,
+#         local_date_str: str,
+#         local_time_str: str,
+#         timezone_str: str,
+#         duration_minutes: int = 30,
+#         title: str = "Veterinary Appointment",
+#         appointment_type: str = "CHECKUP",
+#         notes: Optional[str] = None
+#     ) -> 'AppointmentUnix':
+#         """
+#         🎯 CREATE APPOINTMENT FROM VOICE INPUT
+#         
+#         Args:
+#             local_date_str: "Oct 3, 2025" 
+#             local_time_str: "9pm"
+#             timezone_str: "America/Los_Angeles"
+#             
+#         Returns:
+#             Appointment instance ready for DB storage
+#         """
+#         from dateutil import parser
+#         from zoneinfo import ZoneInfo
+#         
+#         # Parse with timezone context
+#         tz = ZoneInfo(timezone_str)
+#         
+#         # Parse date and time
+#         parsed_date = parser.parse(local_date_str).date()
+#         parsed_time = parser.parse(local_time_str).time()
+#         
+#         # Create timezone-aware local datetime
+#         local_dt = datetime.combine(parsed_date, parsed_time).replace(tzinfo=tz)
+#         
+#         # Convert to UTC for storage
+#         utc_dt = local_dt.astimezone(pytz.UTC)
+#         
+#         return cls(
+#             practice_id=practice_id,
+#             pet_owner_id=pet_owner_id,
+#             assigned_vet_user_id=assigned_vet_user_id,
+#             created_by_user_id=created_by_user_id,
+#             appointment_at=utc_dt,
+#             duration_minutes=duration_minutes,
+#             title=title,
+#             appointment_type=appointment_type,
+#             notes=notes
+#         )
 
 
 # 🔄 MIGRATION HELPER FUNCTIONS
@@ -401,44 +417,46 @@ def migrate_old_availability_to_unix(
     )
 
 
-def migrate_old_appointment_to_unix(
-    old_appointment,  # Old Appointment with appointment_date
-    practice_timezone: str
-) -> AppointmentUnix:
-    """
-    Helper to migrate old appointment_date to Unix timestamp format
-    """
-    import pytz
-    
-    # Old appointment_date should already be UTC, but let's be safe
-    if old_appointment.appointment_date.tzinfo is None:
-        # Assume it's in practice timezone if no timezone info
-        tz = pytz.timezone(practice_timezone)
-        local_dt = tz.localize(old_appointment.appointment_date)
-        utc_dt = local_dt.astimezone(pytz.UTC)
-    else:
-        # Already has timezone info, convert to UTC
-        utc_dt = old_appointment.appointment_date.astimezone(pytz.UTC)
-    
-    return AppointmentUnix(
-        id=old_appointment.id,  # Keep same ID
-        practice_id=old_appointment.practice_id,
-        pet_owner_id=old_appointment.pet_owner_id,
-        assigned_vet_user_id=old_appointment.assigned_vet_user_id,
-        created_by_user_id=old_appointment.created_by_user_id,
-        appointment_at=utc_dt,
-        duration_minutes=old_appointment.duration_minutes,
-        appointment_type=old_appointment.appointment_type,
-        status=old_appointment.status,
-        title=old_appointment.title,
-        description=old_appointment.description,
-        notes=old_appointment.notes,
-        created_at=old_appointment.created_at,
-        updated_at=old_appointment.updated_at
-    )
+# ============================================================================
+# DEPRECATED: Migration Helper Functions for AppointmentUnix
+# ============================================================================
+
+# def migrate_old_appointment_to_unix(
+#     old_appointment,  # Old Appointment with appointment_date
+#     practice_timezone: str
+# ) -> AppointmentUnix:
+#     """
+#     DEPRECATED: Helper to migrate old appointment_date to Unix timestamp format
+#     """
+#     import pytz
+#     
+#     # Old appointment_date should already be UTC, but let's be safe
+#     if old_appointment.appointment_date.tzinfo is None:
+#         # Assume it's in practice timezone if no timezone info
+#         tz = pytz.timezone(practice_timezone)
+#         local_dt = tz.localize(old_appointment.appointment_date)
+#         utc_dt = local_dt.astimezone(pytz.UTC)
+#     else:
+#         # Already has timezone info, convert to UTC
+#         utc_dt = old_appointment.appointment_date.astimezone(pytz.UTC)
+#     
+#     return AppointmentUnix(
+#         id=old_appointment.id,  # Keep same ID
+#         practice_id=old_appointment.practice_id,
+#         pet_owner_id=old_appointment.pet_owner_id,
+#         assigned_vet_user_id=old_appointment.assigned_vet_user_id,
+#         created_by_user_id=old_appointment.created_by_user_id,
+#         appointment_at=utc_dt,
+#         duration_minutes=old_appointment.duration_minutes,
+#         appointment_type=old_appointment.appointment_type,
+#         status=old_appointment.status,
+#         title=old_appointment.title,
+#         description=old_appointment.description,
+#         notes=old_appointment.notes,
+#         created_at=old_appointment.created_at,
+#         updated_at=old_appointment.updated_at
+#     )
 
 
-# Backward compatibility for older imports expecting `Appointment`
-# Some modules may still do: from .scheduling_unix import Appointment
-# Provide alias to prevent ImportError during transition
-Appointment = AppointmentUnix
+# DEPRECATED: Backward compatibility alias
+# Appointment = AppointmentUnix

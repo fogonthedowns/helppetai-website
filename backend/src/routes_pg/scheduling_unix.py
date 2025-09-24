@@ -15,7 +15,8 @@ from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database_pg import get_db_session
-from ..models_pg.scheduling_unix import VetAvailability, AppointmentUnix, AvailabilityType
+from ..models_pg.scheduling_unix import VetAvailability, AvailabilityType
+# AppointmentUnix is deprecated - use regular appointments table instead
 from ..models_pg.user import User
 from ..models_pg.practice import VeterinaryPractice
 

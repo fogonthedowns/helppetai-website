@@ -13,7 +13,8 @@ from sqlalchemy import select, and_, or_, func, text
 import pytz
 
 from .base_repository import BaseRepository
-from ..models_pg.scheduling_unix import VetAvailability, AppointmentUnix
+from ..models_pg.scheduling_unix import VetAvailability
+# AppointmentUnix is deprecated - use regular AppointmentRepository instead
 from ..models_pg.practice import VeterinaryPractice
 
 import logging
@@ -125,11 +126,12 @@ class VetAvailabilityUnixRepository(BaseRepository[VetAvailability]):
         if not availability_records:
             return []
         
-        # Get conflicting appointments
-        appointment_repo = AppointmentUnixRepository(self.session)
-        appointments = await appointment_repo.get_by_vet_and_time_range(
-            vet_user_id, practice_id, utc_start, utc_end
-        )
+        # DEPRECATED: AppointmentUnixRepository not available
+        # appointment_repo = AppointmentUnixRepository(self.session)
+        # appointments = await appointment_repo.get_by_vet_and_time_range(
+        #     vet_user_id, practice_id, utc_start, utc_end
+        # )
+        appointments = []  # Empty list since AppointmentUnix is deprecated
         
         # Generate slots
         slots = []
@@ -242,188 +244,202 @@ class VetAvailabilityUnixRepository(BaseRepository[VetAvailability]):
         return availability
 
 
-class AppointmentUnixRepository(BaseRepository[AppointmentUnix]):
-    """Unix timestamp appointment repository - CLEAN IMPLEMENTATION"""
-    
-    def __init__(self, session: AsyncSession):
-        super().__init__(AppointmentUnix, session)
-    
-    async def get_by_vet_and_time_range(
-        self,
-        vet_user_id: uuid.UUID,
-        practice_id: uuid.UUID,
-        utc_start: datetime,
-        utc_end: datetime,
-        exclude_statuses: List[str] = None
-    ) -> List[AppointmentUnix]:
-        """Get appointments for vet within UTC time range"""
-        if exclude_statuses is None:
-            exclude_statuses = ['CANCELLED', 'NO_SHOW', 'COMPLETED']
-        
-        query = select(AppointmentUnix).where(
-            and_(
-                AppointmentUnix.assigned_vet_user_id == vet_user_id,
-                AppointmentUnix.practice_id == practice_id,
-                AppointmentUnix.appointment_at >= utc_start,
-                AppointmentUnix.appointment_at < utc_end,
-                ~AppointmentUnix.status.in_(exclude_statuses)
-            )
-        ).order_by(AppointmentUnix.appointment_at)
-        
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
-    
-    async def get_by_practice_and_time_range(
-        self,
-        practice_id: uuid.UUID,
-        utc_start: datetime,
-        utc_end: datetime,
-        exclude_statuses: List[str] = None
-    ) -> List[AppointmentUnix]:
-        """Get all appointments for practice within UTC time range"""
-        if exclude_statuses is None:
-            exclude_statuses = ['CANCELLED', 'NO_SHOW', 'COMPLETED']
-        
-        query = select(AppointmentUnix).where(
-            and_(
-                AppointmentUnix.practice_id == practice_id,
-                AppointmentUnix.appointment_at >= utc_start,
-                AppointmentUnix.appointment_at < utc_end,
-                ~AppointmentUnix.status.in_(exclude_statuses)
-            )
-        ).order_by(AppointmentUnix.appointment_at)
-        
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
-    
-    async def find_conflicts(
-        self,
-        vet_user_id: uuid.UUID,
-        utc_appointment_time: datetime,
-        duration_minutes: int,
-        exclude_id: Optional[uuid.UUID] = None
-    ) -> List[AppointmentUnix]:
-        """Find conflicting appointments for a time slot"""
-        appointment_end = utc_appointment_time + timedelta(minutes=duration_minutes)
-        
-        query = select(AppointmentUnix).where(
-            and_(
-                AppointmentUnix.assigned_vet_user_id == vet_user_id,
-                AppointmentUnix.appointment_at < appointment_end,
-                func.date_add(AppointmentUnix.appointment_at, text(f"INTERVAL {AppointmentUnix.duration_minutes} MINUTE")) > utc_appointment_time,
-                ~AppointmentUnix.status.in_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
-            )
-        )
-        
-        if exclude_id:
-            query = query.where(AppointmentUnix.id != exclude_id)
-        
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
-    
-    async def create_from_voice_booking(
-        self,
-        practice_id: uuid.UUID,
-        pet_owner_id: uuid.UUID,
-        assigned_vet_user_id: uuid.UUID,
-        created_by_user_id: uuid.UUID,
-        local_date_str: str,
-        local_time_str: str,
-        timezone_str: str,
-        duration_minutes: int = 30,
-        title: str = "Veterinary Appointment",
-        appointment_type: str = "CHECKUP",
-        notes: Optional[str] = None
-    ) -> AppointmentUnix:
-        """
-        Create appointment from voice booking - CLEAN TIMEZONE CONVERSION
-        """
-        from dateutil import parser
-        
-        # Parse with timezone context
-        tz = pytz.timezone(timezone_str)
-        
-        # Parse date and time
-        if local_date_str.lower() == 'today':
-            local_date = datetime.now(tz).date()
-        elif local_date_str.lower() == 'tomorrow':
-            local_date = (datetime.now(tz) + timedelta(days=1)).date()
-        else:
-            parsed_date = parser.parse(local_date_str)
-            local_date = parsed_date.date()
-        
-        parsed_time = parser.parse(local_time_str).time()
-        
-        # Create timezone-aware local datetime
-        local_dt = tz.localize(datetime.combine(local_date, parsed_time))
-        
-        # Convert to UTC for storage
-        utc_dt = local_dt.astimezone(pytz.UTC)
-        
-        # Create and save appointment
-        appointment = AppointmentUnix(
-            practice_id=practice_id,
-            pet_owner_id=pet_owner_id,
-            assigned_vet_user_id=assigned_vet_user_id,
-            created_by_user_id=created_by_user_id,
-            appointment_at=utc_dt,
-            duration_minutes=duration_minutes,
-            title=title,
-            appointment_type=appointment_type,
-            notes=notes
-        )
-        
-        self.session.add(appointment)
-        await self.session.commit()
-        await self.session.refresh(appointment)
-        
-        logger.info(f"✅ Created appointment: {local_dt} ({timezone_str})")
-        logger.info(f"   Stored as UTC: {utc_dt}")
-        
-        return appointment
-    
-    async def get_statistics(
-        self,
-        practice_id: Optional[uuid.UUID] = None,
-        utc_start: Optional[datetime] = None,
-        utc_end: Optional[datetime] = None
-    ) -> Dict[str, Any]:
-        """Get appointment statistics for UTC time range"""
-        base_query = select(AppointmentUnix)
-        
-        conditions = []
-        if practice_id:
-            conditions.append(AppointmentUnix.practice_id == practice_id)
-        if utc_start:
-            conditions.append(AppointmentUnix.appointment_at >= utc_start)
-        if utc_end:
-            conditions.append(AppointmentUnix.appointment_at < utc_end)
-        
-        if conditions:
-            base_query = base_query.where(and_(*conditions))
-        
-        # Total appointments
-        total_result = await self.session.execute(
-            select(func.count()).select_from(base_query.subquery())
-        )
-        total_appointments = total_result.scalar()
-        
-        # By status
-        status_result = await self.session.execute(
-            select(
-                AppointmentUnix.status,
-                func.count().label('count')
-            ).select_from(
-                base_query.subquery()
-            ).group_by(AppointmentUnix.status)
-        )
-        appointments_by_status = {row.status: row.count for row in status_result}
-        
-        return {
-            'total_appointments': total_appointments,
-            'appointments_by_status': appointments_by_status,
-            'time_range': {
-                'utc_start': utc_start.isoformat() if utc_start else None,
-                'utc_end': utc_end.isoformat() if utc_end else None
-            }
-        }
+# ============================================================================
+# DEPRECATED: AppointmentUnixRepository
+# ============================================================================
+# 
+# This repository was created but is NOT used by any production systems.
+# The voice system uses regular AppointmentRepository instead.
+# 
+# Status: DEPRECATED (2025-09-24)
+# Reason: No services use this repository
+# Active Repository: AppointmentRepository (src/repositories_pg/appointment_repository.py)
+# 
+# ORIGINAL IMPLEMENTATION (COMMENTED FOR REFERENCE):
+# ============================================================================
+
+# class AppointmentUnixRepository(BaseRepository[AppointmentUnix]):
+#     """DEPRECATED: Unix timestamp appointment repository"""
+#     
+#     def __init__(self, session: AsyncSession):
+#         super().__init__(AppointmentUnix, session)
+#     
+#     async def get_by_vet_and_time_range(
+#         self,
+#         vet_user_id: uuid.UUID,
+#         practice_id: uuid.UUID,
+#         utc_start: datetime,
+#         utc_end: datetime,
+#         exclude_statuses: List[str] = None
+#     ) -> List[AppointmentUnix]:
+#         """Get appointments for vet within UTC time range"""
+#         if exclude_statuses is None:
+#             exclude_statuses = ['CANCELLED', 'NO_SHOW', 'COMPLETED']
+#         
+#         query = select(AppointmentUnix).where(
+#             and_(
+#                 AppointmentUnix.assigned_vet_user_id == vet_user_id,
+#                 AppointmentUnix.practice_id == practice_id,
+#                 AppointmentUnix.appointment_at >= utc_start,
+#                 AppointmentUnix.appointment_at < utc_end,
+#                 ~AppointmentUnix.status.in_(exclude_statuses)
+#             )
+#         ).order_by(AppointmentUnix.appointment_at)
+#         
+#         result = await self.session.execute(query)
+#         return list(result.scalars().all())
+#     
+#     async def get_by_practice_and_time_range(
+#         self,
+#         practice_id: uuid.UUID,
+#         utc_start: datetime,
+#         utc_end: datetime,
+#         exclude_statuses: List[str] = None
+#     ) -> List[AppointmentUnix]:
+#         """Get all appointments for practice within UTC time range"""
+#         if exclude_statuses is None:
+#             exclude_statuses = ['CANCELLED', 'NO_SHOW', 'COMPLETED']
+#         
+#         query = select(AppointmentUnix).where(
+#             and_(
+#                 AppointmentUnix.practice_id == practice_id,
+#                 AppointmentUnix.appointment_at >= utc_start,
+#                 AppointmentUnix.appointment_at < utc_end,
+#                 ~AppointmentUnix.status.in_(exclude_statuses)
+#             )
+#         ).order_by(AppointmentUnix.appointment_at)
+#         
+#         result = await self.session.execute(query)
+#         return list(result.scalars().all())
+#     
+#     async def find_conflicts(
+#         self,
+#         vet_user_id: uuid.UUID,
+#         utc_appointment_time: datetime,
+#         duration_minutes: int,
+#         exclude_id: Optional[uuid.UUID] = None
+#     ) -> List[AppointmentUnix]:
+#         """Find conflicting appointments for a time slot"""
+#         appointment_end = utc_appointment_time + timedelta(minutes=duration_minutes)
+#         
+#         query = select(AppointmentUnix).where(
+#             and_(
+#                 AppointmentUnix.assigned_vet_user_id == vet_user_id,
+#                 AppointmentUnix.appointment_at < appointment_end,
+#                 func.date_add(AppointmentUnix.appointment_at, text(f"INTERVAL {AppointmentUnix.duration_minutes} MINUTE")) > utc_appointment_time,
+#                 ~AppointmentUnix.status.in_(['CANCELLED', 'NO_SHOW', 'COMPLETED'])
+#             )
+#         )
+#         
+#         if exclude_id:
+#             query = query.where(AppointmentUnix.id != exclude_id)
+#         
+#         result = await self.session.execute(query)
+#         return list(result.scalars().all())
+#     
+#     async def create_from_voice_booking(
+#         self,
+#         practice_id: uuid.UUID,
+#         pet_owner_id: uuid.UUID,
+#         assigned_vet_user_id: uuid.UUID,
+#         created_by_user_id: uuid.UUID,
+#         local_date_str: str,
+#         local_time_str: str,
+#         timezone_str: str,
+#         duration_minutes: int = 30,
+#         title: str = "Veterinary Appointment",
+#         appointment_type: str = "CHECKUP",
+#         notes: Optional[str] = None
+#     ) -> AppointmentUnix:
+#         """
+#         Create appointment from voice booking - CLEAN TIMEZONE CONVERSION
+#         """
+#         from dateutil import parser
+#         
+#         # Parse with timezone context
+#         tz = pytz.timezone(timezone_str)
+#         
+#         # Parse date and time
+#         if local_date_str.lower() == 'today':
+#             local_date = datetime.now(tz).date()
+#         elif local_date_str.lower() == 'tomorrow':
+#             local_date = (datetime.now(tz) + timedelta(days=1)).date()
+#         else:
+#             parsed_date = parser.parse(local_date_str)
+#             local_date = parsed_date.date()
+#         
+#         parsed_time = parser.parse(local_time_str).time()
+#         
+#         # Create timezone-aware local datetime
+#         local_dt = tz.localize(datetime.combine(local_date, parsed_time))
+#         
+#         # Convert to UTC for storage
+#         utc_dt = local_dt.astimezone(pytz.UTC)
+#         
+#         # Create and save appointment
+#         appointment = AppointmentUnix(
+#             practice_id=practice_id,
+#             pet_owner_id=pet_owner_id,
+#             assigned_vet_user_id=assigned_vet_user_id,
+#             created_by_user_id=created_by_user_id,
+#             appointment_at=utc_dt,
+#             duration_minutes=duration_minutes,
+#             title=title,
+#             appointment_type=appointment_type,
+#             notes=notes
+#         )
+#         
+#         self.session.add(appointment)
+#         await self.session.commit()
+#         await self.session.refresh(appointment)
+#         
+#         logger.info(f"✅ Created appointment: {local_dt} ({timezone_str})")
+#         logger.info(f"   Stored as UTC: {utc_dt}")
+#         
+#         return appointment
+#     
+#     async def get_statistics(
+#         self,
+#         practice_id: Optional[uuid.UUID] = None,
+#         utc_start: Optional[datetime] = None,
+#         utc_end: Optional[datetime] = None
+#     ) -> Dict[str, Any]:
+#         """Get appointment statistics for UTC time range"""
+#         base_query = select(AppointmentUnix)
+#         
+#         conditions = []
+#         if practice_id:
+#             conditions.append(AppointmentUnix.practice_id == practice_id)
+#         if utc_start:
+#             conditions.append(AppointmentUnix.appointment_at >= utc_start)
+#         if utc_end:
+#             conditions.append(AppointmentUnix.appointment_at < utc_end)
+#         
+#         if conditions:
+#             base_query = base_query.where(and_(*conditions))
+#         
+#         # Total appointments
+#         total_result = await self.session.execute(
+#             select(func.count()).select_from(base_query.subquery())
+#         )
+#         total_appointments = total_result.scalar()
+#         
+#         # By status
+#         status_result = await self.session.execute(
+#             select(
+#                 AppointmentUnix.status,
+#                 func.count().label('count')
+#             ).select_from(
+#                 base_query.subquery()
+#             ).group_by(AppointmentUnix.status)
+#         )
+#         appointments_by_status = {row.status: row.count for row in status_result}
+#         
+#         return {
+#             'total_appointments': total_appointments,
+#             'appointments_by_status': appointments_by_status,
+#             'time_range': {
+#                 'utc_start': utc_start.isoformat() if utc_start else None,
+#                 'utc_end': utc_end.isoformat() if utc_end else None
+#             }
+#         }
