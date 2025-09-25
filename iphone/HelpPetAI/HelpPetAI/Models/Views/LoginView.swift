@@ -9,6 +9,7 @@ struct LoginView: View {
     @State private var loginAttempted = false
     @State private var errorMessage = ""
     @State private var showError = false
+    @State private var showingSignUp = false
     
     var body: some View {
         NavigationView {
@@ -100,6 +101,21 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, 40)
                 
+                // Sign Up Link
+                VStack(spacing: 16) {
+                    HStack {
+                        Text("New to HelpPetAI?")
+                            .foregroundColor(.secondary)
+                        
+                        Button("Sign Up") {
+                            showingSignUp = true
+                        }
+                        .foregroundColor(.blue)
+                        .fontWeight(.medium)
+                    }
+                }
+                .padding(.top, 32)
+                
                 Spacer()
                 
             }
@@ -110,6 +126,15 @@ struct LoginView: View {
             } message: {
                 Text(errorMessage)
             }
+        .background(
+            NavigationLink(
+                destination: SignUpView(),
+                isActive: $showingSignUp
+            ) {
+                EmptyView()
+            }
+            .hidden()
+        )
         }
     }
     

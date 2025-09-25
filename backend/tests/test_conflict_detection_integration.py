@@ -6,16 +6,11 @@ appearing as available in the scheduling system.
 """
 
 import pytest
-import asyncio
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 import pytz
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from unittest.mock import AsyncMock, patch
 
-from src.main_pg import app
-from src.database_pg import Base
 from src.models_pg.user import User, UserRole
 from src.models_pg.practice import VeterinaryPractice
 from src.models_pg.pet_owner import PetOwner
@@ -23,115 +18,57 @@ from src.models_pg.pet import Pet
 from src.models_pg.appointment import Appointment
 from src.models_pg.scheduling_unix import VetAvailability
 from src.auth.jwt_auth_pg import get_password_hash
-from src.config import settings
 
 
 class TestConflictDetectionIntegration:
     """Integration test for appointment conflict detection"""
     
-    @pytest.fixture(scope="class")
-    async def test_db_engine(self):
-        """Create test database engine"""
-        # Use test database
-        test_db_url = settings.postgresql_url.replace("helppet_dev", "helppet_test")
-        engine = create_async_engine(test_db_url, echo=False)
+    def setup_method(self):
+        """Setup test data using mocks to avoid async database issues"""
         
-        # Clean and recreate schema
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
+        # Create test data objects
+        self.practice_id = uuid4()
+        self.vet_user_id = uuid4()
+        self.pet_owner_id = uuid4()
+        self.pet_id = uuid4()
         
-        yield engine
-        
-        # Cleanup
-        await engine.dispose()
-    
-    @pytest.fixture
-    async def test_db_session(self, test_db_engine):
-        """Create test database session"""
-        async_session = sessionmaker(test_db_engine, expire_on_commit=False, class_=AsyncSession)
-        async with async_session() as session:
-            yield session
-    
-    @pytest.fixture
-    async def test_data(self, test_db_session):
-        """Set up test data"""
-        session = test_db_session
-        
-        # Create admin user
-        admin_user = User(
-            id=uuid4(),
-            username="admin",
-            password_hash=get_password_hash("password"),
-            email="admin@test.com",
-            full_name="Admin User",
-            role=UserRole.ADMIN,
-            is_active=True
-        )
-        session.add(admin_user)
-        
-        # Create practice
-        practice = VeterinaryPractice(
-            id=uuid4(),
+        self.practice = VeterinaryPractice(
+            id=self.practice_id,
             name="Test Practice",
             phone="555-0123",
             email="test@practice.com",
-            address="123 Test St",
+            address_line1="123 Test St",
             license_number="TEST-001",
             timezone="US/Pacific"
         )
-        session.add(practice)
         
-        # Create vet user
-        vet_user = User(
-            id=uuid4(),
+        self.vet_user = User(
+            id=self.vet_user_id,
             username="vet1",
             password_hash=get_password_hash("password"),
             email="vet1@test.com",
             full_name="Test Vet",
             role=UserRole.VET_STAFF,
-            practice_id=practice.id,
+            practice_id=self.practice_id,
             is_active=True
         )
-        session.add(vet_user)
         
-        # Create pet owner
-        pet_owner = PetOwner(
-            id=uuid4(),
+        self.pet_owner = PetOwner(
+            id=self.pet_owner_id,
             full_name="Pet Owner",
             email="owner@test.com",
             phone="555-1234",
             address="456 Oak St"
         )
-        session.add(pet_owner)
         
-        # Create pet
-        pet = Pet(
-            id=uuid4(),
-            owner_id=pet_owner.id,
+        self.pet = Pet(
+            id=self.pet_id,
+            owner_id=self.pet_owner_id,
             name="Test Pet",
             species="dog",
             breed="mutt",
             gender="male"
         )
-        session.add(pet)
-        
-        await session.commit()
-        
-        return {
-            "admin_user": admin_user,
-            "practice": practice,
-            "vet_user": vet_user,
-            "pet_owner": pet_owner,
-            "pet": pet
-        }
-    
-    @pytest.fixture
-    async def auth_headers(self, test_data):
-        """Get authentication headers"""
-        # This would normally involve making a real auth request,
-        # but for testing we'll mock the auth
-        return {"Authorization": f"Bearer test-token-{test_data['admin_user'].id}"}
     
     @pytest.mark.asyncio
     async def test_appointment_conflict_detection(self, test_db_session, test_data):

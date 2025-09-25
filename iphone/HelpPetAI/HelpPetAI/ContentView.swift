@@ -198,13 +198,19 @@ struct ContentView: View {
     var body: some View {
         Group {
             if apiManager.isAuthenticated {
-                MainContainerView()
+                AuthenticatedContentView()
+                    .onAppear {
+                        print("🔐 ContentView: User is authenticated, showing AuthenticatedContentView")
+                    }
                     .task {
                         // Initialize push notifications after successful login
                         await pushNotificationService.initializeForAuthenticatedUser()
                     }
             } else {
                 LoginView()
+                    .onAppear {
+                        print("🔐 ContentView: User is NOT authenticated, showing LoginView")
+                    }
                     .task {
                         // Unregister push notifications on logout
                         await pushNotificationService.unregisterForLogout()
@@ -212,6 +218,56 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: apiManager.isAuthenticated)
+    }
+}
+
+struct AuthenticatedContentView: View {
+    @StateObject private var apiManager = APIManager.shared
+    @State private var showingPracticeSelection = false
+    
+    var body: some View {
+        Group {
+            if let currentUser = apiManager.currentUser {
+                if currentUser.practiceId == nil {
+                    // User is authenticated but has no practice association
+                    PracticeSelectionView()
+                        .navigationBarHidden(true)
+                        .onAppear {
+                            print("🏥 AuthenticatedContentView: Showing PracticeSelectionView for user \(currentUser.username) (no practice)")
+                        }
+                } else {
+                    // User has practice association, show main app
+                    MainContainerView()
+                        .onAppear {
+                            print("🏥 AuthenticatedContentView: Showing MainContainerView for user \(currentUser.username) (practice: \(currentUser.practiceId!))")
+                        }
+                }
+            } else {
+                // Still loading user data, show loading
+                VStack {
+                    ProgressView()
+                    Text("Loading...")
+                        .padding(.top, 8)
+                }
+                .onAppear {
+                    print("🏥 AuthenticatedContentView: No currentUser, showing loading...")
+                }
+                .task {
+                    // Fetch current user data to check practice association
+                    await loadCurrentUser()
+                }
+            }
+        }
+    }
+    
+    private func loadCurrentUser() async {
+        do {
+            _ = try await apiManager.getCurrentUser()
+            print("✅ User data loaded successfully")
+        } catch {
+            print("❌ Failed to load user data: \(error)")
+            // If we can't load user data, APIManager will handle logout
+        }
     }
 }
 

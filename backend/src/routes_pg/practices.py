@@ -141,9 +141,9 @@ async def get_practice(
 async def create_practice(
     practice_data: PracticeCreate,
     session: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(require_admin())
+    current_user: User = Depends(get_current_user)
 ) -> PracticeResponse:
-    """Create a new practice (admin only)"""
+    """Create a new practice (authenticated users only)"""
     
     practice_repo = PracticeRepository(session)
     

@@ -248,11 +248,15 @@ class APIManager: ObservableObject {
     }
     
     func logout() {
+        print("🔓 APIManager.logout(): Starting logout process...")
         KeychainManager.shared.deleteAccessToken()
+        print("🔓 APIManager.logout(): Access token deleted from keychain")
         
         DispatchQueue.main.async {
+            print("🔓 APIManager.logout(): Setting isAuthenticated = false, currentUser = nil")
             self.isAuthenticated = false
             self.currentUser = nil
+            print("🔓 APIManager.logout(): Logout completed - should trigger ContentView to show LoginView")
         }
     }
     
@@ -2053,6 +2057,259 @@ extension APIManager {
         
         return try decoder.decode([DeviceTokenResponse].self, from: data)
     }
+    
+    // MARK: - Authentication Methods
+    
+    func signUp(username: String, password: String, email: String, fullName: String, role: String) async -> Bool {
+        do {
+            let url = URL(string: "\(baseURL)/api/v1/auth/signup")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let signUpData = [
+                "username": username,
+                "password": password,
+                "email": email,
+                "full_name": fullName,
+                "role": role
+            ]
+            
+            request.httpBody = try JSONEncoder().encode(signUpData)
+            
+            print("🔍 SIGNUP REQUEST:")
+            print("🔍 URL: \(url.absoluteString)")
+            print("🔍 Username: \(username)")
+            print("🔍 Email: \(email)")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ SIGNUP: Invalid response type")
+                return false
+            }
+            
+            print("🔍 SIGNUP RESPONSE:")
+            print("🔍 Status Code: \(httpResponse.statusCode)")
+            
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Response Body: \(responseString)")
+            }
+            
+            if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
+                // Parse response to get auth token if provided
+                if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let token = jsonData["access_token"] as? String {
+                    await MainActor.run {
+                        KeychainManager.shared.saveAccessToken(token)
+                        UserDefaults.standard.set(username, forKey: "logged_in_username")
+                        self.isAuthenticated = true
+                        print("✅ Sign up successful, token saved")
+                    }
+                }
+                return true
+            } else {
+                print("❌ Sign up failed with status: \(httpResponse.statusCode)")
+                return false
+            }
+        } catch {
+            print("❌ Sign up error: \(error)")
+            return false
+        }
+    }
+    
+    // MARK: - Practice Management Methods
+    
+        func searchPractices(query: String) async -> [PracticeSearchResult] {
+        do {
+            // Use the actual backend endpoint: /api/v1/practices/ with filters
+            let url = URL(string: "\(baseURL)/api/v1/practices/?active_only=true&accepting_patients=false")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            print("🔍 SEARCH PRACTICES REQUEST:")
+            print("🔍 URL: \(url.absoluteString)")
+            print("🔍 Query: \(query)")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ SEARCH PRACTICES: Invalid response type")
+                return []
+            }
+            
+            print("🔍 SEARCH PRACTICES RESPONSE:")
+            print("🔍 Status Code: \(httpResponse.statusCode)")
+            
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Response Body: \(responseString)")
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                print("❌ Search practices failed with status: \(httpResponse.statusCode)")
+                return []
+            }
+            
+            // Parse the response - assuming it returns an array of practices directly
+            if let practicesArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                let allPractices = practicesArray.compactMap { practiceDict -> PracticeSearchResult? in
+                    guard let uuid = practiceDict["uuid"] as? String,
+                          let name = practiceDict["name"] as? String else {
+                        return nil
+                    }
+                    
+                    return PracticeSearchResult(
+                        id: uuid,
+                        name: name,
+                        address: practiceDict["address"] as? String,
+                        phone: practiceDict["phone"] as? String,
+                        email: practiceDict["email"] as? String
+                    )
+                }
+                
+                // Filter practices by name matching the query (client-side filtering)
+                let filteredPractices = allPractices.filter { practice in
+                    practice.name.localizedCaseInsensitiveContains(query) ||
+                    (practice.address?.localizedCaseInsensitiveContains(query) ?? false)
+                }
+                
+                print("✅ Found \(filteredPractices.count) practices matching '\(query)' out of \(allPractices.count) total")
+                return filteredPractices
+            }
+            
+            return []
+        } catch {
+            print("❌ Search practices error: \(error)")
+            return []
+        }
+    }
+    
+    func joinPractice(practiceId: String) async -> Bool {
+        do {
+            let url = URL(string: "\(baseURL)/api/v1/auth/me/practice")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let practiceAssociation = [
+                "practice_id": practiceId
+            ]
+            
+            request.httpBody = try JSONEncoder().encode(practiceAssociation)
+            
+            print("🔍 JOIN PRACTICE REQUEST:")
+            print("🔍 URL: \(url.absoluteString)")
+            print("🔍 Practice ID: \(practiceId)")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ JOIN PRACTICE: Invalid response type")
+                return false
+            }
+            
+            print("🔍 JOIN PRACTICE RESPONSE:")
+            print("🔍 Status Code: \(httpResponse.statusCode)")
+            
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Response Body: \(responseString)")
+            }
+            
+            if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
+                print("✅ Successfully joined practice")
+                
+                // Update current user data to reflect the practice association
+                do {
+                    _ = try await getCurrentUser()
+                } catch {
+                    print("⚠️ Failed to refresh user data after joining practice: \(error)")
+                }
+                
+                return true
+            } else if httpResponse.statusCode == 401 {
+                await MainActor.run {
+                    self.logout()
+                }
+                return false
+            } else {
+                print("❌ Join practice failed with status: \(httpResponse.statusCode)")
+                return false
+            }
+        } catch {
+            print("❌ Join practice error: \(error)")
+            return false
+        }
+    }
+    
+    func createPractice(practiceData: CreatePracticeRequest) async -> Bool {
+        do {
+            let url = URL(string: "\(baseURL)/api/v1/practices/")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let encoder = JSONEncoder()
+            encoder.keyEncodingStrategy = .convertToSnakeCase
+            request.httpBody = try encoder.encode(practiceData)
+            
+            print("🔍 CREATE PRACTICE REQUEST:")
+            print("🔍 URL: \(url.absoluteString)")
+            print("🔍 Practice Name: \(practiceData.name)")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ CREATE PRACTICE: Invalid response type")
+                return false
+            }
+            
+            print("🔍 CREATE PRACTICE RESPONSE:")
+            print("🔍 Status Code: \(httpResponse.statusCode)")
+            
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Response Body: \(responseString)")
+            }
+            
+            if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
+                print("✅ Successfully created practice")
+                
+                // Parse the response to get the practice UUID
+                if let responseData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let practiceUUID = responseData["uuid"] as? String {
+                    print("🏥 Created practice with UUID: \(practiceUUID)")
+                    
+                    // Associate the user with the newly created practice
+                    let associationSuccess = await joinPractice(practiceId: practiceUUID)
+                    if associationSuccess {
+                        print("✅ Successfully associated user with created practice")
+                        return true
+                    } else {
+                        print("❌ Failed to associate user with created practice")
+                        return false
+                    }
+                } else {
+                    print("❌ Failed to parse practice UUID from response")
+                    return false
+                }
+                
+                return true
+            } else if httpResponse.statusCode == 401 {
+                await MainActor.run {
+                    self.logout()
+                }
+                return false
+            } else {
+                print("❌ Create practice failed with status: \(httpResponse.statusCode)")
+                return false
+            }
+        } catch {
+            print("❌ Create practice error: \(error)")
+            return false
+        }
+    }
 
     // MARK: - Legacy v1.0 methods removed
     // These methods have been replaced with v2.0 visit-transcript based methods:
@@ -2069,6 +2326,34 @@ extension APIManager {
 // - DashboardResponse: Models/Appointment.swift  
 // - MedicalRecordsResponse: Models/MedicalRecord.swift
 // - VisitTranscript, AudioUploadResponse, etc.: Models/AudioModels.swift
+
+// MARK: - Practice Management Models
+
+struct PracticeSearchResult: Codable, Identifiable {
+    let id: String
+    let name: String
+    let address: String?
+    let phone: String?
+    let email: String?
+}
+
+struct CreatePracticeRequest: Codable {
+    let name: String
+    let address: String?  // Backend expects this in address field
+    let phone: String?
+    let email: String?
+    let website: String?
+    let licenseNumber: String?
+    let specialties: [String]
+    let description: String?
+    let acceptsNewPatients: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case name, address, phone, email, website, description, specialties
+        case licenseNumber = "license_number" 
+        case acceptsNewPatients = "accepts_new_patients"
+    }
+}
 
 // MARK: - APIError Extension
 // Note: APIError cases are now defined in APIError.swift
