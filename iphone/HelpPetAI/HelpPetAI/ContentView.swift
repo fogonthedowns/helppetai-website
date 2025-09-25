@@ -193,13 +193,22 @@ struct MainContainerView: View {
 
 struct ContentView: View {
     @StateObject private var apiManager = APIManager.shared
+    @StateObject private var pushNotificationService = PushNotificationService.shared
     
     var body: some View {
         Group {
             if apiManager.isAuthenticated {
                 MainContainerView()
+                    .task {
+                        // Initialize push notifications after successful login
+                        await pushNotificationService.initializeForAuthenticatedUser()
+                    }
             } else {
                 LoginView()
+                    .task {
+                        // Unregister push notifications on logout
+                        await pushNotificationService.unregisterForLogout()
+                    }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: apiManager.isAuthenticated)

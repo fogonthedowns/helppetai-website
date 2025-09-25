@@ -16,7 +16,6 @@ help:
 	@echo "  make run-test       - Run server with test DB (local)"
 	@echo "  make install        - Install dependencies"
 	@echo "  make test           - Run unit tests + conflict test + curl integration tests"
-	@echo "  make test-conflict  - Run conflict detection test only"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make build          - Build Docker image"
@@ -56,9 +55,6 @@ test:
 	@echo "🧪 Running curl integration tests..."
 	bash scripts/run_curls.sh
 
-test-conflict:
-	@echo "🎯 Running conflict detection test specifically..."
-	pytest tests/test_conflict_detection_integration.py -v -s
 
 .PHONY: run-test
 run-test:
@@ -307,7 +303,7 @@ update-service: build-prod push-image
 	    --execution-role-arn "$(EXEC_ROLE_ARN)" \
 	    --task-role-arn "$(TASK_ROLE_ARN)" \
 	    --cpu $(TASK_CPU) --memory $(TASK_MEMORY) \
-	    --container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"},{"name":"RETELL_API_KEY","value":"$(RETELL_API_KEY)"}],"secrets":[{"name":"RDS_PASSWORD","valueFrom":"$(SECRETS_ARN)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
+		--container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"},{"name":"RETELL_API_KEY","value":"$(RETELL_API_KEY)"},{"name":"APNS_KEY_PATH","value":"/app/keys/AuthKey_M8A86NFUK4.p8"},{"name":"APNS_KEY_ID","value":"M8A86NFUK4"},{"name":"APNS_TEAM_ID","value":"6QH7LZMFLB"},{"name":"APNS_BUNDLE_ID","value":"ai.helppet.HelpPetAI"},{"name":"APNS_USE_SANDBOX","value":"false"}],"secrets":[{"name":"RDS_PASSWORD","valueFrom":"$(SECRETS_ARN)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
 	    --query 'taskDefinition.taskDefinitionArn' \
 	    --output text))
 	@echo "✅ New task-definition: $(TASK_DEF_ARN)"

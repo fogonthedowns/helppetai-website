@@ -127,9 +127,6 @@ struct ScheduleEditingView: View {
                     Text(isToday ? "Today" : displayDateFormatter.string(from: selectedDate)).font(.headline).fontWeight(.medium)
                     Rectangle().fill(Color.orange).frame(height: 2).frame(width: 40)
                 }
-                if !isToday {
-                    Text("Tap to return to today").font(.caption2).foregroundColor(.secondary).onTapGesture { selectedDate = Date() }
-                }
             }
             .onTapGesture { tempSelectedDate = selectedDate; showDatePickerSheet = true }
             Spacer()

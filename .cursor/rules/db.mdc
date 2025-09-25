@@ -1,0 +1,28 @@
+---
+description: Database Migration Rules for HelpPetAI Backend
+globs:
+alwaysApply: true
+---
+## Database Workflow
+- **Deployment Process**: Use `make deploy` followed by `make migrate-production` 
+- **Local Testing**: Use `make migrate` for local database changes
+- **Migration Tool**: Always use Alembic for schema changes - never write raw SQL files
+- **Database Access**: Production DB is not reachable from local dev box - migrations must be tested locally first
+
+## Alembic Migration Best Practices
+
+### Creating Migrations
+1. **Always use Alembic**: `alembic revision -m "descriptive_message"`
+2. **Test locally first**: Run `make migrate` to test the migration on local DB
+3. **Check for head conflicts**: Alembic head often gets mixed up with multiple developers
+4. **Verify migration files**: Double-check that migration files are "kosher" before deployment
+
+### Head Management 
+- **Check for duplicates**: If you get "Multiple head revisions" error, look for duplicate files in `alembic/versions/`
+- **Single revision ID**: Each migration must have a unique revision ID - no duplicates allowed
+- **Linear history**: Keep migration history linear - avoid branches when possible
+
+### File Management
+- **Naming convention**: Use descriptive names like `drop_unused_tables_appointments_unix_and_vet_availability.py`
+- **No orphaned files**: When renaming migrations, delete the old file to avoid duplicate revision IDs
+- **Clean up**: Remove any test/temporary migration files before deployment

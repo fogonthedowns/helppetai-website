@@ -476,6 +476,26 @@ struct DashboardView: View {
                 resetErrorStates()
                 completionStatusTask?.cancel() // Cancel any running completion status task
             }
+            .onReceive(NotificationCenter.default.publisher(for: .appointmentBookedNotification)) { notification in
+                // Handle appointment booked notification - refresh dashboard
+                if let notificationData = notification.object as? NotificationData {
+                    print("📅 Dashboard received appointment notification: \(notificationData.petName)")
+                    Task {
+                        await loadDashboard()
+                    }
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .navigateToAppointmentNotification)) { notification in
+                // Handle navigation to specific appointment
+                if let appointmentId = notification.object as? String {
+                    print("🔗 Dashboard navigating to appointment: \(appointmentId)")
+                    // Find and select the appointment if it's in today's list
+                    if let dashboard = dashboardData,
+                       let appointment = dashboard.appointmentsToday.first(where: { $0.id == appointmentId }) {
+                        selectedAppointment = appointment
+                    }
+                }
+            }
         }
     }
     
@@ -505,15 +525,6 @@ struct DashboardView: View {
                         .fill(Color.blue)
                         .frame(height: 2)
                         .frame(width: 40)
-                }
-                
-                if !isToday {
-                    Text("Tap to return to today")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .onTapGesture {
-                            navigateToDate(Date())
-                        }
                 }
             }
             .onTapGesture {

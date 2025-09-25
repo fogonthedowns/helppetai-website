@@ -1,6 +1,6 @@
 curl -X POST https://api.helppet.ai/api/v1/webhook/phone \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqd2FkZSIsImV4cCI6MTc1ODc2NTE3Mn0.id6WkAUI3g3It33lqB6b_4d4cur8izCJm2_MCsVvx7M" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqd2FkZSIsImV4cCI6MTc1ODc5NzUwN30.5IEChGWZsuxBCjyCvx_w2UgXgA-X896WYFqIHZk0GEc" \
   -d '{
     "function_call": {
       "name": "get_first_available_flexible",

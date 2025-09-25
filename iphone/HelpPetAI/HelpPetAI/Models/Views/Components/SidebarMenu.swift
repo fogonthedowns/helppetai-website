@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SidebarMenu: View {
     @StateObject private var apiManager = APIManager.shared
+    @State private var showingNotificationSettings = false
     let onNavigateToAppointments: () -> Void
     let onNavigateToPetOwners: () -> Void
     let onNavigateToScheduleEditing: () -> Void
@@ -93,6 +94,16 @@ struct SidebarMenu: View {
                         onClose()
                     }
                 )
+                
+                // Notification Settings
+                MenuButton(
+                    icon: "bell",
+                    title: "Notifications",
+                    action: {
+                        showingNotificationSettings = true
+                        onClose()
+                    }
+                )
             }
             .padding(.top, 16)
             
@@ -131,6 +142,9 @@ struct SidebarMenu: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(.systemBackground))
+        .sheet(isPresented: $showingNotificationSettings) {
+            NotificationSettingsView()
+        }
     }
 }
 

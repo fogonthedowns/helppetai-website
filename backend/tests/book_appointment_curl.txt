@@ -1,0 +1,28 @@
+curl -X POST https://api.helppet.ai/api/v1/webhook/phone \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqd2FkZSIsImV4cCI6MTc1ODc5NzUwN30.5IEChGWZsuxBCjyCvx_w2UgXgA-X896WYFqIHZk0GEc" \
+  -d '{
+    "function_call": {
+      "name": "book_appointment",
+      "arguments": {
+        "pet_owner_id": "444cf6e3-4ee0-499e-9ced-d4e098fd1a21",
+        "practice_id": "934c57e7-4f9c-4d28-aa0f-3cb881e3c225",
+        "date": "2025-10-02",
+        "start_time": "11:00 AM",
+        "timezone": "US/Pacific",
+        "service": "General Checkup",
+        "pet_names": ["Amira", "Winston"],
+        "notes": "Test appointment via curl for push notification testing",
+        "assigned_vet_user_id": "e1e3991b-4efa-464b-9bae-f94c74d0a20f"
+      }
+    },
+    "call": {
+      "call_id": "test-call-push-notification",
+      "call_type": "web_call",
+      "agent_id": "test-agent-push",
+      "agent_version": 1,
+      "agent_name": "test-push-agent",
+      "call_status": "in_progress",
+      "start_timestamp": 1727202000
+    }
+  }'

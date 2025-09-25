@@ -21,6 +21,7 @@ from .contact_form import router as contact_form_router
 from .scheduling import router as scheduling_router
 from .call_analysis import router as call_analysis_router
 from .scheduling_unix import router as scheduling_unix_router
+from .device_tokens import router as device_tokens_router
 
 
 # Create main router
@@ -49,5 +50,6 @@ router.include_router(contact_form_router, prefix="/api/v1/vets", tags=["veterin
 router.include_router(scheduling_router, tags=["scheduling"])  # scheduling router already has prefix
 router.include_router(call_analysis_router, tags=["call-analysis"])  # call analysis router already has prefix
 router.include_router(scheduling_unix_router, tags=["scheduling-unix"])  # has /api/v1/scheduling-unix prefix
+router.include_router(device_tokens_router, prefix="/api/v1/device-tokens", tags=["push-notifications"])
 
 __all__ = ["router"]

@@ -1946,6 +1946,114 @@ extension APIManager {
         return try decoder.decode(CallDetailResponse.self, from: data)
     }
 
+    // MARK: - Push Notifications / Device Tokens
+    
+    func registerDeviceToken(_ request: DeviceTokenRegistrationRequest) async throws -> DeviceTokenResponse {
+        let url = URL(string: "\(baseURL)/api/v1/device-tokens/register")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        authHeaders.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
+        
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        urlRequest.httpBody = try encoder.encode(request)
+        
+        print("🔍 REGISTER DEVICE TOKEN REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Method: \(urlRequest.httpMethod ?? "nil")")
+        print("🔍 Headers: \(urlRequest.allHTTPHeaderFields ?? [:])")
+        
+        if let requestBody = urlRequest.httpBody,
+           let requestString = String(data: requestBody, encoding: .utf8) {
+            print("🔍 Request Body: \(requestString)")
+        }
+        
+        let (data, response) = try await session.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ REGISTER DEVICE TOKEN: Invalid response type")
+            throw APIError.invalidResponse
+        }
+        
+        print("🔍 REGISTER DEVICE TOKEN RESPONSE:")
+        print("🔍 Status Code: \(httpResponse.statusCode)")
+        
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("🔍 Response Body: \(responseString)")
+        }
+        
+        guard httpResponse.statusCode == 201 || httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 401 {
+                await MainActor.run {
+                    self.logout()
+                }
+                throw APIError.unauthorized
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode(DeviceTokenResponse.self, from: data)
+    }
+    
+    func unregisterDeviceToken(_ deviceToken: String) async throws {
+        let url = URL(string: "\(baseURL)/api/v1/device-tokens/unregister")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "DELETE"
+        authHeaders.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
+        
+        let body = ["device_token": deviceToken]
+        urlRequest.httpBody = try JSONEncoder().encode(body)
+        
+        print("🔍 UNREGISTER DEVICE TOKEN REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Device Token: \(deviceToken)")
+        
+        let (_, response) = try await session.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ UNREGISTER DEVICE TOKEN: Invalid response type")
+            throw APIError.invalidResponse
+        }
+        
+        print("🔍 UNREGISTER DEVICE TOKEN RESPONSE:")
+        print("🔍 Status Code: \(httpResponse.statusCode)")
+        
+        guard httpResponse.statusCode == 204 || httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 401 {
+                await MainActor.run {
+                    self.logout()
+                }
+                throw APIError.unauthorized
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+    }
+    
+    func getMyDeviceTokens() async throws -> [DeviceTokenResponse] {
+        let url = URL(string: "\(baseURL)/api/v1/device-tokens/")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 401 {
+                await MainActor.run {
+                    self.logout()
+                }
+                throw APIError.unauthorized
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode([DeviceTokenResponse].self, from: data)
+    }
+
     // MARK: - Legacy v1.0 methods removed
     // These methods have been replaced with v2.0 visit-transcript based methods:
     // - getRecordingDetails() -> Use getVisitTranscripts()

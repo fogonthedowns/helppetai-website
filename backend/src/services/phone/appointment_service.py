@@ -252,6 +252,30 @@ class AppointmentService:
             
             logger.info(f"✅ Appointment created: {appointment.id}")
             
+            # Send push notification to iOS app
+            try:
+                from ...services.push_notification_service import get_push_notification_service
+                
+                # Fetch the practice for the notification
+                practice = await self.practice_repo.get_by_id(practice_uuid)
+                
+                push_service = get_push_notification_service()
+                notification_sent = await push_service.send_appointment_booked_notification(
+                    appointment=appointment,
+                    pet_owner=pet_owner,
+                    practice=practice,
+                    db_session=self.db
+                )
+                
+                if notification_sent:
+                    logger.info(f"📱 Push notification sent for appointment {appointment.id}")
+                else:
+                    logger.info(f"📱 No push notification sent for appointment {appointment.id} (no device tokens)")
+                    
+            except Exception as e:
+                logger.error(f"❌ Failed to send push notification for appointment {appointment.id}: {e}")
+                # Don't fail the booking if notification fails
+            
             return {
                 "success": True,
                 "appointment_id": str(appointment.id),
