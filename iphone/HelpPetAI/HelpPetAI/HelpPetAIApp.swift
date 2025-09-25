@@ -26,7 +26,8 @@ struct HelpPetAIApp: App {
                     MedicalRecordingManager.shared.scheduleBackgroundUpload()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                    // Check notification settings when app becomes active
+                    // Clear badge and check notification settings when app becomes active
+                    UIApplication.shared.applicationIconBadgeNumber = 0
                     pushNotificationService.checkNotificationSettings()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .appointmentBookedNotification)) { notification in

@@ -114,7 +114,7 @@ class PushNotificationService:
                         "title": "New Voice Appointment! 📞",
                         "body": f"{pet_owner.full_name} booked an appointment for {appointment_time}"
                     },
-                    "badge": 1,
+                    "badge": 0,  # Let iOS app manage badge count
                     "sound": "default",
                     "category": "VOICE_APPOINTMENT_BOOKED"
                 },
@@ -234,7 +234,7 @@ class PushNotificationService:
                         "title": f"Appointment Reminder 📅",
                         "body": f"Don't forget! Your appointment at {practice.name} is tomorrow at {appointment_time}"
                     },
-                    "badge": 1,
+                    "badge": 0,  # Let iOS app manage badge count
                     "sound": "default",
                     "category": "APPOINTMENT_REMINDER"
                 },
