@@ -52,6 +52,6 @@ router.include_router(scheduling_router, tags=["scheduling"])  # scheduling rout
 router.include_router(call_analysis_router, tags=["call-analysis"])  # call analysis router already has prefix
 router.include_router(scheduling_unix_router, tags=["scheduling-unix"])  # has /api/v1/scheduling-unix prefix
 router.include_router(device_tokens_router, prefix="/api/v1/device-tokens", tags=["push-notifications"])
-router.include_router(voice_agents_router, prefix="/api/v1/voice-agent/register", tags=["voice-agents"])
+router.include_router(voice_agents_router, prefix="/api/v1/practices", tags=["voice-agents"])
 
 __all__ = ["router"]

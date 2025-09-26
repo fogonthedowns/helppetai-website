@@ -1312,6 +1312,157 @@ class APIManager: ObservableObject {
         return try decoder.decode(Visit.self, from: data)
     }
     
+    // MARK: - Voice Agent Management
+    
+    func getVoiceAgent(practiceId: String) async throws -> VoiceAgentResponse {
+        let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)/voice-agent")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        if httpResponse.statusCode == 404 {
+            throw APIError.notFound
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode(VoiceAgentResponse.self, from: data)
+    }
+    
+    func createVoiceAgent(practiceId: String, request: VoiceAgentCreateRequest) async throws -> VoiceAgentResponse {
+        let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)/voice-agent")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        authHeaders.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
+        
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        urlRequest.httpBody = try encoder.encode(request)
+        
+        let (data, response) = try await session.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        return try decoder.decode(VoiceAgentResponse.self, from: data)
+    }
+    
+    func updateVoiceAgentPersonality(practiceId: String, personalityText: String) async throws -> VoiceAgentPersonalityResponse {
+        let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)/voice-agent/personality")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "PATCH"
+        authHeaders.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
+        
+        let requestBody = VoiceAgentPersonalityRequest(personalityText: personalityText)
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        urlRequest.httpBody = try encoder.encode(requestBody)
+        
+        print("🎭 PERSONALITY UPDATE REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Text length: \(personalityText.count) characters")
+        print("🔍 Text preview: \(String(personalityText.prefix(100)))...")
+        
+        let (data, response) = try await session.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        if httpResponse.statusCode != 200 {
+            print("❌ PERSONALITY UPDATE FAILED: Status \(httpResponse.statusCode)")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Error response: \(responseString)")
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        print("✅ PERSONALITY UPDATE SUCCESS")
+        return try decoder.decode(VoiceAgentPersonalityResponse.self, from: data)
+    }
+    
+    func getVoiceAgentNodeMessage(practiceId: String, nodeName: String) async throws -> VoiceAgentNodeMessageResponse {
+        let encodedNodeName = nodeName.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? nodeName
+        let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)/voice-agent/node/\(encodedNodeName)/message")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        print("🔍 GET NODE MESSAGE REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Node name: \(nodeName)")
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        if httpResponse.statusCode == 404 {
+            throw APIError.notFound
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            print("❌ GET NODE MESSAGE FAILED: Status \(httpResponse.statusCode)")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Error response: \(responseString)")
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        print("✅ GET NODE MESSAGE SUCCESS")
+        return try decoder.decode(VoiceAgentNodeMessageResponse.self, from: data)
+    }
+    
+    func updateVoiceAgentNodeMessage(practiceId: String, nodeName: String, messageText: String) async throws -> VoiceAgentPersonalityResponse {
+        let encodedNodeName = nodeName.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? nodeName
+        let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)/voice-agent/node/\(encodedNodeName)/message")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "PATCH"
+        authHeaders.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
+        
+        let requestBody = VoiceAgentPersonalityRequest(personalityText: messageText)
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        urlRequest.httpBody = try encoder.encode(requestBody)
+        
+        print("🎭 UPDATE NODE MESSAGE REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Node name: \(nodeName)")
+        print("🔍 Text length: \(messageText.count) characters")
+        print("🔍 Text preview: \(String(messageText.prefix(100)))...")
+        
+        let (data, response) = try await session.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        if httpResponse.statusCode != 200 {
+            print("❌ UPDATE NODE MESSAGE FAILED: Status \(httpResponse.statusCode)")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Error response: \(responseString)")
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        print("✅ UPDATE NODE MESSAGE SUCCESS")
+        return try decoder.decode(VoiceAgentPersonalityResponse.self, from: data)
+    }
+    
     func updateVisit(visitId: String, request: UpdateVisitRequest) async throws -> Visit {
         let url = URL(string: "\(baseURL)/api/v1/visits/\(visitId)")!
         var urlRequest = URLRequest(url: url)
@@ -2338,18 +2489,20 @@ struct PracticeSearchResult: Codable, Identifiable {
 }
 
 struct CreatePracticeRequest: Codable {
-    let name: String
-    let address: String?  // Backend expects this in address field
-    let phone: String?
-    let email: String?
-    let website: String?
-    let licenseNumber: String?
-    let specialties: [String]
-    let description: String?
-    let acceptsNewPatients: Bool
+    let name: String              // Required
+    let address: String?          // Optional
+    let phone: String?           // Optional
+    let email: String?           // Optional
+    let website: String?         // Optional
+    let licenseNumber: String?   // Optional
+    let specialties: [String]    // Optional
+    let description: String?     // Optional
+    let acceptsNewPatients: Bool // Required (default true)
+    let country: String          // Required
+    let timezone: String         // Required
     
     enum CodingKeys: String, CodingKey {
-        case name, address, phone, email, website, description, specialties
+        case name, address, phone, email, website, description, specialties, country, timezone
         case licenseNumber = "license_number" 
         case acceptsNewPatients = "accepts_new_patients"
     }

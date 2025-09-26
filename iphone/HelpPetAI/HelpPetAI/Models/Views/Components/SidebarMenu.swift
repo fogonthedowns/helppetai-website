@@ -3,6 +3,7 @@ import SwiftUI
 struct SidebarMenu: View {
     @StateObject private var apiManager = APIManager.shared
     @State private var showingNotificationSettings = false
+    @State private var showingConfigureSettings = false
     let onNavigateToAppointments: () -> Void
     let onNavigateToPetOwners: () -> Void
     let onNavigateToScheduleEditing: () -> Void
@@ -78,7 +79,7 @@ struct SidebarMenu: View {
                 // Edit Schedule
                 MenuButton(
                     icon: "calendar.badge.plus",
-                    title: "Edit Schedule",
+                    title: "Work Schedule",
                     action: {
                         onNavigateToScheduleEditing()
                         onClose()
@@ -101,6 +102,16 @@ struct SidebarMenu: View {
                     title: "Notifications",
                     action: {
                         showingNotificationSettings = true
+                        onClose()
+                    }
+                )
+                
+                // Configure Voice Agent
+                MenuButton(
+                    icon: "gear",
+                    title: "Configure Voice Agent",
+                    action: {
+                        showingConfigureSettings = true
                         onClose()
                     }
                 )
@@ -144,6 +155,9 @@ struct SidebarMenu: View {
         .background(Color(.systemBackground))
         .sheet(isPresented: $showingNotificationSettings) {
             NotificationSettingsView()
+        }
+        .sheet(isPresented: $showingConfigureSettings) {
+            VoiceAgentConfigureView()
         }
     }
 }

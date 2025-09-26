@@ -21,12 +21,15 @@ class RetellService:
         if not self.api_key:
             raise ValueError("RETELL_API_KEY environment variable is required")
         
+        # Initialize Retell SDK client
+        self.client = Retell(api_key=self.api_key)
+        
         self.base_url = "https://api.retellai.com"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        logger.info("✅ Retell HTTP client initialized")
+        logger.info("✅ Retell SDK client initialized")
     
     def create_conversation_flow(self, conversation_flow_data: Dict[str, Any]) -> Optional[str]:
         """
@@ -296,11 +299,225 @@ You are helping customers of this specific veterinary practice. Use the practice
             response = self.client.agent.retrieve(agent_id=agent_id)
             
             logger.info(f"✅ Successfully retrieved Retell agent: {agent_id}")
+            logger.info(f"🔍 Agent response keys: {list(response.__dict__.keys())}")
+            
+            # Log the response_engine details for debugging
+            if hasattr(response, 'response_engine'):
+                logger.info(f"🔧 Response engine: {response.response_engine}")
+                if hasattr(response.response_engine, 'conversation_flow_id'):
+                    logger.info(f"🆔 Conversation Flow ID: {response.response_engine.conversation_flow_id}")
+            
             return response.__dict__
             
         except Exception as e:
             logger.error(f"❌ Failed to retrieve Retell agent {agent_id}: {e}")
             return None
+    
+    def convert_node_to_dict(self, obj):
+        """Recursively convert node objects to dictionaries"""
+        try:
+            if hasattr(obj, '__dict__'):
+                result = {}
+                for key, value in obj.__dict__.items():
+                    if hasattr(value, '__dict__'):
+                        result[key] = self.convert_node_to_dict(value)
+                    elif isinstance(value, list):
+                        result[key] = [self.convert_node_to_dict(item) if hasattr(item, '__dict__') else item for item in value]
+                    else:
+                        result[key] = value
+                return result
+            else:
+                return obj
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to convert object to dict: {e}")
+            return obj
+    
+    def update_conversation_flow(self, conversation_flow_id: str, personality_text: str, node_name: str = "Welcome Node") -> Optional[Dict[str, Any]]:
+        """Update conversation flow using raw API calls to avoid object conversion issues"""
+        try:
+            logger.info(f"🔄 Updating conversation flow: {conversation_flow_id}")
+            logger.info(f"🎯 Target node: '{node_name}'")
+            logger.info(f"📝 New text (first 100 chars): {personality_text[:100]}...")
+            
+            # Use raw HTTP request to get the conversation flow as pure JSON
+            import requests
+            
+            logger.info(f"🔍 Using raw API calls to avoid object conversion issues")
+            
+            # Get conversation flow as raw JSON
+            get_response = requests.get(
+                f"https://api.retellai.com/get-conversation-flow/{conversation_flow_id}",
+                headers={"Authorization": f"Bearer {self.api_key}"}
+            )
+            
+            if get_response.status_code != 200:
+                logger.error(f"❌ Failed to get conversation flow: {get_response.text}")
+                return None
+                
+            current_flow_data = get_response.json()
+            all_nodes = current_flow_data.get('nodes', [])
+            
+            logger.info(f"🔍 Retrieved {len(all_nodes)} nodes as raw JSON (no object conversion issues)")
+            
+            # Find and update the specified node
+            target_node_found = False
+            for node in all_nodes:
+                current_node_name = node.get('name', '')
+                node_id = node.get('id', '')
+                
+                logger.info(f"🔍 Processing node: '{current_node_name}' (id: {node_id})")
+                
+                if current_node_name == node_name:
+                    logger.info(f"🎯 Found target node '{node_name}': {node_id}")
+                    
+                    if 'instruction' in node:
+                        # Get current instruction text for logging
+                        current_text = node['instruction'].get('text', '')
+                        logger.info(f"🔍 Current '{node_name}' text: {current_text[:100]}...")
+                        
+                        # Update the instruction text while preserving type
+                        node['instruction']['text'] = f'"{personality_text}"'
+                        target_node_found = True
+                        logger.info(f"✅ Updated '{node_name}' instruction text")
+                    else:
+                        logger.warning(f"⚠️ Node '{node_name}' has no instruction field")
+                        logger.info(f"🔍 Node keys: {list(node.keys())}")
+            
+            if not target_node_found:
+                logger.error(f"❌ Node '{node_name}' not found in {len(all_nodes)} nodes")
+                # Log all node names for debugging
+                node_names = [node.get('name', 'unnamed') for node in all_nodes]
+                logger.error(f"🔍 Available node names: {node_names}")
+                return None
+                
+            # Update using raw API call
+            update_payload = {"nodes": all_nodes}
+            
+            logger.info(f"🔧 Sending update with {len(all_nodes)} nodes via raw API")
+            
+            update_response = requests.patch(
+                f"https://api.retellai.com/update-conversation-flow/{conversation_flow_id}",
+                headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                json=update_payload
+            )
+            
+            if update_response.status_code == 200:
+                logger.info(f"✅ Successfully updated conversation flow")
+                return update_response.json()
+            else:
+                logger.error(f"❌ Update failed: {update_response.status_code}")
+                logger.error(f"🔍 Response: {update_response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to update conversation flow: {e}")
+            return None
+    
+    def get_node_message(self, conversation_flow_id: str, node_name: str) -> Optional[str]:
+        """
+        Get the current instruction message from any node in the conversation flow
+        
+        Args:
+            conversation_flow_id: The conversation flow ID to retrieve
+            node_name: The name of the node to find (e.g., "Welcome Node", "Goodbye Node", etc.)
+            
+        Returns:
+            Node instruction text if found, None if failed
+        """
+        try:
+            logger.info(f"🔍 Getting message from node '{node_name}' in conversation flow: {conversation_flow_id}")
+            
+            # Use raw HTTP request to get the conversation flow as pure JSON
+            import requests
+            
+            get_response = requests.get(
+                f"https://api.retellai.com/get-conversation-flow/{conversation_flow_id}",
+                headers={"Authorization": f"Bearer {self.api_key}"}
+            )
+            
+            if get_response.status_code != 200:
+                logger.error(f"❌ Failed to get conversation flow: {get_response.text}")
+                return None
+                
+            current_flow_data = get_response.json()
+            all_nodes = current_flow_data.get('nodes', [])
+            
+            logger.info(f"🔍 Retrieved {len(all_nodes)} nodes, searching for node '{node_name}'")
+            
+            # Find the specified node and extract its instruction text
+            for node in all_nodes:
+                current_node_name = node.get('name', '')
+                
+                logger.info(f"🔍 Checking node: '{current_node_name}'")
+                
+                if current_node_name == node_name:
+                    logger.info(f"🎯 Found target node: '{node_name}'")
+                    
+                    if 'instruction' in node and 'text' in node['instruction']:
+                        node_text = node['instruction']['text']
+                        
+                        # Remove quotes if they exist (conversation flow stores with quotes)
+                        if node_text.startswith('"') and node_text.endswith('"'):
+                            node_text = node_text[1:-1]
+                        
+                        logger.info(f"✅ Extracted message from '{node_name}': {node_text[:100]}...")
+                        return node_text
+                    else:
+                        logger.warning(f"⚠️ Node '{node_name}' has no instruction text")
+                        logger.info(f"🔍 Node keys: {list(node.keys())}")
+                        return None
+            
+            logger.warning(f"⚠️ Node '{node_name}' not found in conversation flow")
+            # Log all node names for debugging
+            node_names = [node.get('name', 'unnamed') for node in all_nodes]
+            logger.info(f"🔍 Available node names: {node_names}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get message from node '{node_name}': {e}")
+            return None
+    
+    def update_agent_with_new_version(self, agent_id: str, conversation_flow_id: str, new_version: int) -> bool:
+        """
+        Update agent with new conversation flow version
+        
+        Args:
+            agent_id: The agent ID to update
+            conversation_flow_id: The conversation flow ID
+            new_version: The new version number
+            
+        Returns:
+            True if successful, False if failed
+        """
+        try:
+            logger.info(f"🔄 Updating agent {agent_id} with new conversation flow version {new_version}")
+            
+            # Prepare the update payload
+            update_payload = {
+                "response_engine": {
+                    "type": "conversation-flow",
+                    "conversation_flow_id": conversation_flow_id,
+                    "version": new_version
+                }
+            }
+            
+            logger.info(f"🔧 Agent update payload: {update_payload}")
+            
+            # Update the agent
+            response = self.client.agent.update(
+                agent_id=agent_id,
+                **update_payload
+            )
+            
+            logger.info(f"✅ Successfully updated agent {agent_id} with version {new_version}")
+            logger.info(f"🔍 Update response: {response.__dict__}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to update agent {agent_id}: {e}")
+            logger.error(f"🔍 Conversation flow ID: {conversation_flow_id}, Version: {new_version}")
+            return False
     
     # NOTE: We intentionally do NOT implement a delete_agent method here.
     # Deleting agents from Retell is dangerous and irreversible.

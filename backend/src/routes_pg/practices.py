@@ -28,6 +28,8 @@ class PracticeCreate(BaseModel):
     description: Optional[str] = None
     website: Optional[str] = None
     accepts_new_patients: bool = True
+    country: str = "US"  # Required field
+    timezone: str = "America/Los_Angeles"  # Required field
 
 
 class PracticeUpdate(BaseModel):
@@ -145,6 +147,20 @@ async def create_practice(
 ) -> PracticeResponse:
     """Create a new practice (authenticated users only)"""
     
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"🏥 CREATE PRACTICE REQUEST from user {current_user.username}")
+    logger.info(f"🌍 Timezone: '{practice_data.timezone}'")
+    logger.info(f"🌍 Country: '{practice_data.country}'")
+    logger.info(f"🏥 Practice name: '{practice_data.name}'")
+    logger.info(f"👤 Current user role: {current_user.role}")
+    logger.info(f"👤 Current user practice_id: {current_user.practice_id}")
+    logger.info(f"👤 User is_active: {current_user.is_active}")
+    
+    # Debug: Log the full request data
+    logger.info(f"🔍 Full request data: {practice_data.dict()}")
+    
     practice_repo = PracticeRepository(session)
     
     # Handle empty license number - convert to None for database
@@ -170,10 +186,16 @@ async def create_practice(
         address_line1=practice_data.address,  # Store single address in address_line1
         license_number=license_number,  # Use processed license_number
         specialties=practice_data.specialties,
-        accepts_new_patients=practice_data.accepts_new_patients
+        accepts_new_patients=practice_data.accepts_new_patients,
+        country=practice_data.country or "US",  # Use provided value or default
+        timezone=practice_data.timezone or "America/Los_Angeles"  # Use provided value or default
     )
     
+    logger.info(f"🔧 Creating practice in database...")
     created_practice = await practice_repo.create(new_practice)
+    logger.info(f"✅ Practice created successfully: {created_practice.id}")
+    logger.info(f"🌍 Final timezone in DB: '{created_practice.timezone}'")
+    logger.info(f"🌍 Final country in DB: '{created_practice.country}'")
     
     return PracticeResponse(
         uuid=str(created_practice.id),

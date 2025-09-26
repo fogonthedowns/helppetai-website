@@ -9,6 +9,9 @@ struct CreatePracticeView: View {
     @State private var phone = ""
     @State private var email = ""
     @State private var website = ""
+    private let country = "United States"  // Hardcoded for now
+    @State private var timezone = "America/Los_Angeles"
+    @State private var licenseNumber = ""
     @State private var isLoading = false
     @State private var errorMessage = ""
     @Environment(\.dismiss) private var dismiss
@@ -102,6 +105,38 @@ struct CreatePracticeView: View {
                                 .keyboardType(.URL)
                                 .autocapitalization(.none)
                         }
+                        
+                        // Practice Settings
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Practice Settings")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("Timezone")
+                                        .font(.subheadline)
+                                        .foregroundColor(.primary)
+                                    Text("*")
+                                        .foregroundColor(.red)
+                                }
+                                
+                                Picker("Timezone", selection: $timezone) {
+                                    Text("Pacific Time (US/Pacific)").tag("America/Los_Angeles")
+                                    Text("Mountain Time (US/Mountain)").tag("America/Denver")
+                                    Text("Central Time (US/Central)").tag("America/Chicago")
+                                    Text("Eastern Time (US/Eastern)").tag("America/New_York")
+                                    Text("Alaska Time (US/Alaska)").tag("America/Anchorage")
+                                    Text("Hawaii Time (US/Hawaii)").tag("Pacific/Honolulu")
+                                }
+                                .pickerStyle(.menu)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            
+                            TextField("License Number (optional)", text: $licenseNumber)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .textContentType(.none)
+                        }
                     }
                     .padding(.horizontal, 24)
                     
@@ -174,12 +209,49 @@ struct CreatePracticeView: View {
     }
     
     private var isFormValid: Bool {
-        !practiceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let trimmedName = practiceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedTimezone = timezone.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        return !trimmedName.isEmpty && !trimmedTimezone.isEmpty
+    }
+    
+    private var validationErrors: [String] {
+        var errors: [String] = []
+        
+        if practiceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            errors.append("Practice name is required")
+        }
+        
+        if timezone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            errors.append("Timezone is required")
+        }
+        
+        // Optional but recommended validations
+        if !email.isEmpty && !isValidEmail(email) {
+            errors.append("Please enter a valid email address")
+        }
+        
+        if !phone.isEmpty && !isValidPhone(phone) {
+            errors.append("Please enter a valid phone number")
+        }
+        
+        return errors
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        return NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email)
+    }
+    
+    private func isValidPhone(_ phone: String) -> Bool {
+        let phoneRegex = "^[+]?[0-9\\s\\-\\(\\)]{10,}$"
+        return NSPredicate(format: "SELF MATCHES %@", phoneRegex).evaluate(with: phone)
     }
     
     private func createPractice() {
-        guard isFormValid else {
-            errorMessage = "Practice name is required"
+        let errors = validationErrors
+        guard errors.isEmpty else {
+            errorMessage = errors.joined(separator: "\n")
             return
         }
         
@@ -193,17 +265,27 @@ struct CreatePracticeView: View {
                     .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                     .joined(separator: ", ")
                 
+                print("🔍 CREATE PRACTICE DEBUG:")
+                print("🌍 Selected timezone: '\(timezone)'")
+                print("🌍 Country: '\(country)' (hardcoded)")
+                print("🏥 Practice name: '\(practiceName)'")
+                
                 let practiceData = CreatePracticeRequest(
                     name: practiceName.trimmingCharacters(in: .whitespacesAndNewlines),
                     address: fullAddress.isEmpty ? nil : fullAddress,
                     phone: phone.isEmpty ? nil : phone,
                     email: email.isEmpty ? nil : email,
                     website: website.isEmpty ? nil : website,
-                    licenseNumber: nil, // Could add this field to UI later
+                    licenseNumber: licenseNumber.isEmpty ? nil : licenseNumber,
                     specialties: [], // Could add this field to UI later
                     description: nil, // Could add this field to UI later
-                    acceptsNewPatients: true // Default to true
+                    acceptsNewPatients: true, // Default to true
+                    country: country,  // Hardcoded "United States"
+                    timezone: timezone.trimmingCharacters(in: .whitespacesAndNewlines)
                 )
+                
+                print("🔍 Final timezone being sent: '\(practiceData.timezone)'")
+                print("🔍 Final country being sent: '\(practiceData.country)' (hardcoded)")
                 
                 let success = await APIManager.shared.createPractice(practiceData: practiceData)
                 

@@ -69,7 +69,7 @@ struct ScheduleEditingView: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("Edit Schedule").font(.headline).fontWeight(.medium)
+                    Text("Work Schedule").font(.headline).fontWeight(.medium)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showNewAvailability = true }) {
