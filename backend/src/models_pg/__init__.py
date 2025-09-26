@@ -13,6 +13,7 @@ from .appointment import Appointment, AppointmentPet
 from .contact_form import ContactForm
 from .voice_config import VoiceConfig
 from .call_record import CallRecord
+from .device_token import DeviceToken
 from .scheduling import (
     PracticeHours,
     VetAvailability,
@@ -21,6 +22,9 @@ from .scheduling import (
     AvailabilityType,
     ConflictType,
     ConflictSeverity
+)
+from .scheduling_unix import (
+    VetAvailability as VetAvailabilityUnix
 )
 
 __all__ = [
@@ -36,8 +40,10 @@ __all__ = [
     "ContactForm",
     "VoiceConfig",
     "CallRecord",
+    "DeviceToken",
     "PracticeHours",
     "VetAvailability",
+    "VetAvailabilityUnix",
     "RecurringAvailability",
     "AppointmentConflict",
     "AvailabilityType",
