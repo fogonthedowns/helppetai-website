@@ -1451,6 +1451,71 @@ class APIManager: ObservableObject {
         return try decoder.decode(VoiceAgentPersonalityResponse.self, from: data)
     }
     
+    // MARK: - Phone Registration Methods
+    
+    func registerPhoneNumber(
+        practiceId: String,
+        agentId: String,
+        areaCode: Int?,
+        tollFree: Bool,
+        nickname: String?
+    ) async throws -> [String: Any] {
+        print("🔍 REGISTER PHONE NUMBER REQUEST:")
+        print("🔍 Practice ID: \(practiceId)")
+        print("🔍 Agent ID: \(agentId)")
+        print("🔍 Area Code: \(areaCode?.description ?? "nil")")
+        print("🔍 Toll Free: \(tollFree)")
+        print("🔍 Nickname: \(nickname ?? "nil")")
+        
+        guard let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)/voice-agent/\(agentId)/register-phone") else {
+            throw APIError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        var requestBody: [String: Any] = [
+            "toll_free": tollFree
+        ]
+        
+        if let areaCode = areaCode {
+            requestBody["area_code"] = areaCode
+        }
+        
+        if let nickname = nickname {
+            requestBody["nickname"] = nickname
+        }
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        print("🔍 Request URL: \(url)")
+        print("🔍 Request Body: \(requestBody)")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            print("📱 Phone Registration Response Status: \(httpResponse.statusCode)")
+            
+            if httpResponse.statusCode == 200 {
+                if let jsonResponse = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    print("✅ REGISTER PHONE NUMBER SUCCESS")
+                    print("📞 Response: \(jsonResponse)")
+                    return jsonResponse
+                } else {
+                    throw APIError.invalidResponse
+                }
+            } else {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                print("❌ Phone registration failed: \(errorMessage)")
+                throw APIError.serverError(httpResponse.statusCode)
+            }
+        }
+        
+        throw APIError.invalidResponse
+    }
+    
     func getVoiceAgentNodeMessage(practiceId: String, nodeName: String) async throws -> VoiceAgentNodeMessageResponse {
         let encodedNodeName = nodeName.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? nodeName
         let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)/voice-agent/node/\(encodedNodeName)/message")!
@@ -2305,6 +2370,8 @@ extension APIManager {
             }
             
             if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
+                print("✅ Sign up successful! Now logging in automatically...")
+                
                 // Parse response to get auth token if provided
                 if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let token = jsonData["access_token"] as? String {
@@ -2312,10 +2379,21 @@ extension APIManager {
                         KeychainManager.shared.saveAccessToken(token)
                         UserDefaults.standard.set(username, forKey: "logged_in_username")
                         self.isAuthenticated = true
-                        print("✅ Sign up successful, token saved")
+                        print("✅ Sign up successful, token saved from signup response")
+                    }
+                    return true
+                } else {
+                    // No token in signup response, automatically log in the user
+                    print("🔐 No token in signup response, logging in automatically...")
+                    do {
+                        let loginResponse = try await login(username: username, password: password)
+                        print("✅ Auto-login after signup successful!")
+                        return true
+                    } catch {
+                        print("❌ Auto-login after signup failed: \(error)")
+                        return false
                     }
                 }
-                return true
             } else {
                 print("❌ Sign up failed with status: \(httpResponse.statusCode)")
                 return false
@@ -2466,6 +2544,15 @@ extension APIManager {
             print("🔍 CREATE PRACTICE REQUEST:")
             print("🔍 URL: \(url.absoluteString)")
             print("🔍 Practice Name: \(practiceData.name)")
+            
+            // Debug authentication
+            if let token = KeychainManager.shared.getAccessToken() {
+                print("🔍 Auth Token (first 20 chars): \(String(token.prefix(20)))...")
+                print("🔍 Auth Headers: \(authHeaders)")
+            } else {
+                print("❌ No auth token found!")
+            }
+            print("🔍 All Request Headers: \(request.allHTTPHeaderFields ?? [:])")
             
             let (data, response) = try await session.data(for: request)
             

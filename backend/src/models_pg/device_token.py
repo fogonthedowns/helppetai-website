@@ -10,7 +10,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from ..database_pg import Base
+try:
+    from ..database_pg import Base
+except ImportError:
+    from database_pg import Base
 
 
 class DeviceToken(Base):

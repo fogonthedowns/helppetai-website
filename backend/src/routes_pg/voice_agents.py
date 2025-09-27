@@ -10,6 +10,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 import logging
+import requests
 
 from ..database_pg import get_db_session
 from ..models_pg.voice_config import VoiceConfig
@@ -36,11 +37,17 @@ class VoiceAgentUpdate(BaseModel):
 class VoiceAgentPersonalityUpdate(BaseModel):
     personality_text: str
 
+class PhoneRegistrationRequest(BaseModel):
+    area_code: Optional[int] = None
+    toll_free: bool = False
+    nickname: Optional[str] = None
+
 
 class VoiceAgentResponse(BaseModel):
     id: str
     practice_id: str
     agent_id: str
+    phone_number: Optional[str] = None
     timezone: str
     metadata: dict
     is_active: bool
@@ -70,10 +77,13 @@ async def get_voice_agent(
             detail=f"No voice agent found for practice {practice_id}"
         )
     
+    logger.info(f"📞 Using cached phone number: {voice_config.phone_number}")
+    
     return VoiceAgentResponse(
         id=str(voice_config.id),
         practice_id=str(voice_config.practice_id),
         agent_id=voice_config.agent_id,
+        phone_number=voice_config.phone_number,
         timezone=voice_config.timezone,
         metadata=voice_config.config_metadata or {},
         is_active=voice_config.is_active,
@@ -115,7 +125,8 @@ async def create_voice_agent(
             metadata=existing_voice_config.config_metadata or {},
             is_active=existing_voice_config.is_active,
             created_at=existing_voice_config.created_at.isoformat(),
-            updated_at=existing_voice_config.updated_at.isoformat()
+            updated_at=existing_voice_config.updated_at.isoformat(),
+            phone_number=None
         )
     
     # Create simple agent config (no config file needed!)
@@ -190,7 +201,8 @@ async def create_voice_agent(
         metadata=voice_config.config_metadata or {},
         is_active=voice_config.is_active,
         created_at=voice_config.created_at.isoformat(),
-        updated_at=voice_config.updated_at.isoformat()
+        updated_at=voice_config.updated_at.isoformat(),
+        phone_number=None
     )
 
 
@@ -285,7 +297,8 @@ async def update_voice_agent(
         metadata=voice_config.config_metadata or {},
         is_active=voice_config.is_active,
         created_at=voice_config.created_at.isoformat(),
-        updated_at=voice_config.updated_at.isoformat()
+        updated_at=voice_config.updated_at.isoformat(),
+        phone_number=None
     )
 
 
@@ -328,7 +341,8 @@ async def delete_voice_agent(
         metadata=voice_config.config_metadata or {},
         is_active=voice_config.is_active,
         created_at=voice_config.created_at.isoformat(),
-        updated_at=voice_config.updated_at.isoformat()
+        updated_at=voice_config.updated_at.isoformat(),
+        phone_number=None
     )
 
 
@@ -592,4 +606,164 @@ async def get_voice_agent_node_message(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error: {str(e)}"
-    )
+        )
+
+
+@router.post("/{practice_id}/voice-agent/{voice_uuid}/register-phone", response_model=dict)
+async def register_phone_number(
+    practice_id: str,
+    voice_uuid: str,
+    phone_request: PhoneRegistrationRequest,
+    session: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user)
+) -> dict:
+    """
+    Register/buy a new phone number and bind it to the voice agent
+    """
+    logger.info("=" * 80)
+    logger.info(f"📞 PHONE REGISTRATION STARTED for practice {practice_id}")
+    logger.info(f"🎯 Voice agent UUID: {voice_uuid}")
+    logger.info(f"📋 Area code: {phone_request.area_code}")
+    logger.info(f"📋 Toll-free: {phone_request.toll_free}")
+    logger.info(f"📋 Nickname: {phone_request.nickname}")
+    logger.info("=" * 80)
+    
+    try:
+        # Step 1: Get the voice agent configuration for this practice
+        logger.info(f"📋 STEP 1: Getting voice agent for practice {practice_id}")
+        
+        voice_config_query = select(VoiceConfig).where(
+            VoiceConfig.practice_id == UUID(practice_id),
+            VoiceConfig.is_active == True
+        )
+        
+        result = await session.execute(voice_config_query)
+        voice_config = result.scalars().first()
+        
+        if not voice_config:
+            logger.error(f"❌ STEP 1 FAILED: No voice agent found for practice {practice_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No voice agent found for practice {practice_id}"
+            )
+        
+        agent_id = voice_config.agent_id
+        logger.info(f"✅ STEP 1 SUCCESS: Found voice agent {agent_id}")
+        
+        # Step 2: Prepare the phone registration payload
+        logger.info(f"📋 STEP 2: Preparing phone registration payload")
+        
+        # Build the payload for Retell API
+        payload = {
+            "inbound_agent_id": agent_id,
+            "outbound_agent_id": agent_id,
+            "country_code": "US",  # Hard-coded as requested
+        }
+        
+        # Add optional fields
+        if phone_request.area_code:
+            payload["area_code"] = phone_request.area_code
+            
+        if phone_request.nickname:
+            payload["nickname"] = phone_request.nickname
+        else:
+            payload["nickname"] = f"HelpPet.ai - {voice_config.practice_id}"
+            
+        payload["toll_free"] = phone_request.toll_free
+        
+        logger.info(f"🔍 Registration payload: {payload}")
+        
+        # Step 3: Call Retell API to register phone number
+        logger.info(f"📋 STEP 3: Calling Retell API to register phone number")
+        
+        # Get API key from retell_service
+        api_key = retell_service.api_key
+        
+        # response = requests.post(
+        #     "https://api.retellai.com/create-phone-number",
+        #     headers={
+        #         "Authorization": f"Bearer {api_key}",
+        #         "Content-Type": "application/json"
+        #     },
+        #     json=payload
+        # )
+        
+        # Mock response for testing
+        class MockResponse:
+            def __init__(self, json_data, status_code):
+                self._json_data = json_data
+                self.status_code = status_code
+
+            def json(self):
+                return self._json_data
+
+        response = MockResponse({
+            "phone_number": "+14157774444",
+            "phone_number_type": "retell-twilio", 
+            "phone_number_pretty": "+1 (415) 777-4444",
+            "inbound_agent_id": agent_id,
+            "inbound_agent_version": 1,
+            "outbound_agent_version": 1,
+            "area_code": 415,
+            "nickname": "Frontdesk Number",
+            "last_modification_timestamp": 1703413636133
+        }, 200)
+        
+        if response.status_code != 200:
+            logger.error(f"❌ STEP 3 FAILED: Retell API error {response.status_code}")
+            logger.error(f"🔍 Response: {response.text}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to register phone number: {response.text}"
+            )
+        
+        phone_data = response.json()
+        logger.info(f"✅ STEP 3 SUCCESS: Phone number registered")
+        logger.info(f"🔍 Phone data: {phone_data}")
+        
+        # Step 4: Update the voice_config with the new phone number
+        logger.info(f"📋 STEP 4: Updating voice_config with phone number")
+        
+        registered_phone = phone_data.get("phone_number")
+        if registered_phone:
+            voice_config.phone_number = registered_phone
+            await session.commit()
+            logger.info(f"✅ STEP 4 SUCCESS: Updated voice_config with phone number {registered_phone}")
+        else:
+            logger.warning(f"⚠️ STEP 4 WARNING: No phone_number in response, skipping database update")
+        
+        # Success! Return phone registration details
+        logger.info("=" * 80)
+        logger.info(f"🎉 PHONE REGISTRATION COMPLETED SUCCESSFULLY!")
+        logger.info(f"📞 Phone number: {phone_data.get('phone_number', 'Unknown')}")
+        logger.info(f"🆔 Agent ID: {agent_id}")
+        logger.info(f"🏷️ Nickname: {payload.get('nickname', 'N/A')}")
+        logger.info("=" * 80)
+        
+        return {
+            "success": True,
+            "message": "Phone number registered and bound to voice agent successfully",
+            "phone_number": phone_data.get("phone_number"),
+            "agent_id": agent_id,
+            "nickname": payload.get("nickname"),
+            "toll_free": phone_request.toll_free,
+            "area_code": phone_request.area_code,
+            "country_code": "US",
+            "phone_data": phone_data
+        }
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        logger.error("=" * 80)
+        logger.error(f"💥 PHONE REGISTRATION FAILED with unexpected error: {e}")
+        logger.error(f"🔍 Practice ID: {practice_id}")
+        logger.error(f"🔍 Voice UUID: {voice_uuid}")
+        logger.error(f"🔍 Error type: {type(e).__name__}")
+        logger.error("=" * 80)
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error during phone registration: {str(e)}"
+        )

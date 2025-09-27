@@ -207,9 +207,9 @@ struct ContentView: View {
                         await pushNotificationService.initializeForAuthenticatedUser()
                     }
             } else {
-                LoginView()
+                WelcomeView()
                     .onAppear {
-                        print("🔐 ContentView: User is NOT authenticated, showing LoginView")
+                        print("🔐 ContentView: User is NOT authenticated, showing WelcomeView")
                     }
                     .task {
                         // Unregister push notifications on logout

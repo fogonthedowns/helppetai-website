@@ -24,6 +24,7 @@ struct VoiceAgentConfigureView: View {
     @State private var welcomeMessage = ""
     @State private var isUpdatingMessage = false
     @State private var showingMessageEditor = false
+    @State private var showingPhoneConfig = false
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -70,6 +71,7 @@ struct VoiceAgentConfigureView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
         .task {
             loadVoiceAgent()
         }
@@ -82,6 +84,21 @@ struct VoiceAgentConfigureView: View {
                 }
             )
         }
+        .sheet(isPresented: $showingPhoneConfig) {
+            if let agent = voiceAgent,
+               let practiceId = apiManager.currentUser?.practiceId {
+                PhoneConfigurationView(
+                    practiceId: practiceId,
+                    agentId: agent.id,
+                    onPhoneConfigured: {
+                        // Refresh the voice agent data after phone configuration
+                        Task {
+                            await loadVoiceAgent()
+                        }
+                    }
+                )
+            }
+        }
     }
     
     // MARK: - Voice Agent Configured View
@@ -89,12 +106,119 @@ struct VoiceAgentConfigureView: View {
     @ViewBuilder
     private func voiceAgentConfiguredView(agent: VoiceAgentResponse) -> some View {
         List {
-            Section(header: Text("Voice Agent Information")) {
-                VoiceAgentInfoRow(label: "Agent ID", value: agent.agentId)
-                VoiceAgentInfoRow(label: "Status", value: agent.isActive ? "Active" : "Inactive")
+            // Show pricing info if no phone number is configured
+            if agent.phoneNumber == nil || agent.phoneNumber?.isEmpty == true {
+                Section {
+                    VStack(spacing: 16) {
+                        // Header with checkmark and "Pay As You Go" in compact light blue rounded box
+                        HStack {
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.blue)
+                                    .font(.system(size: 14, weight: .medium))
+                                Text("Pay As You Go")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.blue)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.blue.opacity(0.1))
+                            )
+                            Spacer()
+                        }
+                        
+                        // Upcoming Invoice row
+                        HStack {
+                            Text("Credits:")
+                                .font(.system(size: 16))
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Text("$10.00 💰")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.primary)
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 14))
+                        }
+                        
+                        // Concurrency Used row
+                        HStack {
+                            Text("Phone Numbers Used:")
+                                .font(.system(size: 16))
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Text("0/1")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.primary)
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 14))
+                        }
+                    }
+                    .padding(.all, 20)
+                }
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
+                )
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            }
+            
+            Section(header: 
+                HStack {
+                    Text("Voice Agent")
+                    Spacer()
+                    // Status chip - green if active, gray if disabled
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(agent.isActive ? Color.green : Color.gray)
+                            .frame(width: 8, height: 8)
+                        Text(agent.isActive ? "Active" : "Inactive")
+                            .font(.caption)
+                            .foregroundColor(agent.isActive ? .green : .gray)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(agent.isActive ? Color.green.opacity(0.1) : Color.gray.opacity(0.1))
+                    )
+                }
+            ) {
+                VoiceAgentInfoRow(
+                    label: "Phone Number", 
+                    value: formatPhoneNumber(agent.phoneNumber) ?? ""
+                )
+                
+                // Show Configure Phone Number button if no phone number exists
+                if agent.phoneNumber == nil || agent.phoneNumber?.isEmpty == true {
+                    Button(action: {
+                        showingPhoneConfig = true
+                    }) {
+                        HStack {
+                            Text("Configure Phone Number")
+                            Spacer()
+                        }
+                        .foregroundColor(.blue)
+                        .padding(.vertical, 8)
+                    }
+                }
+                
                 VoiceAgentInfoRow(label: "Timezone", value: agent.timezone)
                 VoiceAgentInfoRow(label: "Last Updated", value: formatDate(agent.updatedAt))
             }
+            
+            Section {
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(height: 0.5)
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listSectionSpacing(.compact)
             
             Section(header: Text("Welcome Message")) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -115,16 +239,24 @@ struct VoiceAgentConfigureView: View {
                     Button(action: {
                         showingMessageEditor = true
                     }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: isUpdatingMessage ? "clock" : "pencil")
-                            Text(isUpdatingMessage ? "Updating..." : "Edit Welcome Message")
-                            Spacer()
+                        HStack {
                             if isUpdatingMessage {
                                 ProgressView()
                                     .scaleEffect(0.8)
+                                    .tint(.white)
+                                Text("Updating...")
+                                    .foregroundColor(.white)
+                            } else {
+                                Text("Edit")
+                                    .foregroundColor(.white)
                             }
                         }
-                        .foregroundColor(isUpdatingMessage ? .orange : .blue)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(isUpdatingMessage ? Color.orange : Color.blue)
+                        )
                     }
                     .disabled(isUpdatingMessage)
                 }
@@ -274,6 +406,31 @@ struct VoiceAgentConfigureView: View {
         return dateString
     }
     
+    private func formatPhoneNumber(_ phoneNumber: String?) -> String? {
+        guard let phone = phoneNumber else { return nil }
+        
+        // Remove all non-digit characters
+        let digits = phone.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        
+        // Format as (123) 123-1234 for US numbers
+        if digits.count == 10 {
+            let areaCode = String(digits.prefix(3))
+            let exchange = String(digits.dropFirst(3).prefix(3))
+            let number = String(digits.suffix(4))
+            return "(\(areaCode)) \(exchange)-\(number)"
+        } else if digits.count == 11 && digits.hasPrefix("1") {
+            // Handle +1 country code
+            let withoutCountryCode = String(digits.dropFirst())
+            let areaCode = String(withoutCountryCode.prefix(3))
+            let exchange = String(withoutCountryCode.dropFirst(3).prefix(3))
+            let number = String(withoutCountryCode.suffix(4))
+            return "(\(areaCode)) \(exchange)-\(number)"
+        } else {
+            // Return original if not standard US format
+            return phone
+        }
+    }
+    
     private func loadWelcomeMessage(practiceId: String) async {
         do {
             let response = try await apiManager.getVoiceAgentNodeMessage(
@@ -359,6 +516,7 @@ struct VoiceAgentResponse: Codable, Identifiable {
     let isActive: Bool
     let createdAt: String
     let updatedAt: String
+    let phoneNumber: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -369,6 +527,7 @@ struct VoiceAgentResponse: Codable, Identifiable {
         case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case phoneNumber = "phone_number"
     }
 }
 
@@ -575,6 +734,180 @@ struct WelcomeMessageEditorView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Phone Configuration View
+
+struct PhoneConfigurationView: View {
+    let practiceId: String
+    let agentId: String
+    let onPhoneConfigured: () -> Void
+    
+    @State private var selectedAreaCode = ""
+    @State private var isTollFree = false
+    @State private var nickname = ""
+    @State private var isConfiguring = false
+    @State private var errorMessage: String?
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var apiManager = APIManager.shared
+    
+    // Common US area codes
+    private let areaCodes = [
+        "212", "213", "214", "215", "216", "217", "218", "219",
+        "224", "225", "228", "229", "231", "234", "239", "240",
+        "248", "251", "252", "253", "254", "256", "260", "262",
+        "267", "269", "270", "276", "281", "301", "302", "303",
+        "304", "305", "307", "308", "309", "310", "312", "313",
+        "314", "315", "316", "317", "318", "319", "320", "321",
+        "323", "325", "330", "331", "334", "336", "337", "339",
+        "347", "351", "352", "360", "361", "386", "401", "402",
+        "404", "405", "406", "407", "408", "409", "410", "412",
+        "413", "414", "415", "417", "419", "423", "424", "425",
+        "430", "432", "434", "435", "440", "442", "443", "458",
+        "469", "470", "475", "478", "479", "480", "484", "501",
+        "502", "503", "504", "505", "507", "508", "509", "510",
+        "512", "513", "515", "516", "517", "518", "520", "530",
+        "540", "541", "551", "559", "561", "562", "563", "564",
+        "567", "570", "571", "573", "574", "575", "580", "585",
+        "586", "601", "602", "603", "605", "606", "607", "608",
+        "609", "610", "612", "614", "615", "616", "617", "618",
+        "619", "620", "623", "626", "628", "629", "630", "631",
+        "636", "641", "646", "650", "651", "657", "660", "661",
+        "662", "667", "678", "681", "682", "701", "702", "703",
+        "704", "706", "707", "708", "712", "713", "714", "715",
+        "716", "717", "718", "719", "720", "724", "725", "727",
+        "731", "732", "734", "737", "740", "747", "754", "757",
+        "760", "762", "763", "765", "770", "772", "773", "774",
+        "775", "781", "785", "786", "801", "802", "803", "804",
+        "805", "806", "808", "810", "812", "813", "814", "815",
+        "816", "817", "818", "828", "830", "831", "832", "843",
+        "845", "847", "848", "850", "856", "857", "858", "859",
+        "860", "862", "863", "864", "865", "870", "872", "878",
+        "901", "903", "904", "906", "907", "908", "909", "910",
+        "912", "913", "914", "915", "916", "917", "918", "919",
+        "920", "925", "928", "929", "931", "934", "936", "937",
+        "940", "941", "947", "949", "951", "952", "954", "956",
+        "959", "970", "971", "972", "973", "978", "979", "980",
+        "984", "985", "989"
+    ]
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Phone Number Configuration")) {
+                    // Toll-free toggle
+                    Toggle("Toll-Free Number", isOn: $isTollFree)
+                        .onChange(of: isTollFree) { _ in
+                            if isTollFree {
+                                selectedAreaCode = "" // Clear area code for toll-free
+                            }
+                        }
+                    
+                    // Area code picker (only show if not toll-free)
+                    if !isTollFree {
+                        Picker("Area Code", selection: $selectedAreaCode) {
+                            Text("Select Area Code").tag("")
+                            ForEach(areaCodes, id: \.self) { code in
+                                Text(code).tag(code)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                    }
+                    
+                    // Nickname field
+                    TextField("Nickname (optional)", text: $nickname)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                Section(header: Text("Pricing Information")) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if isTollFree {
+                            Text("Toll-Free: $12/month")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                        } else {
+                            Text("Regular Line: $3/month")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                        }
+                        
+                        Text("Plus 20¢/minute for calls")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+                
+                if let errorMessage = errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+            }
+            .navigationTitle("Configure Phone")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        Task {
+                            await configurePhoneNumber()
+                        }
+                    }) {
+                        if isConfiguring {
+                            HStack {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Text("Configuring...")
+                            }
+                        } else {
+                            Text("Configure")
+                        }
+                    }
+                    .disabled(isConfiguring || (!isTollFree && selectedAreaCode.isEmpty))
+                }
+            }
+        }
+    }
+    
+    private func configurePhoneNumber() async {
+        isConfiguring = true
+        errorMessage = nil
+        
+        do {
+            let areaCode = isTollFree ? nil : Int(selectedAreaCode)
+            let finalNickname = nickname.isEmpty ? nil : nickname
+            
+            let response = try await apiManager.registerPhoneNumber(
+                practiceId: practiceId,
+                agentId: agentId,
+                areaCode: areaCode,
+                tollFree: isTollFree,
+                nickname: finalNickname
+            )
+            
+            print("✅ Phone number configured successfully: \(response)")
+            
+            // Call the completion handler
+            onPhoneConfigured()
+            
+            // Dismiss the sheet
+            dismiss()
+            
+        } catch {
+            print("❌ Failed to configure phone number: \(error)")
+            errorMessage = "Failed to configure phone number. Please try again."
+        }
+        
+        isConfiguring = false
     }
 }
 

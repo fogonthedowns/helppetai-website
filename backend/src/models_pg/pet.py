@@ -14,7 +14,6 @@ try:
 except ImportError:
     from database_pg import Base
 
-
 class Pet(Base):
     """Pet model - linked to pet owners"""
     

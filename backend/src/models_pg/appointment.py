@@ -15,6 +15,8 @@ try:
     from ..database_pg import Base
 except ImportError:
     from database_pg import Base
+except ImportError:
+    from database_pg import Base
 
 if TYPE_CHECKING:
     from .practice import VeterinaryPractice

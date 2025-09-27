@@ -20,6 +20,7 @@ class VoiceConfig(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     practice_id = Column(UUID(as_uuid=True), ForeignKey("veterinary_practices.id", ondelete="CASCADE"), nullable=False)
     agent_id = Column(String, nullable=False, doc="External voice agent identifier")
+    phone_number = Column(String(20), nullable=True, doc="Phone number associated with the voice agent")
     timezone = Column(String, nullable=True, default="UTC", doc="Practice timezone for voice calls")
     config_metadata = Column("metadata", JSONB, nullable=False, default=dict, doc="Additional voice configuration settings")
     is_active = Column(Boolean, nullable=False, default=True)

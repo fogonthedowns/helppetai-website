@@ -13,6 +13,8 @@ try:
     from ..database_pg import Base
 except ImportError:
     from database_pg import Base
+except ImportError:
+    from database_pg import Base
 
 
 class VeterinaryPractice(Base):

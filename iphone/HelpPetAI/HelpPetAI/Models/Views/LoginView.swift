@@ -10,9 +10,30 @@ struct LoginView: View {
     @State private var errorMessage = ""
     @State private var showError = false
     @State private var showingSignUp = false
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            // Navigation Bar
+            HStack {
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .medium))
+                        Text("Back")
+                            .font(.system(size: 17, weight: .medium))
+                    }
+                    .foregroundColor(.primary)
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 10)
+            .padding(.bottom, 20)
+            
             VStack(spacing: 20) {
                 // Header
                 VStack(spacing: 8) {
@@ -119,8 +140,8 @@ struct LoginView: View {
                 Spacer()
                 
             }
-            .navigationTitle("Login")
-            .navigationBarHidden(true)
+        }
+        .navigationBarHidden(true)
             .alert("Login Error", isPresented: $showError) {
                 Button("OK") { }
             } message: {
@@ -135,7 +156,6 @@ struct LoginView: View {
             }
             .hidden()
         )
-        }
     }
     
     private func login() {

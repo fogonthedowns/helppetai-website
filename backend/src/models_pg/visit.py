@@ -16,6 +16,7 @@ try:
 except ImportError:
     from database_pg import Base
 
+
 if TYPE_CHECKING:
     from .pet import Pet
     from .practice import VeterinaryPractice

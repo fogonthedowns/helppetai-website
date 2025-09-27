@@ -53,6 +53,26 @@ struct SignUpView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // Navigation Bar
+            HStack {
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .medium))
+                        Text("Back")
+                            .font(.system(size: 17, weight: .medium))
+                    }
+                    .foregroundColor(.primary)
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 10)
+            .padding(.bottom, 20)
+            
             // Content
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
