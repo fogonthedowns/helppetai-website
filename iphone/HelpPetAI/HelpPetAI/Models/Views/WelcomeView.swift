@@ -125,24 +125,16 @@ struct WelcomeView: View {
                 }
             }
             .navigationBarHidden(true)
-            .background(
-                NavigationLink(
-                    destination: LoginView(),
-                    isActive: $showingLogin
-                ) {
-                    EmptyView()
+            .fullScreenCover(isPresented: $showingLogin) {
+                NavigationView {
+                    LoginView()
                 }
-                .hidden()
-            )
-            .background(
-                NavigationLink(
-                    destination: IntroAnimationView(),
-                    isActive: $showingIntroAnimation
-                ) {
-                    EmptyView()
+            }
+            .fullScreenCover(isPresented: $showingIntroAnimation) {
+                NavigationView {
+                    IntroAnimationView()
                 }
-                .hidden()
-            )
+            }
         }
     }
     

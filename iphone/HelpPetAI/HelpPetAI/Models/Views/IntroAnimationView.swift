@@ -9,7 +9,7 @@ struct IntroAnimationView: View {
     @Environment(\.dismiss) private var dismiss
     
     private let fullText = "Just a few quick questions before we create your AI Front Desk Agent!"
-    private let typingSpeed: Double = 0.05 // seconds per character
+    private let typingSpeed: Double = 0.02 // seconds per character
     
     var body: some View {
         GeometryReader { geometry in
@@ -138,7 +138,7 @@ struct IntroAnimationView: View {
                         
                         // Continue Button
                         if showContinueButton {
-                            NavigationLink(destination: SignUpView()) {
+                            NavigationLink(destination: NameCollectionView()) {
                                 Text("CONTINUE")
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(signUpButtonForeground)
@@ -191,7 +191,7 @@ struct IntroAnimationView: View {
                 
                 // When typing is complete
                 if index == fullText.count - 1 {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         isTyping = false
                         withAnimation(.easeInOut(duration: 0.5)) {
                             showContinueButton = true
