@@ -101,30 +101,7 @@ struct NotificationSettingsView: View {
                         }
                     }
                 }
-                
-                Section(header: Text("Notification Types")) {
-                    NotificationTypeRow(
-                        title: "New Appointments",
-                        description: "Get notified when new appointments are booked via phone",
-                        icon: "calendar.badge.plus",
-                        isEnabled: pushService.isRegistered
-                    )
-                    
-                    NotificationTypeRow(
-                        title: "Appointment Changes",
-                        description: "Updates when appointments are modified or cancelled",
-                        icon: "calendar.badge.exclamationmark",
-                        isEnabled: false // Future feature
-                    )
-                    
-                    NotificationTypeRow(
-                        title: "Visit Transcripts",
-                        description: "When visit recordings are processed and ready",
-                        icon: "doc.text.badge.plus",
-                        isEnabled: false // Future feature
-                    )
-                }
-                
+                                
                 #if DEBUG
                 Section(header: Text("Debug")) {
                     Button("Test Local Notification") {

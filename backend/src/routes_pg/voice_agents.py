@@ -135,7 +135,7 @@ async def create_voice_agent(
     agent_id = await retell_service.create_agent(
         agent_config, 
         practice_id=practice_id, 
-        timezone=agent_data.timezone
+        timezone=practice.timezone
     )
     if not agent_id:
         raise HTTPException(
@@ -147,7 +147,7 @@ async def create_voice_agent(
     voice_config = VoiceConfig(
         practice_id=UUID(practice_id),
         agent_id=agent_id,
-        timezone=agent_data.timezone,
+        timezone=practice.timezone,
         config_metadata=agent_data.metadata or {},
         is_active=True
     )
@@ -240,7 +240,7 @@ async def update_voice_agent(
     agent_id = await retell_service.create_agent(
         agent_config, 
         practice_id=practice_id, 
-        timezone=agent_data.timezone
+        timezone=practice.timezone
     )
     if not agent_id:
         raise HTTPException(
@@ -252,7 +252,7 @@ async def update_voice_agent(
     voice_config = VoiceConfig(
         practice_id=UUID(practice_id),
         agent_id=agent_id,
-        timezone=agent_data.timezone,
+        timezone=practice.timezone,
         config_metadata=agent_data.metadata or {},
         is_active=True
     )
@@ -445,8 +445,39 @@ async def update_voice_agent_node_message(
         
         logger.info(f"✅ STEP 3 SUCCESS: Updated conversation flow")
         
-        # NOTE: No need to update agent version - agent automatically uses latest conversation flow version
-        logger.info(f"ℹ️  SKIPPING agent version update - agent will automatically use updated conversation flow")
+        # Step 4: Publish the agent to make changes live for phone calls
+        logger.info(f"📋 STEP 4: Publishing agent {agent_id} to make changes live")
+        
+        publish_success = retell_service.publish_agent(agent_id)
+        if not publish_success:
+            logger.error(f"❌ STEP 4 FAILED: Could not publish agent")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to publish agent - changes may not be live for phone calls"
+            )
+        
+        logger.info(f"✅ STEP 4 SUCCESS: Agent published and live for phone calls")
+        
+        # Get the latest published version (after publishing, it should be current_version + 1)
+        latest_published_version = current_version
+        logger.info(f"🔍 Latest published version: {latest_published_version}")
+        
+        # Step 5: Update phone numbers to use the latest published version
+        logger.info(f"📋 STEP 5: Updating phone numbers to use latest published version {latest_published_version}")
+        
+        phone_numbers = retell_service.find_phone_numbers_for_agent(agent_id)
+        if phone_numbers:
+            phone_update_results = []
+            for phone_number in phone_numbers:
+                result = retell_service.update_phone_number_to_latest_version(phone_number, agent_id, latest_published_version)
+                phone_update_results.append(result)
+                
+            if all(phone_update_results):
+                logger.info(f"✅ STEP 5 SUCCESS: Updated {len(phone_numbers)} phone numbers")
+            else:
+                logger.warning(f"⚠️ STEP 5 PARTIAL: Some phone numbers failed to update")
+        else:
+            logger.info(f"ℹ️  STEP 5 SKIPPED: No phone numbers found for agent {agent_id}")
         
         # Success! Return summary
         logger.info("=" * 80)
@@ -454,17 +485,19 @@ async def update_voice_agent_node_message(
         logger.info(f"🆔 Agent ID: {agent_id}")
         logger.info(f"🔗 Conversation Flow ID: {conversation_flow_id}")
         logger.info(f"📝 Text length: {len(personality_update.personality_text)} characters")
-        logger.info(f"ℹ️  Agent will automatically use the updated conversation flow")
+        logger.info(f"📢 Agent published and live for phone calls")
         logger.info("=" * 80)
         
         return {
             "success": True,
-            "message": "Voice agent personality updated successfully - agent will automatically use updated conversation flow",
+            "message": "Voice agent personality updated, published, and phone numbers updated - changes are now live for all phone calls",
             "agent_id": agent_id,
             "conversation_flow_id": conversation_flow_id,
             "current_version": current_version,
             "personality_text_length": len(personality_update.personality_text),
-            "note": "Agent automatically uses latest conversation flow version"
+            "published": True,
+            "phone_numbers_updated": len(phone_numbers),
+            "note": "Agent is published and all phone numbers updated to use latest version"
         }
         
     except HTTPException:
@@ -563,4 +596,4 @@ async def get_voice_agent_node_message(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error: {str(e)}"
-        )
+    )

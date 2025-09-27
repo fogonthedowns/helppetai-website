@@ -4,11 +4,42 @@ struct SidebarMenu: View {
     @StateObject private var apiManager = APIManager.shared
     @State private var showingNotificationSettings = false
     @State private var showingConfigureSettings = false
+    @State private var practiceName: String = "Loading..."
     let onNavigateToAppointments: () -> Void
     let onNavigateToPetOwners: () -> Void
     let onNavigateToScheduleEditing: () -> Void
     let onNavigateToFrontDesk: () -> Void
     let onClose: () -> Void
+    
+    // MARK: - Helper Methods
+    
+    private func loadPracticeName() async {
+        guard apiManager.currentUser?.practiceId != nil else {
+            await MainActor.run {
+                self.practiceName = ""
+            }
+            return
+        }
+        
+        do {
+            // Use cached practice data or load from API
+            if let practice = try await apiManager.getCurrentPractice() {
+                await MainActor.run {
+                    self.practiceName = practice.name
+                    print("✅ Loaded practice name: \(practice.name)")
+                }
+            } else {
+                await MainActor.run {
+                    self.practiceName = ""
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.practiceName = "Practice"
+                print("❌ Failed to load practice name: \(error.localizedDescription)")
+            }
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -42,6 +73,14 @@ struct SidebarMenu: View {
                         .font(.title2)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
+                    
+                    // Practice name (small text below user name)
+                    if let practiceId = user.practiceId {
+                        Text(practiceName)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 2)
+                    }
                 }
             }
             .padding(.horizontal, 24)
@@ -158,6 +197,9 @@ struct SidebarMenu: View {
         }
         .sheet(isPresented: $showingConfigureSettings) {
             VoiceAgentConfigureView()
+        }
+        .task {
+            await loadPracticeName()
         }
     }
 }

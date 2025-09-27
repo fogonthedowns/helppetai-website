@@ -6,7 +6,7 @@ import os
 import json
 import logging
 import httpx
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from retell import Retell
 
 logger = logging.getLogger(__name__)
@@ -476,6 +476,121 @@ You are helping customers of this specific veterinary practice. Use the practice
         except Exception as e:
             logger.error(f"❌ Failed to get message from node '{node_name}': {e}")
             return None
+    
+    def publish_agent(self, agent_id: str) -> bool:
+        """
+        Publish the latest version of the agent to make it live for phone calls
+        
+        Args:
+            agent_id: The agent ID to publish
+            
+        Returns:
+            True if successful, False if failed
+        """
+        try:
+            logger.info(f"📢 Publishing agent: {agent_id}")
+            
+            # Use raw HTTP request for publishing
+            import requests
+            
+            publish_response = requests.post(
+                f"https://api.retellai.com/publish-agent/{agent_id}",
+                headers={"Authorization": f"Bearer {self.api_key}"}
+            )
+            
+            logger.info(f"🔍 Publish response status: {publish_response.status_code}")
+            logger.info(f"🔍 Publish response text: '{publish_response.text}'")
+            
+            if publish_response.status_code == 200:
+                # Handle empty response body - this is normal for publish endpoint
+                try:
+                    response_json = publish_response.json() if publish_response.text.strip() else {}
+                    logger.info(f"✅ Successfully published agent {agent_id}")
+                    logger.info(f"🔍 Publish response: {response_json}")
+                except ValueError:
+                    # Empty response is actually success for this endpoint
+                    logger.info(f"✅ Successfully published agent {agent_id} (empty response - this is normal)")
+                return True
+            else:
+                logger.error(f"❌ Failed to publish agent {agent_id}: Status {publish_response.status_code}")
+                logger.error(f"🔍 Response: {publish_response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to publish agent {agent_id}: {e}")
+            return False
+    
+    def find_phone_numbers_for_agent(self, agent_id: str) -> List[str]:
+        """Find all phone numbers associated with an agent"""
+        try:
+            logger.info(f"📞 Finding phone numbers for agent: {agent_id}")
+            
+            import requests
+            
+            # Get all phone numbers
+            response = requests.get(
+                "https://api.retellai.com/list-phone-numbers",
+                headers={"Authorization": f"Bearer {self.api_key}"}
+            )
+            
+            if response.status_code == 200:
+                phone_numbers = response.json()
+                logger.info(f"🔍 Retrieved {len(phone_numbers)} total phone numbers")
+                
+                # Find numbers using this agent (inbound or outbound)
+                matching_numbers = []
+                for phone_data in phone_numbers:
+                    inbound_agent = phone_data.get('inbound_agent_id')
+                    outbound_agent = phone_data.get('outbound_agent_id')
+                    phone_number = phone_data.get('phone_number')
+                    
+                    if inbound_agent == agent_id or outbound_agent == agent_id:
+                        matching_numbers.append(phone_number)
+                        logger.info(f"📞 Found phone number: {phone_number} for agent {agent_id}")
+                        logger.info(f"   Inbound agent: {inbound_agent}")
+                        logger.info(f"   Outbound agent: {outbound_agent}")
+                
+                logger.info(f"📊 Found {len(matching_numbers)} phone numbers for agent {agent_id}")
+                return matching_numbers
+            else:
+                logger.error(f"❌ Failed to list phone numbers: {response.text}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to find phone numbers: {e}")
+            return []
+    
+    def update_phone_number_to_latest_version(self, phone_number: str, agent_id: str, latest_version: int) -> bool:
+        """Update phone number to use latest published version of agent"""
+        try:
+            logger.info(f"📞 Updating phone number {phone_number} to use version {latest_version} of agent {agent_id}")
+            
+            import requests
+            
+            # Update phone number to use latest published version
+            update_response = requests.patch(
+                f"https://api.retellai.com/update-phone-number/{phone_number}",
+                headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                json={
+                    "inbound_agent_id": agent_id,
+                    "inbound_agent_version": latest_version  # Explicitly set to latest published version
+                }
+            )
+            
+            logger.info(f"🔍 Phone number update status: {update_response.status_code}")
+            logger.info(f"🔍 Phone number update response: '{update_response.text}'")
+            
+            if update_response.status_code == 200:
+                logger.info(f"✅ Updated phone number {phone_number} to use latest version")
+                return True
+            else:
+                logger.error(f"❌ Failed to update phone number {phone_number}: Status {update_response.status_code}")
+                logger.error(f"🔍 Response: {update_response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to update phone number {phone_number}: {e}")
+            return False
     
     def update_agent_with_new_version(self, agent_id: str, conversation_flow_id: str, new_version: int) -> bool:
         """

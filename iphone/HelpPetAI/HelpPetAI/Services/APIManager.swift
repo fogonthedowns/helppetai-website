@@ -40,6 +40,7 @@ class APIManager: ObservableObject {
     
     @Published var isAuthenticated = false
     @Published var currentUser: User?
+    @Published var currentPractice: PracticeDetails?
     
     private init() {
         decoder = JSONDecoder()
@@ -256,6 +257,7 @@ class APIManager: ObservableObject {
             print("🔓 APIManager.logout(): Setting isAuthenticated = false, currentUser = nil")
             self.isAuthenticated = false
             self.currentUser = nil
+            self.currentPractice = nil  // Clear cached practice data
             print("🔓 APIManager.logout(): Logout completed - should trigger ContentView to show LoginView")
         }
     }
@@ -836,6 +838,61 @@ class APIManager: ObservableObject {
         }
         
         return try decoder.decode([Practice].self, from: data)
+    }
+    
+    func getPracticeById(practiceId: String) async throws -> PracticeDetails {
+        let url = URL(string: "\(baseURL)/api/v1/practices/\(practiceId)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        authHeaders.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        
+        print("🔍 GET PRACTICE BY ID REQUEST:")
+        print("🔍 URL: \(url.absoluteString)")
+        print("🔍 Practice ID: \(practiceId)")
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        if httpResponse.statusCode == 404 {
+            throw APIError.notFound
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            print("❌ GET PRACTICE BY ID FAILED: Status \(httpResponse.statusCode)")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Error response: \(responseString)")
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        print("✅ GET PRACTICE BY ID SUCCESS")
+        let practice = try decoder.decode(PracticeDetails.self, from: data)
+        
+        // Cache the practice data
+        await MainActor.run {
+            self.currentPractice = practice
+        }
+        
+        return practice
+    }
+    
+    func getCurrentPractice() async throws -> PracticeDetails? {
+        // Return cached practice if available
+        if let cachedPractice = currentPractice {
+            print("✅ Using cached practice: \(cachedPractice.name)")
+            return cachedPractice
+        }
+        
+        // Load practice if user has one
+        guard let user = currentUser, let practiceId = user.practiceId else {
+            return nil
+        }
+        
+        print("🔄 Loading practice from API...")
+        return try await getPracticeById(practiceId: practiceId)
     }
     
     // MARK: - Appointments
@@ -2486,6 +2543,35 @@ struct PracticeSearchResult: Codable, Identifiable {
     let address: String?
     let phone: String?
     let email: String?
+}
+
+struct PracticeDetails: Codable, Identifiable {
+    let uuid: String
+    let name: String
+    let description: String?
+    let phone: String?
+    let email: String?
+    let website: String?
+    let address: String?
+    let licenseNumber: String?
+    let specialties: [String]
+    let adminUserId: String?
+    let isActive: Bool
+    let acceptsNewPatients: Bool
+    let createdAt: String
+    let updatedAt: String
+    
+    var id: String { uuid }
+    
+    enum CodingKeys: String, CodingKey {
+        case uuid, name, description, phone, email, website, address, specialties
+        case licenseNumber = "license_number"
+        case adminUserId = "admin_user_id"
+        case isActive = "is_active"
+        case acceptsNewPatients = "accepts_new_patients"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
 }
 
 struct CreatePracticeRequest: Codable {
