@@ -560,20 +560,20 @@ You are helping customers of this specific veterinary practice. Use the practice
             logger.error(f"❌ Failed to find phone numbers: {e}")
             return []
     
-    def update_phone_number_to_latest_version(self, phone_number: str, agent_id: str, latest_version: int) -> bool:
+    def update_phone_number_to_latest_version(self, phone_number: str, agent_id: str) -> bool:
         """Update phone number to use latest published version of agent"""
         try:
-            logger.info(f"📞 Updating phone number {phone_number} to use version {latest_version} of agent {agent_id}")
+            logger.info(f"📞 Updating phone number {phone_number} to use latest published version of agent {agent_id}")
             
             import requests
             
-            # Update phone number to use latest published version
+            # Update phone number to use latest published version (auto-detects)
             update_response = requests.patch(
                 f"https://api.retellai.com/update-phone-number/{phone_number}",
                 headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
                 json={
-                    "inbound_agent_id": agent_id,
-                    "inbound_agent_version": latest_version  # Explicitly set to latest published version
+                    "inbound_agent_id": agent_id
+                    # No version specified - auto-uses latest published version
                 }
             )
             
@@ -591,6 +591,34 @@ You are helping customers of this specific veterinary practice. Use the practice
         except Exception as e:
             logger.error(f"❌ Failed to update phone number {phone_number}: {e}")
             return False
+    
+    def get_actual_published_version(self, agent_id: str) -> Optional[int]:
+        """Get the actual published version of an agent"""
+        try:
+            logger.info(f"🔍 Getting actual published version for agent: {agent_id}")
+            
+            import requests
+            
+            # Get agent details to find the published version
+            agent_details = self.get_agent(agent_id)
+            if not agent_details:
+                logger.error(f"❌ Could not get agent details")
+                return None
+            
+            response_engine = agent_details.get("response_engine")
+            if not response_engine:
+                logger.error(f"❌ No response engine found")
+                return None
+            
+            # Get the published version from the agent
+            published_version = getattr(response_engine, 'version', None)
+            logger.info(f"🔍 Agent's current published version: {published_version}")
+            
+            return published_version
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get published version: {e}")
+            return None
     
     def update_agent_with_new_version(self, agent_id: str, conversation_flow_id: str, new_version: int) -> bool:
         """

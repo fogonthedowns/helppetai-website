@@ -456,20 +456,16 @@ async def update_voice_agent_node_message(
                 detail="Failed to publish agent - changes may not be live for phone calls"
             )
         
-        logger.info(f"✅ STEP 4 SUCCESS: Agent published and live for phone calls")
+        logger.info(f"✅ STEP 4 SUCCESS: Agent published - our changes are now live!")
         
-        # Get the latest published version (after publishing, it should be current_version + 1)
-        latest_published_version = current_version
-        logger.info(f"🔍 Latest published version: {latest_published_version}")
-        
-        # Step 5: Update phone numbers to use the latest published version
-        logger.info(f"📋 STEP 5: Updating phone numbers to use latest published version {latest_published_version}")
+        # Step 5: Update phone numbers to use latest published version (auto-detects)
+        logger.info(f"📋 STEP 5: Updating phone numbers to use latest published version")
         
         phone_numbers = retell_service.find_phone_numbers_for_agent(agent_id)
         if phone_numbers:
             phone_update_results = []
             for phone_number in phone_numbers:
-                result = retell_service.update_phone_number_to_latest_version(phone_number, agent_id, latest_published_version)
+                result = retell_service.update_phone_number_to_latest_version(phone_number, agent_id)
                 phone_update_results.append(result)
                 
             if all(phone_update_results):
