@@ -18,9 +18,12 @@ struct FinalView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background gradient (same as previous screens)
+                // Background gradient (adaptive for dark mode)
                 LinearGradient(
-                    gradient: Gradient(colors: [
+                    gradient: Gradient(colors: colorScheme == .dark ? [
+                        Color(red: 0.1, green: 0.1, blue: 0.15),
+                        Color(red: 0.15, green: 0.15, blue: 0.2)
+                    ] : [
                         Color(red: 0.85, green: 0.95, blue: 1.0),
                         Color(red: 0.95, green: 0.98, blue: 1.0)
                     ]),
@@ -142,6 +145,10 @@ struct FinalView: View {
             }
         }
         .navigationBarHidden(true)
+        .onTapGesture {
+            // Dismiss keyboard when tapping outside of text fields
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .fullScreenCover(isPresented: $showingPracticeSelection) {
             PracticeSelectionView()
         }
@@ -171,12 +178,21 @@ struct FinalView: View {
         
         Task {
             do {
-                let success = await APIManager.shared.signUp(
+                // Create survey data
+                let surveyData: [String: Any] = [
+                    "practice_type": selectedPracticeType,
+                    "call_volume": selectedCallVolume,
+                    "role": selectedRole,
+                    "motivations": Array(selectedMotivations)
+                ]
+                
+                let success = await APIManager.shared.signUpWithSurvey(
                     username: email, // Use email as username as requested
                     password: password,
                     email: email,
                     fullName: userName,
-                    role: "VET_STAFF"
+                    role: "VET_STAFF",
+                    survey: surveyData
                 )
                 
                 await MainActor.run {

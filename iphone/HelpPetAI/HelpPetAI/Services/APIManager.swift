@@ -2404,6 +2404,84 @@ extension APIManager {
         }
     }
     
+    func signUpWithSurvey(username: String, password: String, email: String, fullName: String, role: String, survey: [String: Any]) async -> Bool {
+        do {
+            let url = URL(string: "\(baseURL)/api/v1/auth/signup")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let signUpData: [String: Any] = [
+                "username": username,
+                "password": password,
+                "email": email,
+                "full_name": fullName,
+                "role": role,
+                "survey": survey
+            ]
+            
+            request.httpBody = try JSONSerialization.data(withJSONObject: signUpData)
+            
+            print("🔍 SIGNUP WITH SURVEY REQUEST:")
+            print("🔍 URL: \(url.absoluteString)")
+            print("🔍 Username: \(username)")
+            print("🔍 Email: \(email)")
+            print("🔍 Survey: \(survey)")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ SIGNUP WITH SURVEY: Invalid response type")
+                return false
+            }
+            
+            print("🔍 SIGNUP WITH SURVEY RESPONSE:")
+            print("🔍 Status Code: \(httpResponse.statusCode)")
+            
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 Response Body: \(responseString)")
+            }
+            
+            if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
+                print("✅ Sign up with survey successful! Now logging in automatically...")
+                
+                // Parse response to get auth token if provided
+                if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let token = jsonData["access_token"] as? String {
+                    await MainActor.run {
+                        KeychainManager.shared.saveAccessToken(token)
+                        UserDefaults.standard.set(username, forKey: "logged_in_username")
+                        self.isAuthenticated = true
+                        print("✅ Sign up with survey successful, token saved from signup response")
+                    }
+                    return true
+                } else {
+                    // If no token in response, try to login automatically
+                    print("🔍 No token in signup response, attempting automatic login...")
+                    do {
+                        let loginResponse = try await login(username: username, password: password)
+                        await MainActor.run {
+                            KeychainManager.shared.saveAccessToken(loginResponse.accessToken)
+                            UserDefaults.standard.set(username, forKey: "logged_in_username")
+                            self.isAuthenticated = true
+                            print("✅ Sign up with survey successful, logged in automatically")
+                        }
+                        return true
+                    } catch {
+                        print("❌ Automatic login after signup failed: \(error)")
+                        return false
+                    }
+                }
+            } else {
+                print("❌ Sign up with survey failed with status: \(httpResponse.statusCode)")
+                return false
+            }
+        } catch {
+            print("❌ Sign up with survey error: \(error)")
+            return false
+        }
+    }
+    
     // MARK: - Practice Management Methods
     
         func searchPractices(query: String) async -> [PracticeSearchResult] {

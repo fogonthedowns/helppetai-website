@@ -40,38 +40,15 @@ struct RoleResponseView: View {
                             Spacer()
                         }
                         
-                        // Progress bar (4/4 complete)
+                        // Progress bar (4/6 complete)
                         VStack(spacing: 8) {
                             HStack {
-                                Circle()
-                                    .fill(Color.green)
-                                    .frame(width: 12, height: 12)
-                                
-                                Rectangle()
-                                    .fill(Color.green)
-                                    .frame(height: 4)
-                                
-                                Circle()
-                                    .fill(Color.green)
-                                    .frame(width: 12, height: 12)
-                                
-                                Rectangle()
-                                    .fill(Color.green)
-                                    .frame(height: 4)
-                                
-                                Circle()
-                                    .fill(Color.green)
-                                    .frame(width: 12, height: 12)
-                                
-                                Rectangle()
-                                    .fill(Color.green)
-                                    .frame(height: 4)
-                                
-                                Circle()
-                                    .fill(Color.green)
-                                    .frame(width: 12, height: 12)
-                                
-                                Spacer()
+                                ForEach(0..<6) { index in
+                                    Rectangle()
+                                        .fill(index < 4 ? Color.green : Color.gray.opacity(0.3))
+                                        .frame(height: 4)
+                                        .cornerRadius(2)
+                                }
                             }
                             .padding(.horizontal, 40)
                         }
@@ -192,6 +169,10 @@ struct RoleResponseView: View {
             }
         }
         .navigationBarHidden(true)
+        .onTapGesture {
+            // Dismiss keyboard when tapping outside of text fields
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .onAppear {
             startTypingAnimation()
         }

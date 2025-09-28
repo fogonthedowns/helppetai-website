@@ -4,8 +4,8 @@ User model for PostgreSQL - HelpPet MVP
 
 import uuid
 from datetime import datetime
-from typing import Optional, List
-from sqlalchemy import String, Boolean, DateTime, Text, Enum as SQLEnum, UUID
+from typing import Optional, List, Dict, Any
+from sqlalchemy import String, Boolean, DateTime, Text, Enum as SQLEnum, UUID, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from enum import Enum
@@ -45,6 +45,9 @@ class User(Base):
     
     # Status fields
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    
+    # Survey data (optional JSON field for onboarding survey responses)
+    survey: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     
     # Audit fields
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

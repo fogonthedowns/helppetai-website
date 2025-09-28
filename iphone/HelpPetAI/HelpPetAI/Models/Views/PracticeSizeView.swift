@@ -50,33 +50,12 @@ struct PracticeSizeView: View {
                         // Progress bar
                         VStack(spacing: 8) {
                             HStack {
-                                Circle()
-                                    .fill(Color.green)
-                                    .frame(width: 12, height: 12)
-                                
-                                Rectangle()
-                                    .fill(Color.green)
-                                    .frame(height: 4)
-                                
-                                Circle()
-                                    .fill(Color.green)
-                                    .frame(width: 12, height: 12)
-                                
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(height: 4)
-                                
-                                Circle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 12, height: 12)
-                                
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(height: 4)
-                                
-                                Circle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 12, height: 12)
+                                ForEach(0..<6) { index in
+                                    Rectangle()
+                                        .fill(index < 2 ? Color.green : Color.gray.opacity(0.3))
+                                        .frame(height: 4)
+                                        .cornerRadius(2)
+                                }
                                 
                                 Spacer()
                             }
@@ -256,6 +235,10 @@ struct PracticeSizeView: View {
             }
         }
         .navigationBarHidden(true)
+        .onTapGesture {
+            // Dismiss keyboard when tapping outside of text fields
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .onAppear {
             startTypingAnimation()
         }

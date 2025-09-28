@@ -98,7 +98,7 @@ struct WelcomeView: View {
                                 HStack(spacing: 12) {
                                     Image(systemName: "plus.circle.fill")
                                         .font(.system(size: 18, weight: .medium))
-                                    Text("Create New Account")
+                                    Text("Find Your Practice")
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .frame(maxWidth: .infinity)

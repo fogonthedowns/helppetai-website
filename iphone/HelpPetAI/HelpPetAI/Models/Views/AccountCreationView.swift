@@ -25,9 +25,12 @@ struct AccountCreationView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background gradient (same as other screens)
+                // Background gradient (adaptive for dark mode)
                 LinearGradient(
-                    gradient: Gradient(colors: [
+                    gradient: Gradient(colors: colorScheme == .dark ? [
+                        Color(red: 0.1, green: 0.1, blue: 0.15),
+                        Color(red: 0.15, green: 0.15, blue: 0.2)
+                    ] : [
                         Color(red: 0.85, green: 0.95, blue: 1.0),
                         Color(red: 0.95, green: 0.98, blue: 1.0)
                     ]),
@@ -162,9 +165,9 @@ struct AccountCreationView: View {
                                         .padding(.vertical, 16)
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.white)
+                                                .fill(colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.25) : Color.white)
                                                 .shadow(
-                                                    color: Color.black.opacity(0.1),
+                                                    color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1),
                                                     radius: 4,
                                                     x: 0,
                                                     y: 2
@@ -205,9 +208,9 @@ struct AccountCreationView: View {
                                     .padding(.vertical, 16)
                                     .background(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color.white)
+                                            .fill(colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.25) : Color.white)
                                             .shadow(
-                                                color: Color.black.opacity(0.1),
+                                                color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1),
                                                 radius: 4,
                                                 x: 0,
                                                 y: 2
@@ -248,9 +251,9 @@ struct AccountCreationView: View {
                                     .padding(.vertical, 16)
                                     .background(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color.white)
+                                            .fill(colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.25) : Color.white)
                                             .shadow(
-                                                color: passwordsMatch ? Color.black.opacity(0.1) : Color.red.opacity(0.2),
+                                                color: passwordsMatch ? Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1) : Color.red.opacity(0.2),
                                                 radius: 4,
                                                 x: 0,
                                                 y: 2
@@ -318,6 +321,10 @@ struct AccountCreationView: View {
             }
         }
         .navigationBarHidden(true)
+        .onTapGesture {
+            // Dismiss keyboard when tapping outside of text fields
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .onAppear {
             startTypingAnimation()
         }

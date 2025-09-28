@@ -40,6 +40,7 @@ class UserCreate(BaseModel):
     email: Optional[str] = None
     full_name: str
     role: UserRole = UserRole.VET_STAFF
+    survey: Optional[dict] = None
 
 
 class UserUpdate(BaseModel):
@@ -117,7 +118,8 @@ async def signup(
         password_hash=hashed_password,
         email=user_data.email,
         full_name=user_data.full_name,
-        role=user_data.role
+        role=user_data.role,
+        survey=user_data.survey
     )
     
     created_user = await user_repo.create(new_user)

@@ -29,9 +29,12 @@ struct MotivationView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background gradient (same as previous screens)
+                // Background gradient (adaptive for dark mode)
                 LinearGradient(
-                    gradient: Gradient(colors: [
+                    gradient: Gradient(colors: colorScheme == .dark ? [
+                        Color(red: 0.1, green: 0.1, blue: 0.15),
+                        Color(red: 0.15, green: 0.15, blue: 0.2)
+                    ] : [
                         Color(red: 0.85, green: 0.95, blue: 1.0),
                         Color(red: 0.95, green: 0.98, blue: 1.0)
                     ]),
@@ -58,11 +61,11 @@ struct MotivationView: View {
                     }
                     .padding(.top, 10)
                     
-                    // Progress Bar
+                    // Progress Bar (5/6 complete)
                     HStack {
-                        ForEach(0..<5) { index in
+                        ForEach(0..<6) { index in
                             Rectangle()
-                                .fill(index < 4 ? Color.green : Color.gray.opacity(0.3))
+                                .fill(index < 5 ? Color.green : Color.gray.opacity(0.3))
                                 .frame(height: 4)
                                 .cornerRadius(2)
                         }
@@ -161,8 +164,8 @@ struct MotivationView: View {
                                                 .frame(width: 40, height: 40)
                                                 .background(
                                                     Circle()
-                                                        .fill(Color.white.opacity(0.8))
-                                                        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+                                                        .fill(colorScheme == .dark ? Color(red: 0.3, green: 0.3, blue: 0.35).opacity(0.8) : Color.white.opacity(0.8))
+                                                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1), radius: 2, x: 0, y: 1)
                                                 )
                                             
                                             // Text
@@ -184,9 +187,9 @@ struct MotivationView: View {
                                         .padding(.vertical, 16)
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.white)
+                                                .fill(colorScheme == .dark ? Color(red: 0.2, green: 0.2, blue: 0.25) : Color.white)
                                                 .shadow(
-                                                    color: selectedMotivations.contains(option.2) ? Color.green.opacity(0.3) : Color.black.opacity(0.1),
+                                                    color: selectedMotivations.contains(option.2) ? Color.green.opacity(0.3) : Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1),
                                                     radius: selectedMotivations.contains(option.2) ? 8 : 4,
                                                     x: 0,
                                                     y: 2
@@ -244,6 +247,10 @@ struct MotivationView: View {
             }
         }
         .navigationBarHidden(true)
+        .onTapGesture {
+            // Dismiss keyboard when tapping outside of text fields
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .onAppear {
             startTypingAnimation()
         }
