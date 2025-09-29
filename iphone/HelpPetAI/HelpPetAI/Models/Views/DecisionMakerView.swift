@@ -3,6 +3,7 @@ import SwiftUI
 
 struct DecisionMakerView: View {
     let userName: String
+    let practiceId: String
     let selectedPracticeType: String
     let selectedCallVolume: String
     
@@ -53,9 +54,9 @@ struct DecisionMakerView: View {
                         // Progress bar (4/6 complete)
                         VStack(spacing: 8) {
                             HStack {
-                                ForEach(0..<6) { index in
+                                ForEach(0..<7) { index in
                                     Rectangle()
-                                        .fill(index < 4 ? Color.green : Color.gray.opacity(0.3))
+                                        .fill(index < 5 ? Color.green : Color.gray.opacity(0.3))
                                         .frame(height: 4)
                                         .cornerRadius(2)
                                 }
@@ -205,7 +206,7 @@ struct DecisionMakerView: View {
                     
                     // Continue Button
                     if selectedRole != nil {
-                        NavigationLink(destination: RoleResponseView(userName: userName, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume, selectedRole: selectedRole!)) {
+                        NavigationLink(destination: RoleResponseView(userName: userName, practiceId: practiceId, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume, selectedRole: selectedRole!)) {
                             Text("CONTINUE")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
@@ -339,11 +340,11 @@ struct DecisionMakerView: View {
 }
 
 #Preview("Light Mode") {
-    DecisionMakerView(userName: "John Doe", selectedPracticeType: "solo", selectedCallVolume: "25-50")
+    DecisionMakerView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "solo", selectedCallVolume: "25-50")
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    DecisionMakerView(userName: "John Doe", selectedPracticeType: "solo", selectedCallVolume: "25-50")
+    DecisionMakerView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "solo", selectedCallVolume: "25-50")
         .preferredColorScheme(.dark)
 }

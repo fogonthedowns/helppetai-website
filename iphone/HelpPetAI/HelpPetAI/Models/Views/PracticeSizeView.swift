@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PracticeSizeView: View {
     let userName: String
+    let practiceId: String
     
     @State private var displayedText = ""
     @State private var showOptions = false
@@ -50,9 +51,9 @@ struct PracticeSizeView: View {
                         // Progress bar
                         VStack(spacing: 8) {
                             HStack {
-                                ForEach(0..<6) { index in
+                                ForEach(0..<7) { index in
                                     Rectangle()
-                                        .fill(index < 2 ? Color.green : Color.gray.opacity(0.3))
+                                        .fill(index < 3 ? Color.green : Color.gray.opacity(0.3))
                                         .frame(height: 4)
                                         .cornerRadius(2)
                                 }
@@ -205,7 +206,7 @@ struct PracticeSizeView: View {
                     
                     // Continue Button
                     if selectedPracticeType != nil {
-                        NavigationLink(destination: PracticeSizeResponseView(userName: userName, selectedPracticeType: selectedPracticeType!)) {
+                        NavigationLink(destination: PracticeSizeResponseView(userName: userName, practiceId: practiceId, selectedPracticeType: selectedPracticeType!)) {
                             Text("CONTINUE")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
@@ -339,11 +340,11 @@ struct PracticeSizeView: View {
 }
 
 #Preview("Light Mode") {
-    PracticeSizeView(userName: "John Doe")
+    PracticeSizeView(userName: "John Doe", practiceId: "practice123")
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    PracticeSizeView(userName: "John Doe")
+    PracticeSizeView(userName: "John Doe", practiceId: "practice123")
         .preferredColorScheme(.dark)
 }

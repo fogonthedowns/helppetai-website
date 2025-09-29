@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AccountCreationView: View {
     let userName: String
+    let practiceId: String
     let selectedPracticeType: String
     let selectedCallVolume: String
     let selectedRole: String
@@ -13,13 +14,15 @@ struct AccountCreationView: View {
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var showContinueButton = false
+    @State private var isCreatingAccount = false
+    @State private var showingFinalView = false
     @State private var isTyping = false
     @State private var isPasswordVisible = false
     @State private var isConfirmPasswordVisible = false
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
     
-    private let fullText = "Almost done! Let's create your account."
+    private let fullText = "Let's Sign in with your work email."
     private let typingSpeed: Double = 0.015
     
     var body: some View {
@@ -59,9 +62,9 @@ struct AccountCreationView: View {
                     
                     // Progress Bar (almost complete)
                     HStack {
-                        ForEach(0..<6) { index in
-                            Rectangle()
-                                .fill(index < 5 ? Color.green : Color.gray.opacity(0.3))
+                                ForEach(0..<7) { index in
+                                    Rectangle()
+                                        .fill(index < 6 ? Color.green : Color.gray.opacity(0.3))
                                 .frame(height: 4)
                                 .cornerRadius(2)
                         }
@@ -288,31 +291,37 @@ struct AccountCreationView: View {
                     
                     // Continue Button
                     if showContinueButton {
-                        NavigationLink(destination: FinalView(
-                            userName: userName,
-                            email: email,
-                            password: password,
-                            selectedPracticeType: selectedPracticeType,
-                            selectedCallVolume: selectedCallVolume,
-                            selectedRole: selectedRole,
-                            selectedMotivations: selectedMotivations
-                        )) {
-                            Text("Create Account")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 56)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 28)
-                                        .fill(Color.green)
-                                        .shadow(
-                                            color: Color.green.opacity(0.3),
-                                            radius: 8,
-                                            x: 0,
-                                            y: 4
-                                        )
-                                )
+                        Button(action: {
+                            createUserAccount()
+                        }) {
+                            HStack {
+                                if isCreatingAccount {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                    Text("Creating Account...")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(.white)
+                                } else {
+                                    Text("Sign In with Email")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                RoundedRectangle(cornerRadius: 28)
+                                    .fill(Color.green)
+                                    .shadow(
+                                        color: Color.green.opacity(0.3),
+                                        radius: 8,
+                                        x: 0,
+                                        y: 4
+                                    )
+                            )
                         }
+                        .disabled(isCreatingAccount)
                         .padding(.horizontal, 28)
                         .padding(.bottom, 40)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -324,6 +333,18 @@ struct AccountCreationView: View {
         .onTapGesture {
             // Dismiss keyboard when tapping outside of text fields
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
+        .fullScreenCover(isPresented: $showingFinalView) {
+            FinalView(
+                userName: userName,
+                practiceId: practiceId,
+                email: email,
+                password: password,
+                selectedPracticeType: selectedPracticeType,
+                selectedCallVolume: selectedCallVolume,
+                selectedRole: selectedRole,
+                selectedMotivations: selectedMotivations
+            )
         }
         .onAppear {
             startTypingAnimation()
@@ -397,12 +418,70 @@ struct AccountCreationView: View {
             }
         }
     }
+    
+    // MARK: - User Creation
+    private func createUserAccount() {
+        isCreatingAccount = true
+        
+        Task {
+            do {
+                // Create survey data (practice_id is separate top-level field)
+                let surveyData: [String: Any] = [
+                    "practice_type": selectedPracticeType,
+                    "call_volume": selectedCallVolume,
+                    "role": selectedRole,
+                    "motivations": Array(selectedMotivations)
+                ]
+                
+                let success = await APIManager.shared.signUpWithSurvey(
+                    username: email, // Use email as username as requested
+                    password: password,
+                    email: email,
+                    fullName: userName,
+                    role: "VET_STAFF",
+                    practiceId: practiceId,
+                    survey: surveyData
+                )
+                
+                await MainActor.run {
+                    isCreatingAccount = false
+                    if success {
+                        print("✅ Sign up successful!")
+                        print("User created successfully:")
+                        print("Email: \(email)")
+                        print("Name: \(userName)")
+                        print("Practice Type: \(selectedPracticeType)")
+                        print("Call Volume: \(selectedCallVolume)")
+                        print("Role: \(selectedRole)")
+                        print("Motivations: \(selectedMotivations)")
+                        
+                        // Success haptic feedback
+                        let successFeedback = UINotificationFeedbackGenerator()
+                        successFeedback.notificationOccurred(.success)
+                        
+                        // Navigate to final "You're all set!" screen
+                        showingFinalView = true
+                    } else {
+                        print("❌ Sign up failed")
+                        // Handle error - could show alert
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isCreatingAccount = false
+                    print("❌ Sign up error: \(error)")
+                    // Handle error - could show alert
+                }
+            }
+        }
+    }
 }
 
 #Preview {
     NavigationView {
         AccountCreationView(
             userName: "John Doe",
+            practiceId: "practice123",
             selectedPracticeType: "solo",
             selectedCallVolume: "25-50",
             selectedRole: "owner",

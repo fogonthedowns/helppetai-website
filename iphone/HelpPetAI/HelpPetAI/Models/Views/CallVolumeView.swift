@@ -3,6 +3,7 @@ import SwiftUI
 
 struct CallVolumeView: View {
     let userName: String
+    let practiceId: String
     let selectedPracticeType: String
     
     @State private var displayedText = ""
@@ -52,9 +53,9 @@ struct CallVolumeView: View {
                         // Progress bar (3/6 complete)
                         VStack(spacing: 8) {
                             HStack {
-                                ForEach(0..<6) { index in
+                                ForEach(0..<7) { index in
                                     Rectangle()
-                                        .fill(index < 3 ? Color.green : Color.gray.opacity(0.3))
+                                        .fill(index < 4 ? Color.green : Color.gray.opacity(0.3))
                                         .frame(height: 4)
                                         .cornerRadius(2)
                                 }
@@ -206,7 +207,7 @@ struct CallVolumeView: View {
                     
                     // Continue Button
                     if selectedCallVolume != nil {
-                        NavigationLink(destination: CallVolumeResponseView(userName: userName, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume!)) {
+                        NavigationLink(destination: CallVolumeResponseView(userName: userName, practiceId: practiceId, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume!)) {
                             Text("CONTINUE")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
@@ -340,11 +341,11 @@ struct CallVolumeView: View {
 }
 
 #Preview("Light Mode") {
-    CallVolumeView(userName: "John Doe", selectedPracticeType: "solo")
+    CallVolumeView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "solo")
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    CallVolumeView(userName: "John Doe", selectedPracticeType: "solo")
+    CallVolumeView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "solo")
         .preferredColorScheme(.dark)
 }

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PracticeSizeResponseView: View {
     let userName: String
+    let practiceId: String
     let selectedPracticeType: String
     @State private var displayedText = ""
     @State private var showContinueButton = false
@@ -38,12 +39,12 @@ struct PracticeSizeResponseView: View {
                             Spacer()
                         }
                         
-                        // Progress bar (2/6 complete)
+                        // Progress bar (3/7 complete)
                         VStack(spacing: 8) {
                             HStack {
-                                ForEach(0..<6) { index in
+                                ForEach(0..<7) { index in
                                     Rectangle()
-                                        .fill(index < 2 ? Color.green : Color.gray.opacity(0.3))
+                                        .fill(index < 3 ? Color.green : Color.gray.opacity(0.3))
                                         .frame(height: 4)
                                         .cornerRadius(2)
                                 }
@@ -137,7 +138,7 @@ struct PracticeSizeResponseView: View {
                     
                     // Continue Button
                     if showContinueButton {
-                        NavigationLink(destination: CallVolumeView(userName: userName, selectedPracticeType: selectedPracticeType)) {
+                        NavigationLink(destination: CallVolumeView(userName: userName, practiceId: practiceId, selectedPracticeType: selectedPracticeType)) {
                             Text("CONTINUE")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
@@ -269,11 +270,11 @@ struct PracticeSizeResponseView: View {
 }
 
 #Preview("Light Mode") {
-    PracticeSizeResponseView(userName: "John Doe", selectedPracticeType: "private_multi")
+    PracticeSizeResponseView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "private_multi")
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    PracticeSizeResponseView(userName: "Jane Smith", selectedPracticeType: "corporate")
+    PracticeSizeResponseView(userName: "Jane Smith", practiceId: "practice123", selectedPracticeType: "corporate")
         .preferredColorScheme(.dark)
 }

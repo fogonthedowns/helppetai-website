@@ -320,7 +320,7 @@ struct SignUpView: View {
                 .navigationBarTitleDisplayMode(.inline)
         }
         .fullScreenCover(isPresented: $showingPracticeSelection) {
-            PracticeSelectionView()
+            PracticeSelectionView(userName: fullName)
         }
     }
     

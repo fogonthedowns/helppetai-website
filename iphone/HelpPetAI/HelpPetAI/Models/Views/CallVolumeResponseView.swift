@@ -3,6 +3,7 @@ import SwiftUI
 
 struct CallVolumeResponseView: View {
     let userName: String
+    let practiceId: String
     let selectedPracticeType: String
     let selectedCallVolume: String
     @State private var displayedText = ""
@@ -42,9 +43,9 @@ struct CallVolumeResponseView: View {
                         // Progress bar (3/6 complete)
                         VStack(spacing: 8) {
                             HStack {
-                                ForEach(0..<6) { index in
+                                ForEach(0..<7) { index in
                                     Rectangle()
-                                        .fill(index < 3 ? Color.green : Color.gray.opacity(0.3))
+                                        .fill(index < 4 ? Color.green : Color.gray.opacity(0.3))
                                         .frame(height: 4)
                                         .cornerRadius(2)
                                 }
@@ -138,7 +139,7 @@ struct CallVolumeResponseView: View {
                     
                     // Continue Button
                     if showContinueButton {
-                        NavigationLink(destination: DecisionMakerView(userName: userName, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume)) {
+                        NavigationLink(destination: DecisionMakerView(userName: userName, practiceId: practiceId, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume)) {
                             Text("CONTINUE")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
@@ -274,11 +275,11 @@ struct CallVolumeResponseView: View {
 }
 
 #Preview("Light Mode") {
-    CallVolumeResponseView(userName: "John Doe", selectedPracticeType: "solo", selectedCallVolume: "100-200")
+    CallVolumeResponseView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "solo", selectedCallVolume: "100-200")
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    CallVolumeResponseView(userName: "John Doe", selectedPracticeType: "corporate", selectedCallVolume: "200+")
+    CallVolumeResponseView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "corporate", selectedCallVolume: "200+")
         .preferredColorScheme(.dark)
 }

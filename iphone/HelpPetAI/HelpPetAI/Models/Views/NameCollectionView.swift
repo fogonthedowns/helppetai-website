@@ -50,7 +50,7 @@ struct NameCollectionView: View {
                     
                     // Progress Bar (first step)
                     HStack {
-                        ForEach(0..<6) { index in
+                        ForEach(0..<7) { index in
                             Rectangle()
                                 .fill(index < 1 ? Color.green : Color.gray.opacity(0.3))
                                 .frame(height: 4)
@@ -205,7 +205,7 @@ struct NameCollectionView: View {
                     
                     // Continue Button
                     if showContinueButton {
-                        NavigationLink(destination: PracticeSizeView(userName: "\(firstName) \(lastName)")) {
+                        NavigationLink(destination: PracticeSelectionView(userName: "\(firstName) \(lastName)")) {
                             Text("Continue")
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)

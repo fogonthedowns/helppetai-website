@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RoleResponseView: View {
     let userName: String
+    let practiceId: String
     let selectedPracticeType: String
     let selectedCallVolume: String
     let selectedRole: String
@@ -43,9 +44,9 @@ struct RoleResponseView: View {
                         // Progress bar (4/6 complete)
                         VStack(spacing: 8) {
                             HStack {
-                                ForEach(0..<6) { index in
+                                ForEach(0..<7) { index in
                                     Rectangle()
-                                        .fill(index < 4 ? Color.green : Color.gray.opacity(0.3))
+                                        .fill(index < 5 ? Color.green : Color.gray.opacity(0.3))
                                         .frame(height: 4)
                                         .cornerRadius(2)
                                 }
@@ -139,7 +140,7 @@ struct RoleResponseView: View {
                     
                     // Continue Button
                     if showContinueButton {
-                        NavigationLink(destination: MotivationView(userName: userName, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume, selectedRole: selectedRole)) {
+                        NavigationLink(destination: MotivationView(userName: userName, practiceId: practiceId, selectedPracticeType: selectedPracticeType, selectedCallVolume: selectedCallVolume, selectedRole: selectedRole)) {
                             Text("GET STARTED!")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
@@ -273,11 +274,11 @@ struct RoleResponseView: View {
 }
 
 #Preview("Light Mode - Front Desk") {
-    RoleResponseView(userName: "John Doe", selectedPracticeType: "solo", selectedCallVolume: "25-50", selectedRole: "front_desk")
+    RoleResponseView(userName: "John Doe", practiceId: "practice123", selectedPracticeType: "solo", selectedCallVolume: "25-50", selectedRole: "front_desk")
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode - Owner") {
-    RoleResponseView(userName: "Jane Smith", selectedPracticeType: "corporate", selectedCallVolume: "100-200", selectedRole: "owner")
+    RoleResponseView(userName: "Jane Smith", practiceId: "practice123", selectedPracticeType: "corporate", selectedCallVolume: "100-200", selectedRole: "owner")
         .preferredColorScheme(.dark)
 }

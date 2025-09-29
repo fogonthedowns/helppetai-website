@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MotivationView: View {
     let userName: String
+    let practiceId: String
     let selectedPracticeType: String
     let selectedCallVolume: String
     let selectedRole: String
@@ -63,9 +64,9 @@ struct MotivationView: View {
                     
                     // Progress Bar (5/6 complete)
                     HStack {
-                        ForEach(0..<6) { index in
-                            Rectangle()
-                                .fill(index < 5 ? Color.green : Color.gray.opacity(0.3))
+                                ForEach(0..<7) { index in
+                                    Rectangle()
+                                        .fill(index < 6 ? Color.green : Color.gray.opacity(0.3))
                                 .frame(height: 4)
                                 .cornerRadius(2)
                         }
@@ -164,7 +165,7 @@ struct MotivationView: View {
                                                 .frame(width: 40, height: 40)
                                                 .background(
                                                     Circle()
-                                                        .fill(colorScheme == .dark ? Color(red: 0.3, green: 0.3, blue: 0.35).opacity(0.8) : Color.white.opacity(0.8))
+                                                        .fill(colorScheme == .dark ? Color(red: 0.4, green: 0.4, blue: 0.45) : Color.white.opacity(0.8))
                                                         .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1), radius: 2, x: 0, y: 1)
                                                 )
                                             
@@ -218,6 +219,7 @@ struct MotivationView: View {
                     if !selectedMotivations.isEmpty {
                         NavigationLink(destination: AccountCreationView(
                             userName: userName,
+                            practiceId: practiceId,
                             selectedPracticeType: selectedPracticeType,
                             selectedCallVolume: selectedCallVolume,
                             selectedRole: selectedRole,
@@ -363,6 +365,7 @@ struct MotivationView: View {
     NavigationView {
         MotivationView(
             userName: "John Doe",
+            practiceId: "practice123",
             selectedPracticeType: "solo",
             selectedCallVolume: "25-50",
             selectedRole: "owner"

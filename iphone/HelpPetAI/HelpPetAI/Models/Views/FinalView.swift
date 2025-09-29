@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FinalView: View {
     let userName: String
+    let practiceId: String
     let email: String
     let password: String
     let selectedPracticeType: String
@@ -9,11 +10,9 @@ struct FinalView: View {
     let selectedRole: String
     let selectedMotivations: Set<String>
     
-    @State private var isCreatingAccount = false
-    @State private var accountCreated = false
-    @State private var showingPracticeSelection = false
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @State private var showingWelcomeView = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -52,7 +51,7 @@ struct FinalView: View {
                     
                     // Progress Bar (completed)
                     HStack {
-                        ForEach(0..<6) { index in
+                        ForEach(0..<7) { index in
                             Rectangle()
                                 .fill(Color.green)
                                 .frame(height: 4)
@@ -64,57 +63,56 @@ struct FinalView: View {
                     
                     Spacer()
                     
-                    // Centered Done Image
-                    VStack(spacing: 40) {
-                        Image("done")
+                    // Main Content
+                    VStack(spacing: 30) {
+                        // Character Image (smaller)
+                        Image("Welcome")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 200, height: 200)
-                            .shadow(
-                                color: shadowColor,
-                                radius: 20,
-                                x: 0,
-                                y: 10
-                            )
+                            .frame(width: 160, height: 160)
                             .scaleEffect(1.0)
-                            .animation(.easeInOut(duration: 0.8), value: 1.0)
                         
-                        // Success message
+                        // Title and Message
                         VStack(spacing: 16) {
-                            Text("You're all set, \(userName.components(separatedBy: " ").first ?? "")!")
+                            Text("You're all set!")
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(primaryTextColor)
                                 .multilineTextAlignment(.center)
                             
-                            Text("Your AI Front Desk Agent is ready to transform your practice!")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(secondaryTextColor)
+                            Text("Check your email!")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(primaryTextColor)
                                 .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
+                            
+                            VStack(spacing: 8) {
+                                Text("We sent a confirmation link to")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(secondaryTextColor)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text(email)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.green)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.horizontal, 40)
                         }
                     }
                     
                     Spacer()
                     
-                    // Continue Button
+                    // Open Email App Button
                     VStack(spacing: 16) {
                         Button(action: {
-                            createUserAccount()
+                            openEmailApp()
                         }) {
                             HStack {
-                                if isCreatingAccount {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(0.8)
-                                    Text("Creating Account...")
-                                        .font(.system(size: 18, weight: .semibold))
-                                        .foregroundColor(.white)
-                                } else {
-                                    Text("Continue")
-                                        .font(.system(size: 18, weight: .semibold))
-                                        .foregroundColor(.white)
-                                }
+                                Image(systemName: "mail.fill")
+                                    .font(.system(size: 18))
+                                Text("Open Email App")
+                                    .font(.system(size: 18, weight: .semibold))
                             }
+                            .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(
@@ -137,8 +135,17 @@ struct FinalView: View {
                                     )
                             )
                         }
-                        .disabled(isCreatingAccount)
                         .padding(.horizontal, 28)
+                        
+                        // Secondary action - Back to login
+                        Button(action: {
+                            // Navigate back to the very first screen (WelcomeView)
+                            showingWelcomeView = true
+                        }) {
+                            Text("Back to Home")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.green)
+                        }
                         .padding(.bottom, 40)
                     }
                 }
@@ -149,8 +156,8 @@ struct FinalView: View {
             // Dismiss keyboard when tapping outside of text fields
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
-        .fullScreenCover(isPresented: $showingPracticeSelection) {
-            PracticeSelectionView()
+        .fullScreenCover(isPresented: $showingWelcomeView) {
+            WelcomeView()
         }
         .onAppear {
             // Add any entrance animations here if needed
@@ -172,60 +179,23 @@ struct FinalView: View {
         colorScheme == .dark ? Color.black.opacity(0.3) : Color.black.opacity(0.15)
     }
     
-    // MARK: - User Creation
-    private func createUserAccount() {
-        isCreatingAccount = true
-        
-        Task {
-            do {
-                // Create survey data
-                let surveyData: [String: Any] = [
-                    "practice_type": selectedPracticeType,
-                    "call_volume": selectedCallVolume,
-                    "role": selectedRole,
-                    "motivations": Array(selectedMotivations)
-                ]
-                
-                let success = await APIManager.shared.signUpWithSurvey(
-                    username: email, // Use email as username as requested
-                    password: password,
-                    email: email,
-                    fullName: userName,
-                    role: "VET_STAFF",
-                    survey: surveyData
-                )
-                
-                await MainActor.run {
-                    isCreatingAccount = false
-                    if success {
-                        print("✅ Sign up successful!")
-                        print("User created successfully:")
-                        print("Email: \(email)")
-                        print("Name: \(userName)")
-                        print("Practice Type: \(selectedPracticeType)")
-                        print("Call Volume: \(selectedCallVolume)")
-                        print("Role: \(selectedRole)")
-                        print("Motivations: \(selectedMotivations)")
-                        
-                        // Success haptic feedback
-                        let successFeedback = UINotificationFeedbackGenerator()
-                        successFeedback.notificationOccurred(.success)
-                        
-                        // Navigate to practice selection (same as old SignUpView)
-                        showingPracticeSelection = true
-                    } else {
-                        print("❌ Sign up failed")
-                        // Handle error - could show alert
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    isCreatingAccount = false
-                    print("❌ Sign up error: \(error)")
-                    // Handle error - could show alert
+    // MARK: - Email Functions
+    private func openEmailApp() {
+        // Try to open the Mail app
+        if let mailURL = URL(string: "message://") {
+            if UIApplication.shared.canOpenURL(mailURL) {
+                UIApplication.shared.open(mailURL)
+            } else {
+                // Fallback to mailto if Mail app is not available
+                if let mailtoURL = URL(string: "mailto:") {
+                    UIApplication.shared.open(mailtoURL)
                 }
             }
         }
+        
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
     }
 }
 
@@ -233,6 +203,7 @@ struct FinalView: View {
     NavigationView {
         FinalView(
             userName: "John Doe",
+            practiceId: "practice123",
             email: "john@example.com",
             password: "password123",
             selectedPracticeType: "solo",

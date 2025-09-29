@@ -230,7 +230,7 @@ struct AuthenticatedContentView: View {
             if let currentUser = apiManager.currentUser {
                 if currentUser.practiceId == nil {
                     // User is authenticated but has no practice association
-                    PracticeSelectionView()
+                    PracticeSelectionView(userName: currentUser.fullName ?? currentUser.username)
                         .navigationBarHidden(true)
                         .onAppear {
                             print("🏥 AuthenticatedContentView: Showing PracticeSelectionView for user \(currentUser.username) (no practice)")

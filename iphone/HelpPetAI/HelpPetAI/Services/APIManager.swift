@@ -2404,7 +2404,7 @@ extension APIManager {
         }
     }
     
-    func signUpWithSurvey(username: String, password: String, email: String, fullName: String, role: String, survey: [String: Any]) async -> Bool {
+    func signUpWithSurvey(username: String, password: String, email: String, fullName: String, role: String, practiceId: String, survey: [String: Any]) async -> Bool {
         do {
             let url = URL(string: "\(baseURL)/api/v1/auth/signup")!
             var request = URLRequest(url: url)
@@ -2417,6 +2417,7 @@ extension APIManager {
                 "email": email,
                 "full_name": fullName,
                 "role": role,
+                "practice_id": practiceId,
                 "survey": survey
             ]
             
@@ -2426,6 +2427,7 @@ extension APIManager {
             print("🔍 URL: \(url.absoluteString)")
             print("🔍 Username: \(username)")
             print("🔍 Email: \(email)")
+            print("🔍 Practice ID: \(practiceId)")
             print("🔍 Survey: \(survey)")
             
             let (data, response) = try await session.data(for: request)
@@ -2443,35 +2445,8 @@ extension APIManager {
             }
             
             if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
-                print("✅ Sign up with survey successful! Now logging in automatically...")
-                
-                // Parse response to get auth token if provided
-                if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let token = jsonData["access_token"] as? String {
-                    await MainActor.run {
-                        KeychainManager.shared.saveAccessToken(token)
-                        UserDefaults.standard.set(username, forKey: "logged_in_username")
-                        self.isAuthenticated = true
-                        print("✅ Sign up with survey successful, token saved from signup response")
-                    }
-                    return true
-                } else {
-                    // If no token in response, try to login automatically
-                    print("🔍 No token in signup response, attempting automatic login...")
-                    do {
-                        let loginResponse = try await login(username: username, password: password)
-                        await MainActor.run {
-                            KeychainManager.shared.saveAccessToken(loginResponse.accessToken)
-                            UserDefaults.standard.set(username, forKey: "logged_in_username")
-                            self.isAuthenticated = true
-                            print("✅ Sign up with survey successful, logged in automatically")
-                        }
-                        return true
-                    } catch {
-                        print("❌ Automatic login after signup failed: \(error)")
-                        return false
-                    }
-                }
+                print("✅ Sign up with survey successful! User must confirm email before logging in.")
+                return true
             } else {
                 print("❌ Sign up with survey failed with status: \(httpResponse.statusCode)")
                 return false
