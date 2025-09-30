@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-HelpPet.ai is a full-stack application that streamlines veterinary visit documentation using iPhone recording and AI. The project consists of:
+HelpPetAI is a full-stack application that streamlines veterinary visit documentation using iPhone recording and AI. The project consists of:
 - **Frontend**: React + TypeScript application with Tailwind CSS
 - **Backend**: FastAPI Python application with PostgreSQL database
 - **Serverless**: AWS Lambda functions for additional processing

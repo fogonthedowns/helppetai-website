@@ -11,7 +11,7 @@ const AboutUs = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-50 py-20">
+      <section className="bg-gradient-to-br from-gray-50 to-gray-100 py-20">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h1 className="text-6xl font-bold text-gray-900 mb-6" style={{
             fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
@@ -45,8 +45,12 @@ const AboutUs = () => {
               </p>
             </div>
             <div className="flex justify-center">
-              <div className="w-80 h-80 bg-gradient-to-br from-blue-100 to-purple-100 rounded-3xl flex items-center justify-center">
-                <Heart className="w-32 h-32 text-blue-600" />
+              <div className="w-80 h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center p-8">
+                <img 
+                  src="/logo_clear_back.png" 
+                  alt="HelpPetAI" 
+                  className="w-64 h-64 object-contain"
+                />
               </div>
             </div>
           </div>
@@ -166,8 +170,8 @@ const AboutUs = () => {
             </div>
 
             <div className="flex justify-center">
-              <div className="w-96 h-96 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center">
-                <div className="text-center text-white">
+              <div className="w-96 h-96 bg-gradient-to-br from-gray-100 to-gray-100 rounded-3xl flex items-center justify-center">
+                <div className="text-center text-black">
                   <div className="text-6xl font-bold mb-2">Front Desk Simplified</div>
                   <div className="text-xl font-light">AI-powered calls</div>
                   <div className="text-4xl font-bold mt-6 mb-2">Voice-First</div>
@@ -186,9 +190,9 @@ const AboutUs = () => {
               Ready to streamline your front desk?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join veterinary practices using HelpPet.ai to transform their front desk workflow.
+            Join veterinary practices using HelpPetAI to transform their front desk workflow.
           </p>
-          <Link to="/vets" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors">
+          <Link to="/contact" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors">
             Start simplifying your front desk
           </Link>
         </div>

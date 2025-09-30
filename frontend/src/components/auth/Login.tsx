@@ -7,6 +7,7 @@ interface LoginProps {
   onLoginSuccess?: () => void;
 }
 
+// destructuring the props
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -61,16 +62,15 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     <div className="min-h-screen flex">
       {/* Left side - Brand/Visual */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800"></div>
-        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-gray-800"></div>
         <div className="relative z-10 flex flex-col justify-center items-center p-12 text-white">
           <div className="mb-8">
             <img 
-              src="/helppetai.png" 
+              src="/logo_clear_back.png" 
               alt="HelpPetAI Logo" 
               width="120" 
               height="120" 
-              className="rounded-xl"
+              className="object-contain"
             />
           </div>
           <h1 className="text-4xl font-bold mb-4" style={{
@@ -80,14 +80,14 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             HelpPetAI
           </h1>
           <p className="text-xl text-center text-white/90 max-w-md leading-relaxed">
-            Advanced veterinary care management system powered by AI
+            Save 80% of phone time with your AI Front Desk Agent
           </p>
           <div className="mt-12 flex items-center space-x-4 text-white/80">
             <div className="flex items-center space-x-2">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              <span>Secure & SOC1 Compliant</span>
+              <span>Secure Infrastructure</span>
             </div>
           </div>
           <div className="mt-4 flex items-center space-x-4 text-white/80">
@@ -95,7 +95,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              <span>AI-Powered Insights</span>
+              <span>Voice-First Design</span>
             </div>
           </div>
         </div>
@@ -110,7 +110,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           {/* Mobile logo */}
           <div className="lg:hidden text-center">
             <img 
-              src="/helppetai.png" 
+              src="/logo_clear_back.png" 
               alt="HelpPetAI Logo" 
               width="64" 
               height="64" 
@@ -203,7 +203,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 {loading && (
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

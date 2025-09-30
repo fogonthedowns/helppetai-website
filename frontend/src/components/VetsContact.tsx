@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Stethoscope, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle, Mail, Phone as PhoneIcon } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
+import Footer from './Footer';
 
 const VetsContact = () => {
   const [formData, setFormData] = useState({
@@ -56,40 +57,46 @@ const VetsContact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-50 py-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center">
-              <Stethoscope className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-6" style={{
-            fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
+      <section className="bg-white pt-8 pb-6 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-6xl font-bold text-gray-900 mb-3 leading-tight tracking-tight" style={{
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
           }}>
-            Connect with Us
+            Get started free.
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-2xl text-gray-600 max-w-2xl mx-auto">
             How can we help your practice?
           </p>
         </div>
       </section>
 
       {/* Contact Form */}
-      <section className="py-16">
-        <div className="max-w-2xl mx-auto px-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <section className="py-6 px-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-gray-50 rounded-3xl border border-gray-200 p-8">
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2" style={{
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+              }}>
+                Send us a message
+              </h2>
+              <p className="text-gray-600 text-lg">
+                Tell us about your practice and we'll get back to you soon.
+              </p>
+            </div>
+
             {submitStatus === 'success' && (
               <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <p className="text-green-800">Your message has been sent successfully! A veterinarian will respond within 24 hours.</p>
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <p className="text-green-800">Your message has been sent successfully! We'll respond within 24 hours.</p>
               </div>
             )}
 
             {submitStatus === 'error' && (
               <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-3">
-                <AlertCircle className="w-5 h-5 text-red-600" />
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
                 <p className="text-red-800">There was an error sending your message. Please try again.</p>
               </div>
             )}
@@ -97,8 +104,8 @@ const VetsContact = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Name *
+                  <label htmlFor="name" className="block text-base font-semibold text-gray-900 mb-3">
+                    Your Name
                   </label>
                   <input
                     type="text"
@@ -107,14 +114,14 @@ const VetsContact = () => {
                     required
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Enter your full name"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
+                    placeholder="Dr. Jane Smith"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
+                  <label htmlFor="email" className="block text-base font-semibold text-gray-900 mb-3">
+                    Email Address
                   </label>
                   <input
                     type="email"
@@ -123,15 +130,15 @@ const VetsContact = () => {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="your.email@example.com"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
+                    placeholder="jane@vetpractice.com"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="phone" className="block text-base font-semibold text-gray-900 mb-3">
                     Phone Number
                   </label>
                   <input
@@ -140,14 +147,14 @@ const VetsContact = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
                     placeholder="(555) 123-4567"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="practice_name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Practice Name *
+                  <label htmlFor="practice_name" className="block text-base font-semibold text-gray-900 mb-3">
+                    Practice Name
                   </label>
                   <input
                     type="text"
@@ -156,15 +163,15 @@ const VetsContact = () => {
                     required
                     value={formData.practice_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Your practice's name"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
+                    placeholder="Happy Paws Veterinary"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                  Message *
+                <label htmlFor="message" className="block text-base font-semibold text-gray-900 mb-3">
+                  Message
                 </label>
                 <textarea
                   id="message"
@@ -173,34 +180,36 @@ const VetsContact = () => {
                   rows={6}
                   value={formData.message}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                  placeholder="Please describe your practices needs and how we can help you."
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none text-base"
+                  placeholder="Tell us about your practice and how we can help..."
                 />
               </div>
+
               <div className="pt-4">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+                  className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Sending...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4" />
+                      <Send className="w-5 h-5" />
                       <span>Send Message</span>
                     </>
                   )}
                 </button>
               </div>
-
             </form>
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 };

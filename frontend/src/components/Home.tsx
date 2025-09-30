@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, DollarSign, Clock, Stethoscope, Phone, Calendar, Mic } from 'lucide-react';
-import TransformSection from './TransformSection';
+import { Phone, Mic, Calendar, Clock, CheckCircle2, Shield, Zap, ArrowRight } from 'lucide-react';
 import Footer from './Footer';
 
 const Home = () => {
+  const [callsPerDay, setCallsPerDay] = useState(50);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const faqs = [
@@ -30,293 +30,332 @@ const Home = () => {
     }
   ];
 
+  // Calculator logic: calls per day * 80% * 5 minutes * $12/hour rate
+  const savedCalls = Math.round(callsPerDay * 0.8);
+  const savedMinutesPerDay = savedCalls * 5;
+  const savedHoursPerDay = savedMinutesPerDay / 60;
+  const hourlyCost = 12;
+  const dailySavings = savedHoursPerDay * hourlyCost;
+  const monthlySavings = dailySavings * 22; // working days per month
+  const annualSavings = monthlySavings * 12;
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section - EXACT Wealthfront Style */}
-      <section className="bg-gradient-to-br from-pink-50 to-orange-50 w-full py-20">
-        <div className="w-full max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="lg:pr-8">
-              <h1 className="text-6xl lg:text-7xl font-bold leading-tight mb-8" style={{
-                fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>
-                Meet LaShonda
-                An AI veterinary voice agent with serious front desk skills
-              </h1>
-
-              <p className="text-2xl text-gray-600 mb-8 font-light">
-                Save 80% of phone time with intelligent check-in, triage, and voice-powered documentation.
-              </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Phone className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">AI Phone Agent</div>
-                    <div className="text-sm text-gray-600">24/7 calls, scheduling & triage</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Mic className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">Voice Documentation</div>
-                    <div className="text-sm text-gray-600">iPhone recording & transcription</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">Smart Check-In</div>
-                    <div className="text-sm text-gray-600">AI-powered patient triage</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">Calendar Automation</div>
-                    <div className="text-sm text-gray-600">Smart scheduling & follow-ups</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <Link to="/vets" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
-                  <ArrowRight className="w-4 h-4" />
-                  Start AI Front Desk
-                </Link>
-
-                <a href="tel:425-584-1920" className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Try it: 425-584-1920
-                </a>
-              </div>
-
-              <p className="text-xs text-gray-500">Voice-First Design • Practice Management Integration</p>
-            </div>
-            {/* Phone Mockup - Exact Wealthfront Style */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative">
-                <div className="w-80 h-[600px] bg-gray-900 rounded-[3rem] p-3 shadow-2xl">
-                  <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden">
-                    {/* Phone Header */}
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                          <Stethoscope className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="font-bold text-lg">HelpPetAI</span>
-                      </div>
-                    </div>
-                    
-                    {/* Phone Content */}
-                    <div className="p-6 space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Phone className="w-4 h-4 text-blue-600" />
-                          <span className="text-xs font-medium text-blue-800">AI Phone Agent</span>
-                        </div>
-                        <div className="text-lg font-bold text-blue-700">HANDLING CALL</div>
-                        <div className="text-xs text-blue-600">"Scheduling Bella for checkup..."</div>
-                      </div>
-
-                      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Mic className="w-4 h-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800">Call Transcripts</span>
-                        </div>
-                        <div className="text-lg font-bold">Amira • Golden Retriever</div>
-                        <div className="text-xs text-gray-500">Visit Recording • Auto-transcribing</div>
-                      </div>
-
-                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <CheckCircle className="w-4 h-4 text-purple-600" />
-                          <span className="text-xs font-medium text-purple-800">Smart Triage</span>
-                        </div>
-                        <div className="text-sm font-semibold text-purple-700">Urgent - GDV symptoms</div>
-                        <div className="text-xs text-purple-600">Prioritized & Dr. alerted</div>
-                      </div>
-
-                      <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Calendar className="w-4 h-4 text-orange-600" />
-                          <span className="text-xs font-medium text-orange-800">Auto-Scheduling</span>
-                        </div>
-                        <div className="text-sm font-bold text-orange-700">3 appointments booked</div>
-                        <div className="text-xs text-orange-600">Follow-ups scheduled</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust indicators - Full Width */}
-      <TransformSection />
-
-      {/* Clean Hims-Style Boxes */}
-      <section className="w-full bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          {/* First Row - Three Large Clean Boxes */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            {/* AI Phone Agent Box */}
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
-              <div>
-                <h2 className="text-4xl font-light leading-tight mb-4" style={{
-                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
-                }}>
-                  AI Phone Agent<br />
-                  24/7 Support
-                </h2>
-                <p className="text-blue-100 text-lg">Handles calls, scheduling, and triage automatically</p>
-              </div>
-              <Link to="/vets" className="bg-white text-blue-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
-                Start AI Agent
-              </Link>
-            </div>
-
-            {/* Voice Documentation Box */}
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
-              <div>
-                <h2 className="text-4xl font-light leading-tight mb-4" style={{
-                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
-                }}>
-                  Built-in<br />
-                  Escape Hatch
-                </h2>
-                <p className="text-green-100 text-lg">Seamless transfer to human staff</p>
-              </div>
-              <Link to="/vets" className="bg-white text-green-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
-                Try Recording
-              </Link>
-            </div>
-
-            {/* Smart Calendar Box */}
-            <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-12 text-white relative overflow-hidden min-h-[400px] flex flex-col justify-between">
-              <div>
-                <h2 className="text-4xl font-light leading-tight mb-4" style={{
-                  fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
-                }}>
-                  Smart Calendar<br />
-                  Automation
-                </h2>
-                <p className="text-orange-100 text-lg">Intelligent scheduling with practice management integration</p>
-              </div>
-              <Link to="/vets" className="bg-white text-orange-600 px-6 py-3 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors self-start">
-                Automate Scheduling
-              </Link>
-            </div>
-          </div>
-
-          {/* Second Row - Four Key Features */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <div className="flex items-center mb-3">
-                <Phone className="w-6 h-6 mr-2" />
-                <h3 className="text-lg font-light">Phone Automation</h3>
-              </div>
-              <p className="text-blue-100 text-sm font-medium">80% less call time</p>
-            </div>
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <div className="flex items-center mb-3">
-                <Mic className="w-6 h-6 mr-2" />
-                <h3 className="text-lg font-light">Call Transcripts</h3>
-              </div>
-              <p className="text-green-100 text-sm font-medium">phone calls to the cloud</p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <div className="flex items-center mb-3">
-                <CheckCircle className="w-6 h-6 mr-2" />
-                <h3 className="text-lg font-light">Smart Triage</h3>
-              </div>
-              <p className="text-purple-100 text-sm font-medium">AI-powered priority</p>
-            </div>
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 text-white hover:scale-105 transition-transform cursor-pointer">
-              <div className="flex items-center mb-3">
-                <Calendar className="w-6 h-6 mr-2" />
-                <h3 className="text-lg font-light">Auto-Scheduling</h3>
-              </div>
-              <p className="text-orange-100 text-sm font-medium">Calendar integration</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section - Full Width */}
-      <section className="bg-blue-600 py-24 w-full">
-        <div className="w-full px-6">
+      {/* Hero Section */}
+      <section className="bg-white pt-6 pb-8 px-6">
+        <div className="max-w-7xl mx-auto">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
-              Save 80% of phone time with<br />
-              your AI Front Desk Agent
-            </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Join veterinary practices automating calls, scheduling, triage, and documentation with voice-first AI
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-              <Link to="/vets" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors flex items-center gap-2">
-                <ArrowRight className="w-5 h-5" />
-                Start AI Front Desk
-              </Link>
-              <a href="tel:425-584-1920" className="bg-blue-800 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-blue-900 transition-colors flex items-center gap-2">
-                <Phone className="w-5 h-5" />
-                Try it: 425-584-1920
-              </a>
+            {/* Hero Visual - Logo Display */}
+            <div className="flex justify-center items-center gap-4 mb-4">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                <Phone className="w-10 h-10 text-blue-600" />
+              </div>
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <Mic className="w-10 h-10 text-green-600" />
+              </div>
+              <div className="relative">
+                <img 
+                  src="/logo_clear_back.png" 
+                  alt="HelpPetAI" 
+                  className="w-32 h-32 object-contain"
+                />
+              </div>
+              <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center">
+                <Calendar className="w-10 h-10 text-orange-600" />
+              </div>
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-blue-600" />
+              </div>
             </div>
-            <p className="text-sm text-blue-200">Voice-First Design • Practice Management Integration</p>
+            <h1 className="text-7xl font-bold text-gray-900 mb-3 leading-tight tracking-tight" style={{
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif',
+            }}>
+              An AI veterinary voice agent
+            </h1>
+            <p className="text-2xl text-gray-600 mb-6 max-w-3xl mx-auto leading-relaxed" style={{
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+            }}>
+              Save 80% of phone time with your AI Front Desk Agent
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                to="/contact" 
+                className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-all inline-flex items-center justify-center gap-2"
+              >
+                Get HelpPetAI free
+              </Link>
+              <Link 
+                to="/contact" 
+                className="bg-blue-50 text-blue-700 px-8 py-4 rounded-lg text-lg font-medium hover:bg-blue-100 transition-all inline-flex items-center justify-center gap-2"
+              >
+                Request a demo
+              </Link>
+            </div>
+          </div>
+
+          {/* Feature Showcase - Dashboard Preview */}
+          <div className="mt-10 max-w-6xl mx-auto">
+            <div className="bg-gray-50 rounded-2xl border border-gray-200 shadow-2xl overflow-hidden">
+              <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <div className="text-sm text-gray-500 font-medium">Call Dashboard</div>
+                <div className="w-20"></div>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-blue-50 via-white to-orange-50">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Phone className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="text-sm font-medium text-gray-600">AI Calls Handled</div>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900">247</div>
+                    <div className="text-sm text-green-600 mt-1">↑ 80% automated</div>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="text-sm font-medium text-gray-600">Appointments Booked</div>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900">52</div>
+                    <div className="text-sm text-green-600 mt-1">This week</div>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div className="text-sm font-medium text-gray-600">Time Saved</div>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900">18.5h</div>
+                    <div className="text-sm text-green-600 mt-1">This week</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Indicators */}
+      <section className="bg-white py-4 border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <p className="text-sm text-gray-500 font-medium mb-3">Stay on top of your practice</p>
+            <div className="flex flex-wrap justify-center items-center gap-12 opacity-60">
+              <div className="text-2xl font-bold text-gray-400">Google Calendar</div>
+              <div className="text-2xl font-bold text-gray-400">Email Notifications</div>
+              <div className="text-2xl font-bold text-gray-400">Text Messages</div>
+              <div className="text-2xl font-bold text-gray-400">Push Notifications</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid - Notion Style */}
+      <section className="bg-gray-50 py-12 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+            {/* AI Phone Agent */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-8 text-white min-h-[320px] flex flex-col justify-between hover:shadow-2xl transition-shadow">
+              <div>
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+                  <Phone className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-4xl font-bold mb-4 leading-tight" style={{
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+                }}>
+                  AI Phone Agent
+                </h2>
+                <p className="text-blue-100 text-lg leading-relaxed">
+                  24/7 call handling, appointment scheduling, and intelligent triage that saves your team 80% of phone time.
+                </p>
+              </div>
+              <Link to="/contact" className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors inline-flex items-center gap-2 self-start mt-6">
+                Learn more →
+              </Link>
+            </div>
+
+            {/* Voice Documentation */}
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-8 text-white min-h-[320px] flex flex-col justify-between hover:shadow-2xl transition-shadow">
+              <div>
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+                  <Mic className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-4xl font-bold mb-4 leading-tight" style={{
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+                }}>
+                  Outbound Calls
+                </h2>
+                <p className="text-green-100 text-lg leading-relaxed">
+                  Our agent can make outbound calls to pet owners to remind them about appointments, and handle rescheduling requests.
+                </p>
+              </div>
+              <Link to="/contact" className="bg-white text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition-colors inline-flex items-center gap-2 self-start mt-6">
+                Earning your trust →
+              </Link>
+            </div>
+
+            {/* Smart Calendar */}
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl p-8 text-white min-h-[320px] flex flex-col justify-between hover:shadow-2xl transition-shadow">
+              <div>
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-4xl font-bold mb-4 leading-tight" style={{
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+                }}>
+                  Smart Calendar
+                </h2>
+                <p className="text-orange-100 text-lg leading-relaxed">
+                  Intelligent scheduling with practice management integration and automated follow-ups.
+                </p>
+              </div>
+              <Link to="/contact" className="bg-white text-orange-600 px-6 py-3 rounded-lg font-medium hover:bg-orange-50 transition-colors inline-flex items-center gap-2 self-start mt-6">
+                Automate scheduling →
+              </Link>
+            </div>
+          </div>
+
+          {/* Feature Pills */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-3 mb-2">
+                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-gray-900">24/7 Availability</h3>
+              </div>
+              <p className="text-sm text-gray-600">Always on, never misses a call</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-3 mb-2">
+                <Shield className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-gray-900">Call Recordings</h3>
+              </div>
+              <p className="text-sm text-gray-600">Know exactly how the phone call went.</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-3 mb-2">
+                <Zap className="w-5 h-5 text-orange-600" />
+                <h3 className="font-semibold text-gray-900">Instant Setup</h3>
+              </div>
+              <p className="text-sm text-gray-600">Live in minutes, not weeks</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-3 mb-2">
+                <Phone className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-gray-900">Human Handoff</h3>
+              </div>
+              <p className="text-sm text-gray-600">Seamless transfer anytime</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Savings Calculator - Notion Style */}
+      <section className="bg-white py-12 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3" style={{
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+            }}>
+              <span className="whitespace-nowrap">More time</span><br />
+              <span className="whitespace-nowrap">with the animals.</span>
+            </h2>
+            <p className="text-xl text-gray-600">
+              Calculate your savings below.
+            </p>
+          </div>
+
+          <div className="bg-gray-50 border border-gray-200 rounded-3xl p-8">
+            <div className="mb-6">
+              <label className="block text-lg font-semibold text-gray-900 mb-6">
+                Phone calls per day
+              </label>
+              <div className="relative">
+                <input
+                  type="range"
+                  min="10"
+                  max="200"
+                  value={callsPerDay}
+                  onChange={(e) => setCallsPerDay(parseInt(e.target.value))}
+                  className="w-full h-3 bg-gray-200 rounded-full appearance-none cursor-pointer slider"
+                  style={{
+                    background: `linear-gradient(to right, #2563eb 0%, #2563eb ${((callsPerDay - 10) / 190) * 100}%, #e5e7eb ${((callsPerDay - 10) / 190) * 100}%, #e5e7eb 100%)`
+                  }}
+                />
+                <div className="flex justify-between mt-4">
+                  <span className="text-sm text-gray-500">10</span>
+                  <span className="text-2xl font-bold text-blue-600">{callsPerDay}</span>
+                  <span className="text-sm text-gray-500">200</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-white rounded-2xl p-5 border border-gray-200">
+                <div className="text-sm font-medium text-gray-600 mb-2">Calls Automated</div>
+                <div className="text-4xl font-bold text-gray-900 mb-1">{savedCalls}</div>
+                <div className="text-sm text-green-600">80% of total calls</div>
+              </div>
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <div className="text-sm font-medium text-gray-600 mb-2">Monthly Savings</div>
+                <div className="text-4xl font-bold text-gray-900 mb-1">${Math.round(monthlySavings)}</div>
+                <div className="text-sm text-gray-500">~{Math.round(savedHoursPerDay * 22)}hrs saved/month</div>
+              </div>
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <div className="text-sm font-medium text-gray-600 mb-2">Annual Savings</div>
+                <div className="text-4xl font-bold text-gray-900 mb-1">${Math.round(annualSavings).toLocaleString()}</div>
+                <div className="text-sm text-gray-500">At $12/hour rate</div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-4">
+                Based on 5 minutes per call, 80% automation rate, and $12/hour staff cost
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="bg-gray-50 py-24">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="mb-12">
+      <section className="bg-gray-50 py-12 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
             <h2 className="text-4xl font-bold text-gray-900 text-center" style={{
-              fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
             }}>
               Frequently asked questions
             </h2>
           </div>
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white rounded-2xl overflow-hidden border border-gray-200">
             {faqs.map((faq, index) => (
               <div key={index} className="border-b border-gray-100 last:border-b-0">
                 <button
-                  className="w-full flex items-center justify-between p-10 text-left hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
                   onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                 >
-                  <span className="text-2xl font-medium text-black pr-8 leading-relaxed" style={{
-                    fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
+                  <span className="text-lg font-medium text-black pr-8 leading-relaxed" style={{
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
                   }}>
                     {faq.question}
                   </span>
                   <ArrowRight
-                    className={`w-7 h-7 text-gray-400 transition-transform flex-shrink-0 ${
+                    className={`w-6 h-6 text-gray-400 transition-transform flex-shrink-0 ${
                       expandedFaq === index ? 'rotate-90' : ''
                     }`}
                   />
                 </button>
                 {expandedFaq === index && (
-                  <div className="px-10 pb-10 pt-2 text-gray-600">
-                    <p className="text-lg leading-relaxed">
+                  <div className="px-6 pb-6 pt-2 text-gray-600">
+                    <p className="text-base leading-relaxed">
                       {faq.answer}
                     </p>
                   </div>
@@ -326,7 +365,36 @@ const Home = () => {
           </div>
         </div>
       </section>
-      
+
+      {/* CTA Section */}
+      <section className="bg-blue-600 py-16 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
+            Save 80% of phone time with<br />
+            your AI Front Desk Agent
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Join veterinary practices automating calls, scheduling, triage, and documentation with voice-first AI
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+            <Link 
+              to="/contact" 
+              className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors inline-flex items-center justify-center gap-2"
+            >
+              Build my Front Desk Agent
+            </Link>
+            <a 
+              href="tel:425-584-1920"
+              className="bg-blue-800 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-blue-900 transition-colors inline-flex items-center justify-center gap-2"
+            >
+              <Phone className="w-5 h-5" />
+              Try it: 425-584-1920
+            </a>
+          </div>
+          <p className="text-sm text-blue-200">Voice-First Design • Practice Management Integration</p>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );

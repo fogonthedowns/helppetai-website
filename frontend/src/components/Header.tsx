@@ -14,24 +14,22 @@ const Header = () => {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-100">
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="w-full px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Brand */}
             <div className="flex items-center space-x-3">
               <img 
-                src="/helppetai.png" 
+                src="/logo_clear_back.png" 
                 alt="HelpPetAI Logo" 
-                width="40" 
-                height="40" 
-                className="rounded-lg"
+                width="36" 
+                height="36" 
+                className="object-contain"
               />
-              <Link to="/" className="text-2xl font-semibold text-gray-900 hover:text-gray-700 transition-colors" style={{
-                fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
-                letterSpacing: '-0.02em',
-                fontWeight: '600',
-                fontSize: '24px',
-                lineHeight: '1.2'
+              <Link to="/" className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors" style={{
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
+                letterSpacing: '-0.01em',
+                fontWeight: '500'
               }}>
                 HelpPetAI
               </Link>
@@ -40,7 +38,7 @@ const Header = () => {
             <div className="hidden md:flex items-center space-x-6">
               <Link to="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Home</Link>
               {!isAuthenticated && (
-                <Link to="/vets" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Vets</Link>
+                <Link to="/contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Contact</Link>
               )}
               {!isAuthenticated && (
                 <>
@@ -100,11 +98,11 @@ const Header = () => {
                 {!isAuthenticated && (
                   <>
                     <Link 
-                      to="/vets" 
+                      to="/contact" 
                       className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Vets
+                      Contact
                     </Link>
                     <Link 
                       to="/practices" 

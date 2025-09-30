@@ -30,6 +30,7 @@ import AppointmentPetRecorder from './components/visit-transcripts/AppointmentPe
 import AppointmentForm from './components/appointments/AppointmentForm';
 import VetDashboardPage from './pages/VetDashboardPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -43,9 +44,10 @@ const App = () => {
           <Routes>
             {/* Original Routes - RESTORED */}
             <Route path="/" element={<Home />} />
-            <Route path="/vets" element={<VetsContact />} />
+            <Route path="/contact" element={<VetsContact />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />

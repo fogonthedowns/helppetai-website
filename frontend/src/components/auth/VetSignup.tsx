@@ -153,7 +153,7 @@ const VetSignup: React.FC = () => {
           <div className="flex justify-center mb-6">
             <div className="relative">
               <img 
-                src="/helppetai.png" 
+                src="/logo_clear_back.png" 
                 alt="HelpPetAI Logo" 
                 width="64" 
                 height="64" 
