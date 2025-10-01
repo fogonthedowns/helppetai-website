@@ -1,8 +1,8 @@
-# HelpPet.ai - Application Documentation
+# HelpPetAI - Application Documentation
 
 ## Overview
 
-HelpPet.ai is a comprehensive veterinary practice management system that streamlines the process of recording, transcribing, and managing veterinary visits. The application features a modern web interface for practice management and a mobile audio recording system designed specifically for iPhone users.
+HelpPetAI is a comprehensive veterinary practice management system that streamlines the process of recording, transcribing, and managing veterinary visits. The application features a modern web interface for practice management and a mobile audio recording system designed specifically for iPhone users.
 
 ## What This Application Does
 
