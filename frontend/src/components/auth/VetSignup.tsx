@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '../../config/api';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { API_ENDPOINTS, API_BASE_URL } from '../../config/api';
 
 interface Practice {
   uuid: string;
@@ -10,7 +10,21 @@ interface Practice {
   state?: string;
 }
 
+interface InvitationDetails {
+  id: string;
+  practice_id: string;
+  practice_name: string;
+  email: string;
+  status: string;
+}
+
 const VetSignup: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const inviteId = searchParams.get('invite');
+  const inviteCode = searchParams.get('code');
+  
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -24,11 +38,43 @@ const VetSignup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [practicesLoading, setPracticesLoading] = useState(true);
-  const navigate = useNavigate();
+  const [invitationDetails, setInvitationDetails] = useState<InvitationDetails | null>(null);
+  const [invitationLoading, setInvitationLoading] = useState(false);
 
   useEffect(() => {
-    fetchPractices();
-  }, []);
+    if (inviteId && inviteCode) {
+      fetchInvitationDetails();
+    } else {
+      fetchPractices();
+    }
+  }, [inviteId, inviteCode]);
+
+  const fetchInvitationDetails = async () => {
+    if (!inviteId || !inviteCode) return;
+    
+    setInvitationLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/invites/${inviteId}?code=${inviteCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        setInvitationDetails(data);
+        // Pre-populate email and practice_id
+        setFormData(prev => ({
+          ...prev,
+          email: data.email,
+          practice_id: data.practice_id
+        }));
+      } else {
+        setError('Invalid invitation link. Please check the link and try again.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch invitation:', error);
+      setError('Failed to load invitation details.');
+    } finally {
+      setInvitationLoading(false);
+      setPracticesLoading(false);
+    }
+  };
 
   const fetchPractices = async () => {
     try {
@@ -81,7 +127,8 @@ const VetSignup: React.FC = () => {
         password: formData.password,
         email: formData.email,
         full_name: formData.full_name,
-        role: 'VET_STAFF'
+        role: invitationDetails ? 'PENDING_INVITE' : 'VET_STAFF',
+        practice_id: formData.practice_id || undefined
       };
 
       const response = await fetch(API_ENDPOINTS.AUTH.SIGNUP, {
@@ -99,12 +146,21 @@ const VetSignup: React.FC = () => {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate('/login', { 
-          state: { 
-            message: 'Veterinary account created successfully! Please log in.',
-            practiceId: formData.practice_id 
-          }
-        });
+        if (invitationDetails && inviteId && inviteCode) {
+          // Redirect to login with invite params so they can complete the invitation flow
+          navigate(`/login?redirect=/accept-invite/${inviteId}?code=${inviteCode}`, { 
+            state: { 
+              message: 'Account created successfully! Please log in to join the practice.'
+            }
+          });
+        } else {
+          navigate('/login', { 
+            state: { 
+              message: 'Veterinary account created successfully! Please log in.',
+              practiceId: formData.practice_id 
+            }
+          });
+        }
       }, 2000);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Signup failed');
@@ -224,6 +280,9 @@ const VetSignup: React.FC = () => {
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Professional Email
+                    {invitationDetails && (
+                      <span className="ml-2 text-xs text-green-600">(from invitation)</span>
+                    )}
                   </label>
                   <input
                     id="email"
@@ -232,9 +291,9 @@ const VetSignup: React.FC = () => {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-50 disabled:text-gray-600"
                     placeholder="dr.johnson@vetclinic.com"
-                    disabled={loading}
+                    disabled={loading || !!invitationDetails}
                   />
                 </div>
               </div>
@@ -316,44 +375,68 @@ const VetSignup: React.FC = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Practice Association</h3>
-                  <p className="text-sm text-gray-500">Associate with your veterinary practice (optional)</p>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {invitationDetails ? 'Joining Practice' : 'Practice Association'}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {invitationDetails ? 'You are being invited to join this practice' : 'Associate with your veterinary practice (optional)'}
+                  </p>
                 </div>
               </div>
 
               <div>
-                {practicesLoading ? (
+                {invitationLoading || practicesLoading ? (
                   <div className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 flex items-center">
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span className="text-gray-500">Loading practices...</span>
+                    <span className="text-gray-500">Loading practice details...</span>
+                  </div>
+                ) : invitationDetails ? (
+                  <div className="w-full px-4 py-4 border-2 border-green-200 bg-green-50 rounded-xl">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-green-900">
+                          🏥 {invitationDetails.practice_name}
+                        </p>
+                        <p className="text-xs text-green-700 mt-1">
+                          You'll join this practice after completing registration
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <select
-                    id="practice_id"
-                    name="practice_id"
-                    value={formData.practice_id}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-                    disabled={loading}
-                  >
-                    <option value="">🏥 Select your practice (optional)</option>
-                    {practices.map((practice) => (
-                      <option key={practice.uuid} value={practice.uuid}>
-                        {practice.name}
-                        {practice.city && practice.state && ` - ${practice.city}, ${practice.state}`}
-                      </option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      id="practice_id"
+                      name="practice_id"
+                      value={formData.practice_id}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                      disabled={loading}
+                    >
+                      <option value="">🏥 Select your practice (optional)</option>
+                      {practices.map((practice) => (
+                        <option key={practice.uuid} value={practice.uuid}>
+                          {practice.name}
+                          {practice.city && practice.state && ` - ${practice.city}, ${practice.state}`}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-2 text-xs text-gray-500 flex items-center">
+                      <svg className="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Don't see your practice? You can add it later or contact support to add your practice.
+                    </p>
+                  </>
                 )}
-                <p className="mt-2 text-xs text-gray-500 flex items-center">
-                  <svg className="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Don't see your practice? You can add it later or contact support to add your practice.
-                </p>
               </div>
             </div>
 

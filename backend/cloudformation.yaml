@@ -130,6 +130,13 @@ Resources:
                   - dynamodb:*
                   - s3:*
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource:
+                  - "arn:aws:ses:us-west-1:724843234496:identity/helppet.ai"
+                  - "arn:aws:ses:us-west-1:724843234496:identity/hi@upcactus.com"
 
   # RDS Subnet Group
   DBSubnetGroup:

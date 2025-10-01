@@ -23,6 +23,7 @@ from .call_analysis import router as call_analysis_router
 from .scheduling_unix import router as scheduling_unix_router
 from .device_tokens import router as device_tokens_router
 from .voice_agents import router as voice_agents_router
+from .invitations import router as invitations_router
 
 
 # Create main router
@@ -53,5 +54,6 @@ router.include_router(call_analysis_router, tags=["call-analysis"])  # call anal
 router.include_router(scheduling_unix_router, tags=["scheduling-unix"])  # has /api/v1/scheduling-unix prefix
 router.include_router(device_tokens_router, prefix="/api/v1/device-tokens", tags=["push-notifications"])
 router.include_router(voice_agents_router, prefix="/api/v1/practices", tags=["voice-agents"])
+router.include_router(invitations_router, prefix="/api/v1", tags=["practice-invitations"])
 
 __all__ = ["router"]

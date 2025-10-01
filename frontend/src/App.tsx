@@ -31,6 +31,9 @@ import AppointmentForm from './components/appointments/AppointmentForm';
 import VetDashboardPage from './pages/VetDashboardPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import Comparison from './pages/Comparison';
+import AcceptInvitation from './pages/AcceptInvitation';
+import PracticeTeam from './pages/PracticeTeam';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -46,8 +49,12 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/contact" element={<VetsContact />} />
             <Route path="/about" element={<AboutUs />} />
+            <Route path="/comparison" element={<Comparison />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            
+            {/* Invitation Routes */}
+            <Route path="/accept-invite/:inviteId" element={<AcceptInvitation />} />
             
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
@@ -98,6 +105,13 @@ const App = () => {
             <Route path="/practices/:id/edit" element={
               <ProtectedRoute>
                 <PracticeForm mode="edit" />
+              </ProtectedRoute>
+            } />
+            
+            {/* Practice Team Routes */}
+            <Route path="/practice/team" element={
+              <ProtectedRoute>
+                <PracticeTeam />
               </ProtectedRoute>
             } />
             

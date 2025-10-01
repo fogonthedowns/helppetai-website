@@ -296,7 +296,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose }) 
               </label>
               <input
                 type="text"
-                value={user?.role === 'VET_STAFF' ? 'Veterinary Staff' : user?.role === 'VET' ? 'Veterinarian' : user?.role === 'ADMIN' ? 'Administrator' : user?.role || ''}
+                value={user?.role === 'VET_STAFF' ? 'Veterinary Staff' : user?.role === 'PRACTICE_ADMIN' ? 'Practice Administrator' : user?.role === 'SYSTEM_ADMIN' ? 'System Administrator' : user?.role || ''}
                 disabled
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
               />

@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "chrome",
+        "request": "launch",
+        "name": "Launch Brave for React",
+        "runtimeExecutable": "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder}/src",
+        "sourceMapPathOverrides": {
+          "webpack:///src/*": "${webRoot}/*"
+        }
+      },
+      {
+        "type": "chrome",
+        "request": "attach",
+        "name": "Attach to Brave",
+        "port": 9222,
+        "webRoot": "${workspaceFolder}/src"
+      }
+    ]
+  }

@@ -126,11 +126,11 @@ const VisitTranscriptDetail: React.FC = () => {
 
   const canEdit = () => {
     if (!transcript || !user) return false;
-    return user.role === 'ADMIN' || transcript.created_by === user.id;
+    return user.role === 'PRACTICE_ADMIN' || user.role === 'SYSTEM_ADMIN' || transcript.created_by === user.id;
   };
 
   const canDelete = () => {
-    return user?.role === 'ADMIN';
+    return user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN';
   };
 
   const handleDelete = async () => {

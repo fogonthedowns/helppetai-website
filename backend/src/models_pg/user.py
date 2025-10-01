@@ -18,9 +18,11 @@ except ImportError:
 
 class UserRole(str, Enum):
     """User role enumeration"""
-    PET_OWNER = "PET_OWNER"
-    VET_STAFF = "VET_STAFF"
-    ADMIN = "ADMIN"
+    PET_OWNER = "PET_OWNER"           # Pet owner - manages their pets
+    VET_STAFF = "VET_STAFF"            # Regular staff - can view/edit within practice
+    PRACTICE_ADMIN = "PRACTICE_ADMIN"  # Practice admin - can manage team, invite, remove
+    SYSTEM_ADMIN = "SYSTEM_ADMIN"      # Platform admin - can manage all practices (future use)
+    PENDING_INVITE = "PENDING_INVITE"  # Temporary - awaiting invite acceptance
 
 
 class User(Base):
@@ -61,8 +63,8 @@ class User(Base):
     
     @property
     def is_vet_staff(self) -> bool:
-        """Check if user is veterinary staff (includes admin)"""
-        return self.role in [UserRole.VET_STAFF, UserRole.ADMIN]
+        """Check if user is veterinary staff (includes practice admin and system admin)"""
+        return self.role in [UserRole.VET_STAFF, UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]
     
     @property
     def is_pet_owner(self) -> bool:
@@ -70,9 +72,14 @@ class User(Base):
         return self.role == UserRole.PET_OWNER
     
     @property
-    def is_admin(self) -> bool:
-        """Check if user is an admin"""
-        return self.role == UserRole.ADMIN
+    def is_practice_admin(self) -> bool:
+        """Check if user is a practice admin (can manage team within their practice)"""
+        return self.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]
+    
+    @property
+    def is_system_admin(self) -> bool:
+        """Check if user is a system admin (can manage all practices)"""
+        return self.role == UserRole.SYSTEM_ADMIN
     
     # Relationships
     created_visits: Mapped[List["Visit"]] = relationship("Visit", foreign_keys="Visit.created_by", back_populates="creator")

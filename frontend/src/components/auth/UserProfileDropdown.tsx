@@ -148,7 +148,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onEditProfile
               Edit Profile
             </button>
 
-            {(user?.role === 'VET' || user?.role === 'VET_STAFF') && (
+            {(user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN') && (
               <Link
                 to="/dashboard/vet"
                 onClick={() => setIsOpen(false)}
@@ -172,7 +172,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onEditProfile
               AI Search
             </Link>
 
-            {user?.role === 'ADMIN' && (
+            {(user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN') && (
               <>
                 <div className="border-t border-gray-100 my-1"></div>
                 <Link

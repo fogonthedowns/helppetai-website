@@ -9,8 +9,8 @@ const Header = () => {
   const { isAuthenticated, username, user, logout } = useAuth();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isAdmin = user?.role === 'ADMIN';
-  const isVet = user?.role === 'VET' || user?.role === 'VET_STAFF';
+  const isPracticeAdmin = user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN';
+  const isVetStaff = user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN';
 
   return (
     <>
@@ -43,16 +43,20 @@ const Header = () => {
               {!isAuthenticated && (
                 <>
                   <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About Us</Link>
+                  <Link to="/comparison" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Compare</Link>
                 </>
               )}
               
               {isAuthenticated ? (
                 <>
-                  {isVet && (
+                  {isVetStaff && (
                     <Link to="/dashboard/vet" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">Dashboard</Link>
                   )}
-                  {isAdmin && (
+                  {isPracticeAdmin && (
                     <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
+                  )}
+                  {isVetStaff && (
+                    <Link to="/practice/team" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Team</Link>
                   )}
                   <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
                   <Link to="/rag/search" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Search</Link>
@@ -119,6 +123,13 @@ const Header = () => {
                       About Us
                     </Link>
                     <Link 
+                      to="/comparison" 
+                      className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Compare
+                    </Link>
+                    <Link 
                       to="/login" 
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-center"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -130,7 +141,7 @@ const Header = () => {
 
                 {isAuthenticated && (
                   <>
-                    {isVet && (
+                    {isVetStaff && (
                       <Link 
                         to="/dashboard/vet" 
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-center"
@@ -139,13 +150,22 @@ const Header = () => {
                         Dashboard
                       </Link>
                     )}
-                    {isAdmin && (
+                    {isPracticeAdmin && (
                       <Link 
                         to="/practices" 
                         className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         Practices
+                      </Link>
+                    )}
+                    {isVetStaff && (
+                      <Link 
+                        to="/practice/team" 
+                        className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Team
                       </Link>
                     )}
                     <Link 

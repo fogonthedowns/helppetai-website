@@ -109,12 +109,12 @@ const PetDetail: React.FC = () => {
 
   const canEditPet = () => {
     // Admin can edit all pets, VET_STAFF can edit pets from their practice, pet owners can edit their own pets
-    return user?.role === 'ADMIN' || user?.role === 'VET_STAFF' || (pet && pet.owner.user_id === user?.id);
+    return user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN' || user?.role === 'VET_STAFF' || (pet && pet.owner.user_id === user?.id);
   };
 
   const canDeletePet = () => {
     // Admin can delete all pets, VET_STAFF can delete pets from their practice, pet owners can delete their own pets
-    return user?.role === 'ADMIN' || user?.role === 'VET_STAFF' || (pet && pet.owner.user_id === user?.id);
+    return user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN' || user?.role === 'VET_STAFF' || (pet && pet.owner.user_id === user?.id);
   };
 
   const formatAge = (pet: PetWithOwner) => {
