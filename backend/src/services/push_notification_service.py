@@ -155,7 +155,7 @@ class PushNotificationService:
             result = await db_session.execute(
                 select(DeviceToken.device_token).join(User).where(
                     User.practice_id == practice_id,
-                    User.role.in_([UserRole.VET_STAFF, UserRole.ADMIN]),
+                    User.role.in_([UserRole.VET_STAFF, UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]),
                     User.is_active == True,
                     DeviceToken.is_active == True,
                     DeviceToken.device_type == "ios"  # Only iOS for now

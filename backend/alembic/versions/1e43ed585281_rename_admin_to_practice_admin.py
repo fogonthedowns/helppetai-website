@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Rename ADMIN role to PRACTICE_ADMIN and add SYSTEM_ADMIN."""
+    """Add missing enum values and rename ADMIN role to PRACTICE_ADMIN."""
     # PostgreSQL enum alterations must be done outside of a transaction
     # So we use execute with the appropriate isolation level
     
@@ -29,6 +29,9 @@ def upgrade() -> None:
     # Execute enum additions outside transaction using COMMIT/BEGIN trick
     connection.execute(sa.text("COMMIT"))
     try:
+        # Add PENDING_INVITE (was missing from previous migration)
+        connection.execute(sa.text("ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'PENDING_INVITE'"))
+        # Add new admin role types
         connection.execute(sa.text("ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'PRACTICE_ADMIN'"))
         connection.execute(sa.text("ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'SYSTEM_ADMIN'"))
     finally:

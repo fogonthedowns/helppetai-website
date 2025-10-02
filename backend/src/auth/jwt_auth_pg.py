@@ -131,7 +131,7 @@ def require_role(required_role: UserRole):
 
 def require_admin():
     """Dependency to require admin role"""
-    return require_role(UserRole.ADMIN)
+    return require_role(UserRole.PRACTICE_ADMIN)
 
 
 def require_vet_staff():

@@ -101,7 +101,7 @@ class AppointmentService:
             creator_user_result = await self.db.execute(
                 sql_select(User).where(
                     User.practice_id == practice_uuid,
-                    User.role.in_([UserRole.ADMIN, UserRole.VET_STAFF]),
+                    User.role.in_([UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.VET_STAFF]),
                     User.is_active == True
                 ).limit(1)
             )
@@ -131,7 +131,7 @@ class AppointmentService:
                 default_vet_result = await self.db.execute(
                     sql_select(User).where(
                         User.practice_id == practice_uuid,
-                        User.role.in_([UserRole.VET_STAFF, UserRole.ADMIN]),
+                        User.role.in_([UserRole.VET_STAFF, UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]),
                         User.is_active == True
                     ).limit(1)
                 )

@@ -101,7 +101,7 @@ async def create_association(
         notes=association_data.notes,
         primary_contact=association_data.primary_contact,
         requested_by_user_id=current_user.id,
-        status=AssociationStatus.APPROVED if current_user.role == UserRole.ADMIN else AssociationStatus.PENDING
+        status=AssociationStatus.APPROVED if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN] else AssociationStatus.PENDING
     )
     
     created_association = await association_repo.create(new_association)
@@ -221,7 +221,7 @@ async def update_association(
         )
     
     # Check access permissions
-    if current_user.role == UserRole.ADMIN:
+    if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         # Admin can update any association
         pass
     elif current_user.role == UserRole.VET_STAFF:
@@ -274,7 +274,7 @@ async def approve_association(
     """Approve an association request (Admin or Practice staff only)"""
     
     # For now, require admin. Later we can add practice-specific permissions
-    if current_user.role != UserRole.ADMIN:
+    if current_user.role not in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required to approve associations"
@@ -362,7 +362,7 @@ async def delete_association(
         )
     
     # Check access permissions
-    if current_user.role == UserRole.ADMIN:
+    if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         # Admin can delete any association
         pass
     elif current_user.role == UserRole.VET_STAFF:

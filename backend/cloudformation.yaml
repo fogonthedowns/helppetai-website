@@ -137,6 +137,11 @@ Resources:
                 Resource:
                   - "arn:aws:ses:us-west-1:724843234496:identity/helppet.ai"
                   - "arn:aws:ses:us-west-1:724843234496:identity/hi@upcactus.com"
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - "arn:aws:secretsmanager:us-west-1:724843234496:secret:helppet-prod/database-password*"
 
   # RDS Subnet Group
   DBSubnetGroup:

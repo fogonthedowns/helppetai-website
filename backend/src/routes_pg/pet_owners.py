@@ -67,7 +67,7 @@ async def get_accessible_pet_owner_ids(
     - Admin: Can access all pet owners (returns None to indicate no filtering)
     - Vet Staff: Can only access pet owners associated with their practice
     """
-    if current_user.role == UserRole.ADMIN:
+    if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         return None  # Admin can access all
     
     # For vet staff, get pet owners associated with their practice
@@ -184,7 +184,7 @@ async def create_pet_owner(
     """Create a new pet owner (Admin and Vet Staff can create pet owners)"""
     
     # Check if user can create pet owners
-    if current_user.role not in [UserRole.ADMIN, UserRole.VET_STAFF]:
+    if current_user.role not in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN, UserRole.VET_STAFF]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin or Vet Staff access required to create pet owners"
@@ -285,7 +285,7 @@ async def update_pet_owner(
         )
     
     # Check access permissions
-    if current_user.role == UserRole.ADMIN:
+    if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         # Admin can update any pet owner
         pass
     elif current_user.role == UserRole.VET_STAFF:
