@@ -288,12 +288,12 @@ async def update_pet_owner(
     if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         # Admin can update any pet owner
         pass
-    elif current_user.role == UserRole.VET_STAFF:
-        # VET_STAFF can only update pet owners associated with their practice
+    elif current_user.role in [UserRole.VET_STAFF, UserRole.PRACTICE_ADMIN]:
+        # VET_STAFF and PRACTICE_ADMIN can only update pet owners associated with their practice
         if not current_user.practice_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="VET_STAFF user must have a practice_id to update pet owners"
+                detail="VET_STAFF or PRACTICE_ADMIN user must have a practice_id to update pet owners"
             )
         
         # Check if this pet owner is associated with the user's practice

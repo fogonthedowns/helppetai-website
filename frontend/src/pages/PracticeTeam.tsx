@@ -23,6 +23,7 @@ interface PendingInvite {
 
 const PracticeTeam: React.FC = () => {
   const { user } = useAuth();
+  const practiceId = user?.practice_id; // Ensure practiceId is defined here
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +47,7 @@ const PracticeTeam: React.FC = () => {
   // Fetch team members and pending invites
   useEffect(() => {
     const fetchTeamData = async () => {
-      if (!user?.practice_id) {
+      if (!practiceId) {
         setError('No practice ID found');
         setIsLoading(false);
         return;
@@ -57,7 +58,7 @@ const PracticeTeam: React.FC = () => {
         
         // Fetch team members
         const membersResponse = await fetch(
-          `${API_BASE_URL}/api/v1/practices/${user.practice_id}/members`,
+          `${API_BASE_URL}/api/v1/practices/${practiceId}/members`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -73,7 +74,7 @@ const PracticeTeam: React.FC = () => {
         
         // Fetch pending invites
         const invitesResponse = await fetch(
-          `${API_BASE_URL}/api/v1/practices/${user.practice_id}/invites`,
+          `${API_BASE_URL}/api/v1/practices/${practiceId}/invites`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -84,7 +85,9 @@ const PracticeTeam: React.FC = () => {
         
         if (invitesResponse.ok) {
           const invitesData = await invitesResponse.json();
-          setPendingInvites(invitesData);
+          // Filter to only show pending invites
+          const pendingOnly = invitesData.filter((inv: PendingInvite) => inv.status === 'pending');
+          setPendingInvites(pendingOnly);
         }
         
         setIsLoading(false);
@@ -96,12 +99,12 @@ const PracticeTeam: React.FC = () => {
     };
     
     fetchTeamData();
-  }, [user]);
+  }, [practiceId]);
   
   // Handle sending an invitation
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim() || !user?.practice_id) return;
+    if (!inviteEmail.trim() || !practiceId) return;
     
     // Check if this email is already invited
     const emailLower = inviteEmail.trim().toLowerCase();
@@ -122,7 +125,7 @@ const PracticeTeam: React.FC = () => {
       const token = localStorage.getItem('access_token');
       
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/practices/${user.practice_id}/invites`,
+        `${API_BASE_URL}/api/v1/practices/${practiceId}/invites`,
         {
           method: 'POST',
           headers: {
@@ -159,30 +162,38 @@ const PracticeTeam: React.FC = () => {
   
   // Handle revoking an invitation
   const handleRevokeInvite = async (inviteId: string) => {
-    if (!user?.practice_id) return;
+    if (!practiceId) {
+      console.error('No practiceId found!');
+      setError('No practice ID found');
+      return;
+    }
     
+    console.log('Revoking invite:', inviteId, 'for practice:', practiceId);
     setIsRevoking(true);
     setError(null);
     
     try {
       const token = localStorage.getItem('access_token');
+      const url = `${API_BASE_URL}/api/v1/practices/${practiceId}/invites/${inviteId}`;
+      console.log('DELETE request to:', url);
       
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/practices/${user.practice_id}/invites/${inviteId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         }
-      );
+      });
+      
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response:', errorData);
         throw new Error(errorData.detail || 'Failed to revoke invitation');
       }
       
+      console.log('Invitation revoked successfully');
       // Remove the invitation from the list
       setPendingInvites(pendingInvites.filter(inv => inv.id !== inviteId));
       setRevokeConfirm(null);
@@ -201,30 +212,38 @@ const PracticeTeam: React.FC = () => {
   
   // Handle removing a team member
   const handleRemoveMember = async (memberId: string) => {
-    if (!user?.practice_id) return;
+    if (!practiceId) {
+      console.error('No practiceId found!');
+      setError('No practice ID found');
+      return;
+    }
     
+    console.log('Removing member:', memberId, 'from practice:', practiceId);
     setIsRemovingMember(true);
     setError(null);
     
     try {
       const token = localStorage.getItem('access_token');
+      const url = `${API_BASE_URL}/api/v1/practices/${practiceId}/members/${memberId}`;
+      console.log('DELETE request to:', url);
       
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/practices/${user.practice_id}/members/${memberId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         }
-      );
+      });
+      
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response:', errorData);
         throw new Error(errorData.detail || 'Failed to remove team member');
       }
       
+      console.log('Team member removed successfully');
       // Remove the member from the list
       setMembers(members.filter(m => m.id !== memberId));
       setRemoveMemberConfirm(null);
@@ -291,11 +310,11 @@ const PracticeTeam: React.FC = () => {
         
         {/* Active Team Members */}
         <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Active Team Members</h2>
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between">
+            <h2 className="text-lg font-medium text-gray-900">Team Members</h2>
+            <span className="text-sm font-medium text-gray-500">Role</span>
           </div>
-          
-          {members.length === 0 ? (
+          {members.length === 0 && pendingInvites.length === 0 ? (
             <div className="px-6 py-12 text-center">
               <User className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">No team members</h3>
@@ -303,43 +322,36 @@ const PracticeTeam: React.FC = () => {
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              {members.map((member) => (
-                <div key={member.id} className="px-6 py-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <User className="h-5 w-5 text-blue-600" />
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-900">{member.full_name}</p>
-                          <p className="text-sm text-gray-500">{member.email}</p>
-                        </div>
+              {[...members, ...pendingInvites].map((member) => (
+                <div key={member.id} className="px-4 py-2 hover:bg-gray-50 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <img src={`https://www.gravatar.com/avatar/${member.email}?s=40&d=identicon`} alt="avatar" className="h-8 w-8 rounded-full" />
+                    <div className="ml-3">
+                      <div className={`text-sm font-medium text-gray-900 ${!('role' in member) ? 'italic' : ''}`}>
+                        {'full_name' in member ? member.full_name : member.email}
                       </div>
                     </div>
-                    <div className="ml-4 flex items-center gap-3">
-                      {(member.role === 'PRACTICE_ADMIN' || member.role === 'SYSTEM_ADMIN') ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                          <Shield className="h-4 w-4 mr-1" />
-                          {member.role === 'SYSTEM_ADMIN' ? 'System Admin' : 'Admin'}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                          {member.role === 'VET_STAFF' ? 'Staff' : member.role}
-                        </span>
-                      )}
-                      {(user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN') && member.id !== user.id && member.role !== 'PRACTICE_ADMIN' && member.role !== 'SYSTEM_ADMIN' && (
-                        <button
-                          onClick={() => setRemoveMemberConfirm(member.id)}
-                          className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                          title="Remove from practice"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                  </div>
+                  <div className="flex items-center">
+                    <div className="text-sm text-gray-500 mr-3">
+                      {'role' in member ? member.role : 'Pending Invite'}
                     </div>
+                    {('role' in member && member.role !== 'PRACTICE_ADMIN') || !('role' in member) ? (
+                      <button 
+                        className="text-red-600 hover:text-red-900" 
+                        onClick={() => {
+                          if ('role' in member) {
+                            // Remove team member
+                            setRemoveMemberConfirm(member.id);
+                          } else {
+                            // Revoke invite
+                            setRevokeConfirm(member.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -347,74 +359,6 @@ const PracticeTeam: React.FC = () => {
           )}
         </div>
         
-        {/* Pending Invitations */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Pending Invitations</h2>
-          </div>
-          
-          {pendingInvites.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <Mail className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No pending invitations</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by inviting a team member.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {pendingInvites.map((invite) => (
-                <div key={invite.id} className="px-6 py-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <Mail className="h-5 w-5 text-gray-500" />
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-900">{invite.email}</p>
-                          <div className="flex items-center mt-1 text-sm text-gray-500">
-                            <Clock className="h-4 w-4 mr-1" />
-                            <span>Sent {formatDate(invite.created_at)}</span>
-                            <span className="mx-2">•</span>
-                            <span>Expires {formatDate(invite.expires_at)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="ml-4 flex items-center gap-2">
-                      {invite.status === 'pending' ? (
-                        <>
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                            <Clock className="h-4 w-4 mr-1" />
-                            Pending
-                          </span>
-                          <button
-                            onClick={() => setRevokeConfirm(invite.id)}
-                            className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                            title="Revoke invitation"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </>
-                      ) : invite.status === 'accepted' ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Accepted
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                          <XCircle className="h-4 w-4 mr-1" />
-                          {invite.status}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
       
       {/* Invite Modal */}

@@ -58,10 +58,11 @@ const VetSignup: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setInvitationDetails(data);
-        // Pre-populate email and practice_id
+        // Pre-populate email, username (same as email), and practice_id
         setFormData(prev => ({
           ...prev,
           email: data.email,
+          username: data.email, // Set username to email
           practice_id: data.practice_id
         }));
       } else {
@@ -144,24 +145,64 @@ const VetSignup: React.FC = () => {
         throw new Error(errorData.detail || 'Signup failed');
       }
 
-      setSuccess(true);
-      setTimeout(() => {
-        if (invitationDetails && inviteId && inviteCode) {
-          // Redirect to login with invite params so they can complete the invitation flow
-          navigate(`/login?redirect=/accept-invite/${inviteId}?code=${inviteCode}`, { 
-            state: { 
-              message: 'Account created successfully! Please log in to join the practice.'
-            }
+      // If coming from invitation, auto-login and redirect to accept-invite page
+      if (invitationDetails && inviteId && inviteCode) {
+        try {
+          // Auto-login after signup
+          const loginResponse = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              username: formData.username,
+              password: formData.password,
+            }),
           });
-        } else {
+
+          if (loginResponse.ok) {
+            const loginData = await loginResponse.json();
+            localStorage.setItem('access_token', loginData.access_token);
+            
+            // Redirect to accept-invite page
+            setSuccess(true);
+            setTimeout(() => {
+              navigate(`/accept-invite/${inviteId}?code=${inviteCode}`);
+            }, 1000);
+          } else {
+            // Fall back to manual login
+            setSuccess(true);
+            setTimeout(() => {
+              navigate(`/login?redirect=/accept-invite/${inviteId}?code=${inviteCode}`, { 
+                state: { 
+                  message: 'Account created successfully! Please log in to join the practice.'
+                }
+              });
+            }, 2000);
+          }
+        } catch (loginError) {
+          console.error('Auto-login failed:', loginError);
+          // Fall back to manual login
+          setSuccess(true);
+          setTimeout(() => {
+            navigate(`/login?redirect=/accept-invite/${inviteId}?code=${inviteCode}`, { 
+              state: { 
+                message: 'Account created successfully! Please log in to join the practice.'
+              }
+            });
+          }, 2000);
+        }
+      } else {
+        setSuccess(true);
+        setTimeout(() => {
           navigate('/login', { 
             state: { 
               message: 'Veterinary account created successfully! Please log in.',
               practiceId: formData.practice_id 
             }
           });
-        }
-      }, 2000);
+        }, 2000);
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Signup failed');
     } finally {
@@ -279,7 +320,7 @@ const VetSignup: React.FC = () => {
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Professional Email
+                    {invitationDetails ? 'Username' : 'Professional Email'}
                     {invitationDetails && (
                       <span className="ml-2 text-xs text-green-600">(from invitation)</span>
                     )}
@@ -311,22 +352,25 @@ const VetSignup: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                    Username
-                  </label>
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    required
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Choose a unique username"
-                    disabled={loading}
-                  />
-                </div>
+                {/* Only show username field if NOT coming from invitation */}
+                {!invitationDetails && (
+                  <div>
+                    <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                      Username
+                    </label>
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      required
+                      value={formData.username}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Choose a unique username"
+                      disabled={loading}
+                    />
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

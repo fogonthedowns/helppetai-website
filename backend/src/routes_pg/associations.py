@@ -224,8 +224,8 @@ async def update_association(
     if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         # Admin can update any association
         pass
-    elif current_user.role == UserRole.VET_STAFF:
-        # VET_STAFF can only update associations for their practice
+    elif current_user.role in [UserRole.VET_STAFF, UserRole.PRACTICE_ADMIN]:
+        # VET_STAFF and PRACTICE_ADMIN can only update associations for their practice
         if not current_user.practice_id or current_user.practice_id != association.practice_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -365,8 +365,8 @@ async def delete_association(
     if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
         # Admin can delete any association
         pass
-    elif current_user.role == UserRole.VET_STAFF:
-        # VET_STAFF can only delete associations for their practice
+    elif current_user.role in [UserRole.VET_STAFF, UserRole.PRACTICE_ADMIN]:
+        # VET_STAFF and PRACTICE_ADMIN can only delete associations for their practice
         if not current_user.practice_id or current_user.practice_id != association.practice_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

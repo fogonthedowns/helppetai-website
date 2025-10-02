@@ -44,7 +44,28 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const data = await response.json();
       await login(username, data.access_token);
       
-      // Redirect to intended page or RAG search
+      // Fetch user details to check role
+      const token = data.access_token;
+      const userResponse = await fetch(API_ENDPOINTS.AUTH.ME, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        
+        // If user has PENDING_INVITE role, redirect to pending invitations page
+        if (userData.role === 'PENDING_INVITE') {
+          navigate('/pending-invitations', { replace: true });
+          if (onLoginSuccess) {
+            onLoginSuccess();
+          }
+          return;
+        }
+      }
+      
+      // Redirect to intended page or default
       const from = (location.state as any)?.from?.pathname || '/pet_owners';
       navigate(from, { replace: true });
       

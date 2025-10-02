@@ -29,9 +29,9 @@ const PetOwnersList = () => {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
 
   const isAdmin = user?.role === 'ADMIN';
-  const canCreatePetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF';
-  const canViewPetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF';
-  const canEditPetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF';
+  const canCreatePetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN';
+  const canViewPetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN';
+  const canEditPetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN';
 
   useEffect(() => {
     // Don't check permissions while auth is still loading

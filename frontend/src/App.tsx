@@ -34,6 +34,7 @@ import TermsOfService from './pages/TermsOfService';
 import Comparison from './pages/Comparison';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PracticeTeam from './pages/PracticeTeam';
+import PendingInvitations from './pages/PendingInvitations';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -55,6 +56,11 @@ const App = () => {
             
             {/* Invitation Routes */}
             <Route path="/accept-invite/:inviteId" element={<AcceptInvitation />} />
+            <Route path="/pending-invitations" element={
+              <ProtectedRoute>
+                <PendingInvitations />
+              </ProtectedRoute>
+            } />
             
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />

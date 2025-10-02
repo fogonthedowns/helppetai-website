@@ -26,6 +26,45 @@ from ..utils.email_service import send_practice_invitation_email
 router = APIRouter()
 
 
+@router.get("/invites/my-invitations", response_model=List[dict])
+async def get_my_invitations(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+) -> List[dict]:
+    """
+    Get all pending invitations for the current user's email.
+    
+    Returns invitations sent to the user's email address.
+    """
+    invitation_repo = InvitationRepository(session)
+    
+    # Get all invitations for this email
+    invitations = await invitation_repo.get_by_email(current_user.email)
+    
+    # Get practice details for each invitation
+    practice_repo = PracticeRepository(session)
+    user_repo = UserRepository(session)
+    
+    result = []
+    for inv in invitations:
+        practice = await practice_repo.get_by_id(inv.practice_id)
+        inviter = await user_repo.get_by_id(inv.created_by)
+        
+        result.append({
+            "id": str(inv.id),
+            "practice_id": str(inv.practice_id),
+            "practice_name": practice.name if practice else "Unknown Practice",
+            "email": inv.email,
+            "status": inv.status.value if hasattr(inv.status, 'value') else str(inv.status),
+            "invite_code": str(inv.invite_code),
+            "created_at": inv.created_at.isoformat(),
+            "expires_at": inv.expires_at.isoformat(),
+            "inviter_name": inviter.full_name if inviter else "Unknown"
+        })
+    
+    return result
+
+
 @router.post("/practices/{practice_id}/invites", response_model=PracticeInvitationPublic, status_code=status.HTTP_201_CREATED)
 async def create_invitation(
     practice_id: UUID = Path(..., description="Practice ID"),

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
 interface InvitationDetails {
   id: string;
@@ -89,7 +89,27 @@ const AcceptInvitation: React.FC = () => {
       const data = await response.json();
       setAcceptStatus('success');
       
-      // Wait a moment to show success message before redirecting
+      // Refresh user data to update the role in AuthContext
+      try {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+        const userResponse = await fetch(API_ENDPOINTS.AUTH.ME, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (userResponse.ok) {
+          // Force a page reload to refresh the auth context
+          setTimeout(() => {
+            window.location.href = '/dashboard/vet';
+          }, 1500);
+          return;
+        }
+      } catch (refreshError) {
+        console.error('Failed to refresh user data:', refreshError);
+      }
+      
+      // Fallback: navigate normally
       setTimeout(() => {
         navigate('/dashboard/vet');
       }, 1500);

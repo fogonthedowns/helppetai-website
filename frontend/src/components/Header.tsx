@@ -10,6 +10,7 @@ const Header = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isPracticeAdmin = user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN';
+  const isAdmin = user?.role === 'ADMIN';
   const isVetStaff = user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN';
 
   return (
@@ -36,7 +37,6 @@ const Header = () => {
             </div>
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
-              <Link to="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Home</Link>
               {!isAuthenticated && (
                 <Link to="/contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Contact</Link>
               )}
@@ -52,14 +52,13 @@ const Header = () => {
                   {isVetStaff && (
                     <Link to="/dashboard/vet" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">Dashboard</Link>
                   )}
-                  {isPracticeAdmin && (
+                  {isAdmin && (
                     <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
                   )}
                   {isVetStaff && (
                     <Link to="/practice/team" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Team</Link>
                   )}
                   <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
-                  <Link to="/rag/search" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Search</Link>
                   
                   {/* User Profile Dropdown */}
                   <UserProfileDropdown onEditProfile={() => setIsProfileModalOpen(true)} />
@@ -91,16 +90,17 @@ const Header = () => {
           {isMobileMenuOpen && (
             <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4">
               <div className="flex flex-col space-y-4">
-                <Link 
-                  to="/" 
-                  className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Home
-                </Link>
+
                 
                 {!isAuthenticated && (
                   <>
+                    <Link 
+                      to="/" 
+                      className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Home
+                    </Link>
                     <Link 
                       to="/contact" 
                       className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
