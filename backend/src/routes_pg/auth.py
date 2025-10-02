@@ -112,6 +112,22 @@ async def signup(
             detail="Email already registered"
         )
     
+    # Determine role based on practice membership
+    determined_role = user_data.role
+    if user_data.practice_id:
+        from uuid import UUID
+        practice_uuid = UUID(user_data.practice_id) if isinstance(user_data.practice_id, str) else user_data.practice_id
+        
+        # Count active users in the practice
+        user_count = await user_repo.count_active_users_by_practice(practice_uuid)
+        
+        # If this is the first user, make them PRACTICE_ADMIN
+        # Otherwise, make them PENDING_INVITE (requires admin approval)
+        if user_count == 0:
+            determined_role = UserRole.PRACTICE_ADMIN
+        else:
+            determined_role = UserRole.PENDING_INVITE
+    
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     if user_data.practice_id:
@@ -120,7 +136,7 @@ async def signup(
             password_hash=hashed_password,
             email=user_data.email,
             full_name=user_data.full_name,
-            role=user_data.role,
+            role=determined_role,
             survey=user_data.survey,
             practice_id=user_data.practice_id
         )
@@ -130,7 +146,7 @@ async def signup(
             password_hash=hashed_password,
             email=user_data.email,
             full_name=user_data.full_name,
-            role=user_data.role,
+            role=determined_role,
             survey=user_data.survey
         )
     
@@ -186,17 +202,22 @@ async def update_user_profile(
     if user_update.full_name is not None:
         update_data["full_name"] = user_update.full_name
     
-    if user_update.practice_id is not None:
-        # Validate practice exists
-        practice_repo = PracticeRepository(session)
-        practice_uuid = UUID(user_update.practice_id)
-        practice = await practice_repo.get_by_id(practice_uuid)
-        if not practice:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Practice not found"
-            )
-        update_data["practice_id"] = practice_uuid
+    # Handle practice_id updates (including removal)
+    if hasattr(user_update, 'practice_id') and 'practice_id' in user_update.model_dump(exclude_unset=True):
+        if user_update.practice_id is None:
+            # Allow removing practice association
+            update_data["practice_id"] = None
+        else:
+            # Validate practice exists
+            practice_repo = PracticeRepository(session)
+            practice_uuid = UUID(user_update.practice_id)
+            practice = await practice_repo.get_by_id(practice_uuid)
+            if not practice:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Practice not found"
+                )
+            update_data["practice_id"] = practice_uuid
     
     # Update user
     updated_user = await user_repo.update_by_id(current_user.id, update_data)

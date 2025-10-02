@@ -10,6 +10,7 @@ import AboutUs from './components/AboutUs';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import VetSignup from './components/auth/VetSignup';
+import GeneralSignup from './components/auth/GeneralSignup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PracticesList from './components/practices/PracticesList';
 import PracticeDetail from './components/practices/PracticeDetail';
@@ -35,6 +36,7 @@ import Comparison from './pages/Comparison';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PracticeTeam from './pages/PracticeTeam';
 import PendingInvitations from './pages/PendingInvitations';
+import PracticeSelection from './pages/PracticeSelection';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -64,7 +66,9 @@ const App = () => {
             
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/signup" element={<GeneralSignup />} />
+            <Route path="/signup/select-practice" element={<PracticeSelection />} />
+            <Route path="/pet-owner-signup" element={<Signup />} />
             <Route path="/vet-signup" element={<VetSignup />} />
             
             {/* Dashboard Routes */}

@@ -162,12 +162,15 @@ const VetSignup: React.FC = () => {
 
           if (loginResponse.ok) {
             const loginData = await loginResponse.json();
+            // Store tokens in both keys for compatibility
+            localStorage.setItem('token', loginData.access_token);
             localStorage.setItem('access_token', loginData.access_token);
+            localStorage.setItem('username', formData.username);
             
-            // Redirect to accept-invite page
+            // Show success and redirect with full page reload to ensure auth state is fresh
             setSuccess(true);
             setTimeout(() => {
-              navigate(`/accept-invite/${inviteId}?code=${inviteCode}`);
+              window.location.href = `/accept-invite/${inviteId}?code=${inviteCode}`;
             }, 1000);
           } else {
             // Fall back to manual login

@@ -77,3 +77,17 @@ class UserRepository(BaseRepository[User]):
     async def activate_user(self, user_id: UUID) -> bool:
         """Activate a user"""
         return await self.update_by_id(user_id, {"is_active": True}) is not None
+    
+    async def count_active_users_by_practice(self, practice_id: UUID) -> int:
+        """Count active users in a practice (excluding PENDING_INVITE)"""
+        from sqlalchemy import func, and_
+        result = await self.session.execute(
+            select(func.count(User.id)).where(
+                and_(
+                    User.practice_id == practice_id,
+                    User.is_active == True,
+                    User.role != UserRole.PENDING_INVITE
+                )
+            )
+        )
+        return result.scalar() or 0

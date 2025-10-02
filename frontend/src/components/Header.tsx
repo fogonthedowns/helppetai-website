@@ -12,6 +12,7 @@ const Header = () => {
   const isPracticeAdmin = user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN';
   const isAdmin = user?.role === 'ADMIN';
   const isVetStaff = user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN';
+  const isPendingInvite = user?.role === 'PENDING_INVITE';
 
   return (
     <>
@@ -49,16 +50,26 @@ const Header = () => {
               
               {isAuthenticated ? (
                 <>
-                  {isVetStaff && (
-                    <Link to="/dashboard/vet" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">Dashboard</Link>
+                  {isPendingInvite ? (
+                    <>
+                      {/* For PENDING_INVITE users, show link to invitations page */}
+                      <Link to="/pending-invitations" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">My Invitations</Link>
+                    </>
+                  ) : (
+                    <>
+                      {/* For active staff/admin users, show normal navigation */}
+                      {isVetStaff && (
+                        <Link to="/dashboard/vet" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">Dashboard</Link>
+                      )}
+                      {isAdmin && (
+                        <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
+                      )}
+                      {isVetStaff && (
+                        <Link to="/practice/team" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Team</Link>
+                      )}
+                      <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
+                    </>
                   )}
-                  {isAdmin && (
-                    <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
-                  )}
-                  {isVetStaff && (
-                    <Link to="/practice/team" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Team</Link>
-                  )}
-                  <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
                   
                   {/* User Profile Dropdown */}
                   <UserProfileDropdown onEditProfile={() => setIsProfileModalOpen(true)} />
@@ -141,47 +152,63 @@ const Header = () => {
 
                 {isAuthenticated && (
                   <>
-                    {isVetStaff && (
-                      <Link 
-                        to="/dashboard/vet" 
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-center"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
+                    {isPendingInvite ? (
+                      <>
+                        {/* For PENDING_INVITE users, show link to invitations page */}
+                        <Link 
+                          to="/pending-invitations" 
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-center"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          My Invitations
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        {/* For active staff/admin users, show normal navigation */}
+                        {isVetStaff && (
+                          <Link 
+                            to="/dashboard/vet" 
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-center"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            Dashboard
+                          </Link>
+                        )}
+                        {isPracticeAdmin && (
+                          <Link 
+                            to="/practices" 
+                            className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            Practices
+                          </Link>
+                        )}
+                        {isVetStaff && (
+                          <Link 
+                            to="/practice/team" 
+                            className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            Team
+                          </Link>
+                        )}
+                        <Link 
+                          to="/pet_owners" 
+                          className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Pet Owners
+                        </Link>
+                        <Link 
+                          to="/rag/search" 
+                          className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Search
+                        </Link>
+                      </>
                     )}
-                    {isPracticeAdmin && (
-                      <Link 
-                        to="/practices" 
-                        className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Practices
-                      </Link>
-                    )}
-                    {isVetStaff && (
-                      <Link 
-                        to="/practice/team" 
-                        className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Team
-                      </Link>
-                    )}
-                    <Link 
-                      to="/pet_owners" 
-                      className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Pet Owners
-                    </Link>
-                    <Link 
-                      to="/rag/search" 
-                      className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Search
-                    </Link>
                     
                     {/* Mobile User Profile Section */}
                     <div className="pt-4 border-t border-gray-100">

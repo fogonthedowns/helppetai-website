@@ -314,7 +314,7 @@ const VetDashboard: React.FC = () => {
               <h1 className="text-3xl font-bold text-gray-900" style={{
                 fontFamily: 'Calibre, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
               }}>
-                Welcome back, Dr. {user.full_name}
+                Welcome back, {user.full_name}
               </h1>
               
               {/* Date Navigation */}

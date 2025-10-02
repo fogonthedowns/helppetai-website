@@ -28,6 +28,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
   // Handle 401 responses (token expired)
   if (response.status === 401) {
     localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('username');
     
     // Only redirect if we're not already on login/signup pages
@@ -51,6 +52,7 @@ export const isAuthenticated = (): boolean => {
 
 export const logout = (): void => {
   localStorage.removeItem('token');
+  localStorage.removeItem('access_token');
   localStorage.removeItem('username');
   window.location.href = '/';
 };
