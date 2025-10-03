@@ -101,7 +101,7 @@ const AcceptInvitation: React.FC = () => {
         if (userResponse.ok) {
           // Force a page reload to refresh the auth context
           setTimeout(() => {
-            window.location.href = '/dashboard/vet';
+            window.location.href = '/dashboard';
           }, 1500);
           return;
         }
@@ -111,7 +111,7 @@ const AcceptInvitation: React.FC = () => {
       
       // Fallback: navigate normally
       setTimeout(() => {
-        navigate('/dashboard/vet');
+        navigate('/dashboard');
       }, 1500);
     } catch (error: any) {
       console.error('Error accepting invitation:', error);

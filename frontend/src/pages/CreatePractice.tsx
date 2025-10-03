@@ -80,7 +80,7 @@ const CreatePractice: React.FC = () => {
       }
 
       // Force reload to refresh user context
-      window.location.href = '/dashboard/vet';
+      window.location.href = '/dashboard';
     } catch (err: any) {
       console.error('Create practice error:', err);
       setError(err.message || 'An error occurred. Please try again.');

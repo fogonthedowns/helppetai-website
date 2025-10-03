@@ -1319,7 +1319,7 @@ class SchedulingService:
         result = await self.db.execute(
             select(User).where(
                 User.practice_id == practice_id,
-                User.role == 'VET_STAFF',
+                User.role.in_(['VET_STAFF', 'PRACTICE_ADMIN']),
                 User.is_active == True
             ).limit(1)
         )

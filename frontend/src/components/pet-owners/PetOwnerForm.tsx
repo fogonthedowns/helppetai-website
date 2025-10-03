@@ -419,10 +419,10 @@ const PetOwnerForm: React.FC<PetOwnerFormProps> = ({ mode }) => {
   };
 
   // Check authorization for editing
-  const canEdit = user?.role === 'ADMIN' || user?.role === 'VET_STAFF';
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN';
   if (mode === 'edit' && !canEdit) {
-    // Only ADMIN and VET_STAFF can edit pet owners
-    // VET_STAFF can edit pet owners associated with their practice (backend will enforce this)
+    // Only ADMIN, VET_STAFF, and PRACTICE_ADMIN can edit pet owners
+    // VET_STAFF and PRACTICE_ADMIN can edit pet owners associated with their practice (backend will enforce this)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         default="http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://host.docker.internal:3000,https://helppet.ai,https://www.helppet.ai,null,file://", 
         env="CORS_ORIGINS"
     )
-    cors_methods: str = Field(default="GET,POST,PUT,DELETE,OPTIONS", env="CORS_METHODS")
+    cors_methods: str = Field(default="GET,POST,PUT,PATCH,DELETE,OPTIONS", env="CORS_METHODS")
     cors_headers: str = Field(default="*", env="CORS_HEADERS")
     
     # Production URLs

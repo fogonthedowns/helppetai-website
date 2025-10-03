@@ -208,7 +208,7 @@ async def update_association(
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user)
 ) -> AssociationResponse:
-    """Update an association (Admin can update any, VET_STAFF can update their practice's associations)"""
+    """Update an association (Admin can update any, VET_STAFF/PRACTICE_ADMIN can update their practice's associations)"""
     
     association_repo = AssociationRepository(session)
     
@@ -349,7 +349,7 @@ async def delete_association(
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user)
 ) -> None:
-    """Delete an association (Admin can delete any, VET_STAFF can delete their practice's associations)"""
+    """Delete an association (Admin can delete any, VET_STAFF/PRACTICE_ADMIN can delete their practice's associations)"""
     
     association_repo = AssociationRepository(session)
     

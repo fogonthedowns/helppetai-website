@@ -145,7 +145,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onEditProfile
 
             {(user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN' || user?.role === 'SYSTEM_ADMIN') && (
               <Link
-                to="/dashboard/vet"
+                to="/dashboard"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               >

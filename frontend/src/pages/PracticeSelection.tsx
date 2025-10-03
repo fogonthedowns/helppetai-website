@@ -122,7 +122,7 @@ const PracticeSelection: React.FC = () => {
           
           // Redirect with full page reload
           setTimeout(() => {
-            window.location.href = '/dashboard/vet';
+            window.location.href = '/dashboard';
           }, 500);
         } else {
           // Fallback to manual login

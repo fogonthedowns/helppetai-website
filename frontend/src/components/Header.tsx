@@ -130,7 +130,7 @@ const Header = () => {
                     <>
                       {/* For active staff/admin users, show normal navigation */}
                       {isVetStaff && (
-                        <Link to="/dashboard/vet" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">Dashboard</Link>
+                        <Link to="/dashboard" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">Dashboard</Link>
                       )}
                       {isSystemAdmin && (
                         <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SearchPage } from './pages/SearchPage';
 import { SearchResult } from './pages/SearchResult';
@@ -12,6 +12,7 @@ import Signup from './components/auth/Signup';
 import VetSignup from './components/auth/VetSignup';
 import GeneralSignup from './components/auth/GeneralSignup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import PracticesList from './components/practices/PracticesList';
 import PracticeDetail from './components/practices/PracticeDetail';
 import PracticeForm from './components/practices/PracticeForm';
@@ -30,6 +31,7 @@ import VisitTranscriptRecorder from './components/visit-transcripts/VisitTranscr
 import AppointmentPetRecorder from './components/visit-transcripts/AppointmentPetRecorder';
 import AppointmentForm from './components/appointments/AppointmentForm';
 import VetDashboardPage from './pages/VetDashboardPage';
+import Dashboard from './pages/Dashboard';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import Pricing from './pages/Pricing';
@@ -45,12 +47,21 @@ import CreatePractice from './pages/CreatePractice';
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
 
+const ConditionalHeader = () => {
+  const location = useLocation();
+  // Don't show header on dashboard routes
+  if (location.pathname.startsWith('/dashboard')) {
+    return null;
+  }
+  return <Header />;
+};
+
 const App = () => {
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-white">
-          <Header />
+          <ConditionalHeader />
           <Routes>
             {/* Original Routes - RESTORED */}
             <Route path="/" element={<Home />} />
@@ -63,55 +74,64 @@ const App = () => {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             
-            {/* Invitation Routes */}
+            {/* Invitation Routes - Accessible to PENDING_INVITE */}
             <Route path="/accept-invite/:inviteId" element={<AcceptInvitation />} />
             <Route path="/pending-invitations" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['PENDING_INVITE', 'VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <PendingInvitations />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<GeneralSignup />} />
-            <Route path="/signup/select-practice" element={<PracticeSelection />} />
+            <Route path="/signup/select-practice" element={
+              <RoleBasedRoute allowedRoles={['PENDING_INVITE', 'VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
+                <PracticeSelection />
+              </RoleBasedRoute>
+            } />
             <Route path="/signup/create-practice" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['PENDING_INVITE', 'VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <CreatePractice />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/pet-owner-signup" element={<Signup />} />
             <Route path="/vet-signup" element={<VetSignup />} />
             
-            {/* Dashboard Routes */}
+            {/* Dashboard Routes - NOT accessible to PENDING_INVITE */}
+            <Route path="/dashboard/*" element={
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
+                <Dashboard />
+              </RoleBasedRoute>
+            } />
             <Route path="/dashboard/vet" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <VetDashboardPage />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/dashboard/vet/:date" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <VetDashboardPage />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             
-            {/* Appointment Routes */}
+            {/* Appointment Routes - NOT accessible to PENDING_INVITE */}
             <Route path="/appointments/new" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <AppointmentForm />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             
-            {/* Visit Transcript Routes */}
+            {/* Visit Transcript Routes - NOT accessible to PENDING_INVITE */}
             <Route path="/visit-transcripts/record" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <VisitTranscriptRecorder />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/visit-transcripts/record/:appointmentId" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <AppointmentPetRecorder />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             
             {/* Practice Routes - Public */}
@@ -130,50 +150,50 @@ const App = () => {
               </ProtectedRoute>
             } />
             
-            {/* Practice Team Routes */}
+            {/* Practice Team Routes - NOT accessible to PENDING_INVITE */}
             <Route path="/practice/team" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <PracticeTeam />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             
-            {/* Pet Owner Routes */}
+            {/* Pet Owner Routes - NOT accessible to PENDING_INVITE */}
             <Route path="/pet_owners" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <PetOwnersList />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/pet_owners/new" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <PetOwnerCreate />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/pet_owners/:uuid" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <PetOwnerDetail />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/pet_owners/:uuid/edit" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <PetOwnerForm mode="edit" />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             
-            {/* Pet Routes */}
+            {/* Pet Routes - NOT accessible to PENDING_INVITE */}
             <Route path="/pets/create" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
                 <PetForm mode="create" />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/pets/:uuid" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN', 'PET_OWNER']}>
                 <PetDetail />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             <Route path="/pets/:uuid/edit" element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN', 'PET_OWNER']}>
                 <PetForm mode="edit" />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             } />
             
             {/* Medical Record Routes */}

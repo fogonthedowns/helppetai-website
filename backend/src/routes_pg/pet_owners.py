@@ -3,7 +3,7 @@ Pet Owner routes for PostgreSQL - HelpPet MVP
 """
 
 from uuid import UUID
-from typing import List, Optional
+from typing import List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -55,6 +55,10 @@ class PetOwnerResponse(BaseModel):
     notifications_enabled: bool
     created_at: str
     updated_at: str
+    pets: List[Any] = []  # Include pets list
+    
+    class Config:
+        extra = "allow"
 
 
 async def get_accessible_pet_owner_ids(
@@ -114,23 +118,38 @@ async def get_pet_owners(
             if pet_owner:
                 pet_owners.append(pet_owner)
     
-    return [
-        PetOwnerResponse(
-            uuid=str(pet_owner.id),
-            user_id=str(pet_owner.user_id) if pet_owner.user_id else None,
-            full_name=pet_owner.full_name,
-            email=pet_owner.email,
-            phone=pet_owner.phone,
-            emergency_contact=pet_owner.emergency_contact,
-            secondary_phone=pet_owner.secondary_phone,
-            address=pet_owner.address,
-            preferred_communication=pet_owner.preferred_communication,
-            notifications_enabled=pet_owner.notifications_enabled,
-            created_at=pet_owner.created_at.isoformat(),
-            updated_at=pet_owner.updated_at.isoformat()
+    # Fetch pets for each owner
+    from ..repositories_pg.pet_repository import PetRepository
+    pet_repo = PetRepository(session)
+    
+    result = []
+    for pet_owner in pet_owners:
+        pets_list = await pet_repo.get_by_owner_id(pet_owner.id)
+        result.append(
+            PetOwnerResponse(
+                uuid=str(pet_owner.id),
+                user_id=str(pet_owner.user_id) if pet_owner.user_id else None,
+                full_name=pet_owner.full_name,
+                email=pet_owner.email,
+                phone=pet_owner.phone,
+                emergency_contact=pet_owner.emergency_contact,
+                secondary_phone=pet_owner.secondary_phone,
+                address=pet_owner.address,
+                preferred_communication=pet_owner.preferred_communication,
+                notifications_enabled=pet_owner.notifications_enabled,
+                created_at=pet_owner.created_at.isoformat(),
+                updated_at=pet_owner.updated_at.isoformat(),
+                pets=[{
+                    "uuid": str(pet.id),
+                    "name": pet.name, 
+                    "species": pet.species,
+                    "breed": pet.breed,
+                    "age": pet.age_years if hasattr(pet, 'age_years') else None
+                } for pet in pets_list]
+            )
         )
-        for pet_owner in pet_owners
-    ]
+    
+    return result
 
 
 @router.get("/{pet_owner_id}", response_model=PetOwnerResponse)
@@ -224,27 +243,27 @@ async def create_pet_owner(
     
     created_pet_owner = await pet_owner_repo.create(new_pet_owner)
     
-    # Auto-create practice association for VET_STAFF users
-    if current_user.role == UserRole.VET_STAFF and current_user.practice_id:
+    # Auto-create practice association if user has a practice
+    if current_user.practice_id:
         from ..models_pg.pet_owner_practice_association import PetOwnerPracticeAssociation, AssociationStatus, AssociationRequestType
         
         association_repo = AssociationRepository(session)
         
-        # Check if association already exists (in case frontend created it)
+        # Check if association already exists
         existing_association = await association_repo.check_association_exists(
             created_pet_owner.id, current_user.practice_id
         )
         
         if not existing_association:
-            # Create automatic association for VET_STAFF
+            # Create automatic association
             auto_association = PetOwnerPracticeAssociation(
                 pet_owner_id=created_pet_owner.id,
                 practice_id=current_user.practice_id,
                 request_type=AssociationRequestType.NEW_CLIENT,
-                notes="Automatically created by vet staff",
+                notes="Automatically created by practice staff",
                 primary_contact=True,
                 requested_by_user_id=current_user.id,
-                status=AssociationStatus.APPROVED  # Auto-approve for VET_STAFF
+                status=AssociationStatus.APPROVED
             )
             
             await association_repo.create(auto_association)
@@ -272,7 +291,7 @@ async def update_pet_owner(
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user)
 ) -> PetOwnerResponse:
-    """Update an existing pet owner (Admin can update any, VET_STAFF can update their practice's pet owners)"""
+    """Update an existing pet owner (Admin can update any, VET_STAFF/PRACTICE_ADMIN can update their practice's pet owners)"""
     
     pet_owner_repo = PetOwnerRepository(session)
     association_repo = AssociationRepository(session)

@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+
+- Never change the const isAdmin   
+- const isAdmin = user?.role === 'ADMIN';
+- You often confus PRACTICE_ADMIN with ADMIN. A admin is the same as SUPER_ADMIN
+- A PRACTICE_ADMIN Is similar to VET_STAFF but they manage the practice

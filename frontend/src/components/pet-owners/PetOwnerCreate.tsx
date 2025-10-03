@@ -58,9 +58,9 @@ const PetOwnerCreate = () => {
   const [loading, setLoading] = useState(true);
 
   // Check if user can access this page
-  const canCreatePetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF';
+  const canCreatePetOwners = user?.role === 'ADMIN' || user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN';
   const isAdmin = user?.role === 'ADMIN';
-  const isVetStaff = user?.role === 'VET_STAFF';
+  const isVetStaff = user?.role === 'VET_STAFF' || user?.role === 'PRACTICE_ADMIN';
 
   useEffect(() => {
     if (!canCreatePetOwners) {
@@ -247,7 +247,8 @@ const PetOwnerCreate = () => {
 
       setSubmitStatus('success');
       setTimeout(() => {
-        navigate('/pet_owners');
+        // Navigate to the pet owners tab in the dashboard
+        navigate('/dashboard/pet_owners');
       }, 1500);
 
     } catch (err) {
