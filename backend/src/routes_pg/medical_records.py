@@ -56,11 +56,11 @@ async def check_pet_access_for_medical_records(
         )
     
     # Admin can access all pets
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         return pet
     
     # VET_STAFF can access pets from their practice
-    if current_user.role == "VET_STAFF" and current_user.practice_id:
+    if current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         association = await association_repo.check_association_exists(
             pet.owner_id, current_user.practice_id
         )
@@ -150,7 +150,7 @@ async def create_medical_record(
     Create medical record (Vet or Admin only)
     """
     # Only VET_STAFF and ADMIN can create medical records
-    if current_user.role not in ["VET_STAFF", "ADMIN"]:
+    if current_user.role not in ["VET_STAFF", "VET", "PRACTICE_ADMIN", "SYSTEM_ADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only veterinarians and administrators can create medical records"
@@ -196,7 +196,7 @@ async def update_medical_record(
     )
     
     # Only ADMIN or the creating veterinarian can update
-    if current_user.role != "ADMIN" and existing_record.created_by_user_id != current_user.id:
+    if current_user.role not in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"] and existing_record.created_by_user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators and the creating veterinarian can update medical records"
@@ -222,7 +222,7 @@ async def delete_medical_record(
     """
     Delete medical record (Admin only)
     """
-    if current_user.role != "ADMIN":
+    if current_user.role not in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can delete medical records"
@@ -295,7 +295,7 @@ async def get_follow_ups_due(
     """
     Get all follow-ups due (Vet Staff and Admin only)
     """
-    if current_user.role not in ["VET_STAFF", "ADMIN"]:
+    if current_user.role not in ["VET_STAFF", "VET", "PRACTICE_ADMIN", "SYSTEM_ADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only veterinarians and administrators can view follow-ups"
@@ -304,7 +304,7 @@ async def get_follow_ups_due(
     records = await medical_record_repo.get_records_requiring_follow_up()
     
     # For VET_STAFF, filter to only their practice's pets
-    if current_user.role == "VET_STAFF" and current_user.practice_id:
+    if current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         # This would require additional filtering logic based on practice associations
         pass
     

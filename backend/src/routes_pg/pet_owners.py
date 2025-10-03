@@ -64,16 +64,17 @@ async def get_accessible_pet_owner_ids(
     """
     Get pet owner IDs that the current user can access based on their role and practice.
     
-    - Admin: Can access all pet owners (returns None to indicate no filtering)
-    - Vet Staff: Can only access pet owners associated with their practice
+    - SYSTEM_ADMIN: Can access all pet owners (returns None to indicate no filtering)
+    - PRACTICE_ADMIN: Can only access pet owners associated with their practice
+    - VET_STAFF: Can only access pet owners associated with their practice
     """
-    if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.SYSTEM_ADMIN]:
-        return None  # Admin can access all
+    if current_user.role == UserRole.SYSTEM_ADMIN:
+        return None  # System admin can access all pet owners
     
-    # For vet staff, get pet owners associated with their practice
-    if current_user.role == UserRole.VET_STAFF:
+    # For practice admin and vet staff, get pet owners associated with their practice
+    if current_user.role in [UserRole.PRACTICE_ADMIN, UserRole.VET_STAFF]:
         if not current_user.practice_id:
-            # VET_STAFF without practice_id can't access any pet owners
+            # Users without practice_id can't access any pet owners
             return []
         
         # Get all approved pet owners associated with this practice

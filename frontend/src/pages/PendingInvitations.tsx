@@ -305,22 +305,45 @@ const PendingInvitations: React.FC = () => {
 
         {/* Search for Practice Option - Show if no current practice */}
         {!currentPractice && (
-          <div className="bg-white rounded-lg shadow-sm border-2 border-gray-200 overflow-hidden mb-8">
-            <div className="p-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-full mb-4">
-                <Search className="h-8 w-8 text-blue-600" />
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Search for Practice */}
+            <div className="bg-white rounded-lg shadow-sm border-2 border-gray-200 overflow-hidden">
+              <div className="p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-full mb-4">
+                  <Search className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Join a Practice</h3>
+                <p className="text-gray-600 mb-6">
+                  Search for your existing veterinary practice to join your team.
+                </p>
+                <button
+                  onClick={() => navigate('/signup/select-practice')}
+                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                >
+                  <Search className="h-5 w-5 mr-2" />
+                  Find My Practice
+                </button>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Search for Your Practice</h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                Can't find an invitation? Search for your veterinary practice to join your team.
-              </p>
-              <button
-                onClick={() => navigate('/signup/select-practice')}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
-              >
-                <Search className="h-5 w-5 mr-2" />
-                Find My Practice
-              </button>
+            </div>
+
+            {/* Create New Practice */}
+            <div className="bg-white rounded-lg shadow-sm border-2 border-green-200 overflow-hidden">
+              <div className="p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
+                  <Building2 className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Start a New Practice</h3>
+                <p className="text-gray-600 mb-6">
+                  Create your own veterinary practice and become the administrator.
+                </p>
+                <button
+                  onClick={() => navigate('/signup/create-practice')}
+                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+                >
+                  <Building2 className="h-5 w-5 mr-2" />
+                  Create Practice
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -337,6 +360,40 @@ const PendingInvitations: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Remove Practice Confirmation Modal */}
+      {showRemoveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Remove Practice Association</h3>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to remove your association with this practice? You will need to join again or receive a new invitation.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowRemoveModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRemovePractice}
+                  disabled={removeLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
+                >
+                  {removeLoading ? 'Removing...' : 'Remove'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

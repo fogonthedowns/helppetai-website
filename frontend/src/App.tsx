@@ -32,11 +32,15 @@ import AppointmentForm from './components/appointments/AppointmentForm';
 import VetDashboardPage from './pages/VetDashboardPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
-import Comparison from './pages/Comparison';
+import Pricing from './pages/Pricing';
+import AIFrontDesk from './pages/AIFrontDesk';
+import VisitTranscriptions from './pages/VisitTranscriptions';
+import WebsiteHosting from './pages/WebsiteHosting';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PracticeTeam from './pages/PracticeTeam';
 import PendingInvitations from './pages/PendingInvitations';
 import PracticeSelection from './pages/PracticeSelection';
+import CreatePractice from './pages/CreatePractice';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
@@ -52,7 +56,10 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/contact" element={<VetsContact />} />
             <Route path="/about" element={<AboutUs />} />
-            <Route path="/comparison" element={<Comparison />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/products/ai-front-desk" element={<AIFrontDesk />} />
+            <Route path="/products/visit-transcriptions" element={<VisitTranscriptions />} />
+            <Route path="/products/website-hosting" element={<WebsiteHosting />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             
@@ -68,6 +75,11 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<GeneralSignup />} />
             <Route path="/signup/select-practice" element={<PracticeSelection />} />
+            <Route path="/signup/create-practice" element={
+              <ProtectedRoute>
+                <CreatePractice />
+              </ProtectedRoute>
+            } />
             <Route path="/pet-owner-signup" element={<Signup />} />
             <Route path="/vet-signup" element={<VetSignup />} />
             

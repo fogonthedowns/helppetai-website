@@ -54,11 +54,11 @@ async def check_pet_access(
         )
     
     # Admin can access all pets
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         return pet
     
     # VET_STAFF can access pets from their practice
-    if current_user.role == "VET_STAFF" and current_user.practice_id:
+    if current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         association = await association_repo.check_association_exists(
             pet.owner_id, current_user.practice_id
         )
@@ -86,7 +86,7 @@ async def list_pets(
     """
     List all pets (Admin only)
     """
-    if current_user.role != "ADMIN":
+    if current_user.role not in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can list all pets"
@@ -130,9 +130,9 @@ async def list_pets_by_owner(
     # Check access permissions
     has_access = False
     
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         has_access = True
-    elif current_user.role == "VET_STAFF" and current_user.practice_id:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         # Check if vet's practice is associated with this pet owner
         association = await association_repo.check_association_exists(
             owner_uuid, current_user.practice_id
@@ -192,9 +192,9 @@ async def create_pet(
     # Check access permissions for creating pets for this owner
     has_access = False
     
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         has_access = True
-    elif current_user.role == "VET_STAFF" and current_user.practice_id:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         # Check if vet's practice is associated with this pet owner
         association = await association_repo.check_association_exists(
             pet_data.owner_id, current_user.practice_id
@@ -246,9 +246,9 @@ async def update_pet(
     # Admin, VET_STAFF (for their practice), and Pet Owner can update pets
     can_update = False
     
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         can_update = True
-    elif current_user.role == "VET_STAFF" and current_user.practice_id:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         # VET_STAFF can update pets from their practice
         association = await association_repo.check_association_exists(
             pet.owner_id, current_user.practice_id
@@ -304,9 +304,9 @@ async def delete_pet(
     # Admin, VET_STAFF (for their practice), and Pet Owner can delete pets
     can_delete = False
     
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         can_delete = True
-    elif current_user.role == "VET_STAFF" and current_user.practice_id:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         # VET_STAFF can delete pets from their practice
         association = await association_repo.check_association_exists(
             pet.owner_id, current_user.practice_id
@@ -349,9 +349,9 @@ async def reactivate_pet(
     # Admin, VET_STAFF (for their practice), and Pet Owner can reactivate pets
     can_reactivate = False
     
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         can_reactivate = True
-    elif current_user.role == "VET_STAFF" and current_user.practice_id:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and current_user.practice_id:
         # VET_STAFF can reactivate pets from their practice
         association = await association_repo.check_association_exists(
             pet.owner_id, current_user.practice_id

@@ -258,10 +258,23 @@ async def associate_with_practice(
             detail="Practice not found"
         )
     
-    # Update user's practice association
+    # Check if this user is the first active user for this practice
+    active_user_count = await user_repo.count_active_users_by_practice(practice_uuid)
+    
+    # Determine role: first user becomes PRACTICE_ADMIN, others become PENDING_INVITE
+    update_data = {"practice_id": practice_uuid}
+    if active_user_count == 0:
+        update_data["role"] = UserRole.PRACTICE_ADMIN
+    else:
+        # Only update role if they're currently PENDING_INVITE
+        if current_user.role == UserRole.PENDING_INVITE:
+            # Keep as PENDING_INVITE until an admin approves them
+            update_data["role"] = UserRole.PENDING_INVITE
+    
+    # Update user's practice association and possibly role
     updated_user = await user_repo.update_by_id(
         current_user.id, 
-        {"practice_id": practice_uuid}
+        update_data
     )
     
     if not updated_user:

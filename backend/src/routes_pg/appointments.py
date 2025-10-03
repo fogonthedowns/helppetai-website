@@ -90,11 +90,11 @@ async def check_practice_access(practice_id: str, user: User, db: AsyncSession) 
         raise HTTPException(status_code=404, detail="Practice not found")
     
     # Admin can access all practices
-    if user.role == "ADMIN":
+    if user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         return practice
     
     # Vet staff can access their practice
-    if user.role in ["VET_STAFF", "VET"] and hasattr(user, 'practice_id') and user.practice_id == practice_uuid:
+    if user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"] and hasattr(user, 'practice_id') and user.practice_id == practice_uuid:
         return practice
     
     raise HTTPException(status_code=403, detail="Access denied to this practice")
@@ -114,7 +114,7 @@ async def check_pet_owner_access(pet_owner_id: str, user: User, db: AsyncSession
         raise HTTPException(status_code=404, detail="Pet owner not found")
     
     # Admin can access all pet owners
-    if user.role == "ADMIN":
+    if user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         return pet_owner
     
     # Pet owner can access their own data
@@ -122,7 +122,7 @@ async def check_pet_owner_access(pet_owner_id: str, user: User, db: AsyncSession
         return pet_owner
     
     # Vet staff can access pet owners associated with their practice
-    if user.role in ["VET_STAFF", "VET"]:
+    if user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"]:
         # TODO: Check if pet owner is associated with user's practice
         return pet_owner
     
@@ -235,9 +235,9 @@ async def get_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
     
     # Check access permissions
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         pass  # Admin can access all
-    elif current_user.role in ["VET_STAFF", "VET"]:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"]:
         # Check if user's practice matches appointment practice
         if hasattr(current_user, 'practice_id') and current_user.practice_id != appointment.practice_id:
             raise HTTPException(status_code=403, detail="Access denied")
@@ -261,7 +261,7 @@ async def create_appointment(
     Create appointment
     Access: Vet or Admin only
     """
-    if current_user.role not in ["VET_STAFF", "VET", "ADMIN"]:
+    if current_user.role not in ["VET_STAFF", "VET", "PRACTICE_ADMIN", "SYSTEM_ADMIN"]:
         raise HTTPException(
             status_code=403, 
             detail="Only veterinarians and admins can create appointments"
@@ -328,6 +328,52 @@ async def create_appointment(
     )
     appointment = result.scalar_one()
     
+    # Send appointment confirmation email to pet owner
+    if pet_owner.email:
+        try:
+            import logging
+            from ..utils.email_service import send_appointment_confirmation_email
+            
+            logger = logging.getLogger(__name__)
+            
+            # Prepare pet data for email
+            pets_data = [
+                {
+                    'name': ap.pet.name,
+                    'species': ap.pet.species
+                }
+                for ap in appointment.appointment_pets
+            ]
+            
+            # Get practice address
+            practice_address = practice.full_address or "Address not available"
+            practice_phone = practice.phone or "Phone not available"
+            
+            # Send email (don't block appointment creation if email fails)
+            email_sent = send_appointment_confirmation_email(
+                recipient_email=pet_owner.email,
+                recipient_name=pet_owner.full_name,
+                practice_name=practice.name,
+                practice_address=practice_address,
+                practice_phone=practice_phone,
+                appointment_date=appointment.appointment_date,
+                appointment_duration_minutes=appointment.duration_minutes,
+                appointment_type=appointment.appointment_type,
+                appointment_title=appointment.title,
+                pets=pets_data,
+                appointment_id=str(appointment.id),
+                practice_timezone=practice.timezone
+            )
+            
+            if email_sent:
+                logger.info(f"Appointment confirmation email sent to {pet_owner.email} for appointment {appointment.id}")
+            else:
+                logger.warning(f"Failed to send appointment confirmation email to {pet_owner.email} for appointment {appointment.id}")
+                
+        except Exception as e:
+            # Log but don't fail appointment creation
+            logger.error(f"Error sending appointment confirmation email: {str(e)}")
+    
     return appointment_to_response(appointment)
 
 
@@ -360,9 +406,9 @@ async def update_appointment(
     
     # Check permissions and determine allowed fields
     allowed_fields = set()
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         allowed_fields = {"assigned_vet_user_id", "appointment_date", "duration_minutes", "appointment_type", "status", "title", "description", "notes", "pet_ids"}
-    elif current_user.role in ["VET_STAFF", "VET"]:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"]:
         if hasattr(current_user, 'practice_id') and current_user.practice_id == appointment.practice_id:
             allowed_fields = {"assigned_vet_user_id", "appointment_date", "duration_minutes", "appointment_type", "status", "title", "description", "notes", "pet_ids"}
         else:
@@ -472,9 +518,9 @@ async def cancel_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
     
     # Check permissions
-    if current_user.role == "ADMIN":
+    if current_user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         pass  # Admin can cancel all
-    elif current_user.role in ["VET_STAFF", "VET"]:
+    elif current_user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"]:
         if hasattr(current_user, 'practice_id') and current_user.practice_id != appointment.practice_id:
             raise HTTPException(status_code=403, detail="Access denied")
     elif current_user.role == "PET_OWNER":

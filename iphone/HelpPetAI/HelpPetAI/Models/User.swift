@@ -31,8 +31,10 @@ struct User: Codable, Identifiable, Equatable {
 enum UserRole: String, Codable {
     case vetStaff = "VET_STAFF"
     case vet = "VET"
-    case admin = "ADMIN"
+    case practiceAdmin = "PRACTICE_ADMIN"
+    case systemAdmin = "SYSTEM_ADMIN"
     case petOwner = "PET_OWNER"
+    case pendingInvite = "PENDING_INVITE"
 }
 
 

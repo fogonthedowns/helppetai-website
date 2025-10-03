@@ -266,7 +266,7 @@ const VetDashboard: React.FC = () => {
     }
   };
 
-  if (!user || (user.role !== 'VET' && user.role !== 'VET_STAFF')) {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'VET_STAFF' && user.role !== 'PRACTICE_ADMIN' && user.role !== 'SYSTEM_ADMIN')) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

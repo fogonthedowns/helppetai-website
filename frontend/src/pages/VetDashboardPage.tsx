@@ -18,7 +18,7 @@ const VetDashboardPage: React.FC = () => {
         return;
       }
 
-      if (user && (user.role !== 'VET' && user.role !== 'VET_STAFF')) {
+      if (user && (user.role !== 'ADMIN' && user.role !== 'VET_STAFF' && user.role !== 'PRACTICE_ADMIN' && user.role !== 'SYSTEM_ADMIN')) {
         navigate('/');
         return;
       }

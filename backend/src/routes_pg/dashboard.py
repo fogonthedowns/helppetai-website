@@ -64,8 +64,8 @@ class TodayWorkSummaryResponse(BaseModel):
 
 
 def require_vet_access(current_user: User = Depends(get_current_user)) -> User:
-    """Require VET or VET_STAFF role for dashboard access."""
-    if current_user.role not in ["VET", "VET_STAFF"]:
+    """Require VET, VET_STAFF, PRACTICE_ADMIN, or SYSTEM_ADMIN role for dashboard access."""
+    if current_user.role not in ["VET", "VET_STAFF", "PRACTICE_ADMIN", "SYSTEM_ADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Veterinary staff only."
@@ -95,7 +95,7 @@ async def get_vet_dashboard(
         raise HTTPException(status_code=400, detail="Invalid vet user UUID format")
     
     # Verify user can access this dashboard (admin or self)
-    if current_user.role != "ADMIN" and str(current_user.id) != vet_user_uuid:
+    if current_user.role not in ["PRACTICE_ADMIN", "SYSTEM_ADMIN"] and str(current_user.id) != vet_user_uuid:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Can only view your own dashboard."
@@ -226,7 +226,7 @@ async def get_vet_today_summary(
         raise HTTPException(status_code=400, detail="Invalid vet user UUID format")
     
     # Verify user can access this dashboard (admin or self)
-    if current_user.role != "ADMIN" and str(current_user.id) != vet_user_uuid:
+    if current_user.role not in ["PRACTICE_ADMIN", "SYSTEM_ADMIN"] and str(current_user.id) != vet_user_uuid:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Can only view your own dashboard."

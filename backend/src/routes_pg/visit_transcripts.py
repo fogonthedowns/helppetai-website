@@ -154,11 +154,11 @@ async def check_pet_access(pet_id: str, user: User, db: AsyncSession) -> Pet:
         raise HTTPException(status_code=404, detail="Pet not found")
     
     # Admin can access all pets
-    if user.role == "ADMIN":
+    if user.role in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         return pet
     
     # Vet can access pets from their associated practices
-    if user.role in ["VET_STAFF", "VET"]:
+    if user.role in ["VET_STAFF", "VET", "PRACTICE_ADMIN"]:
         # TODO: Check if user's practice is associated with pet owner
         return pet
     
@@ -357,7 +357,7 @@ async def create_visit_transcript(
     Create visit transcript
     Access: Vet or Admin only
     """
-    if current_user.role not in ["VET_STAFF", "VET", "ADMIN"]:
+    if current_user.role not in ["VET_STAFF", "VET", "PRACTICE_ADMIN", "SYSTEM_ADMIN"]:
         raise HTTPException(
             status_code=403, 
             detail="Only veterinarians and admins can create visit transcripts"
@@ -414,7 +414,7 @@ async def update_visit_transcript(
         raise HTTPException(status_code=404, detail="Visit transcript not found")
     
     # Check permissions
-    if current_user.role != "ADMIN" and visit.created_by != current_user.id:
+    if current_user.role not in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"] and visit.created_by != current_user.id:
         raise HTTPException(
             status_code=403,
             detail="Only admins or the creating veterinarian can update this transcript"
@@ -452,7 +452,7 @@ async def delete_visit_transcript(
     Delete visit transcript
     Access: Admin only
     """
-    if current_user.role != "ADMIN":
+    if current_user.role not in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         raise HTTPException(
             status_code=403,
             detail="Only admins can delete visit transcripts"
@@ -488,7 +488,7 @@ async def initiate_audio_upload(
     Initiate audio upload for iPhone - generates presigned S3 URL
     Creates a new visit record in 'new' state for the pet
     """
-    if current_user.role not in ["VET_STAFF", "VET", "ADMIN"]:
+    if current_user.role not in ["VET_STAFF", "VET", "PRACTICE_ADMIN", "SYSTEM_ADMIN"]:
         raise HTTPException(
             status_code=403, 
             detail="Only veterinarians and admins can upload audio"
@@ -671,7 +671,7 @@ async def complete_audio_upload(
         raise HTTPException(status_code=404, detail="Visit not found")
     
     # Check if user can complete this upload
-    if visit.created_by != current_user.id and current_user.role != "ADMIN":
+    if visit.created_by != current_user.id and current_user.role not in ["SYSTEM_ADMIN", "PRACTICE_ADMIN"]:
         raise HTTPException(
             status_code=403,
             detail="Only the uploading user or admin can complete this upload"

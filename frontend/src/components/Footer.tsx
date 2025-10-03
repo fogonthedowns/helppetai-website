@@ -30,28 +30,18 @@ const Footer = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link to="/" className="text-gray-600 hover:text-blue-600 transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
                   <Link to="/about" className="text-gray-600 hover:text-blue-600 transition-colors">
                     About Us
                   </Link>
                 </li>
                 <li>
-                  <Link to="/comparison" className="text-gray-600 hover:text-blue-600 transition-colors">
-                    Compare
+                  <Link to="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    Pricing
                   </Link>
                 </li>
                 <li>
                   <Link to="/contact" className="text-gray-600 hover:text-blue-600 transition-colors">
                     Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/practices" className="text-gray-600 hover:text-blue-600 transition-colors">
-                    Veterinary Practices
                   </Link>
                 </li>
               </ul>
@@ -69,11 +59,6 @@ const Footer = () => {
                 <li>
                   <Link to="/terms" className="text-gray-600 hover:text-blue-600 transition-colors">
                     Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/security" className="text-gray-600 hover:text-blue-600 transition-colors">
-                    Security & Compliance
                   </Link>
                 </li>
               </ul>
