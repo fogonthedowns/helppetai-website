@@ -123,41 +123,45 @@ const WebsiteHosting: React.FC = () => {
             No setup fees, no hidden costs, cancel anytime.
           </p>
           
-          <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md">
-            <div className="text-center mb-6">
-              <div className="text-4xl font-bold text-gray-900 mb-2">$7</div>
-              <div className="text-gray-600">per month</div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+            {/* Hosting Price */}
+            <div className="bg-white border border-gray-200 rounded-lg p-8">
+              <div className="text-center mb-6">
+                <div className="text-4xl font-bold text-gray-900 mb-2">$7</div>
+                <div className="text-gray-600">per month</div>
+              </div>
+              
+              <div className="space-y-3 mb-8">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-gray-700">Professional veterinary template</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-gray-700">99.9% uptime guarantee</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-gray-700">SSL certificate included</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-gray-700">Custom domain hosting</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-gray-700">24/7 technical support</span>
+                </div>
+              </div>
+              
+              <Link 
+                to="/signup" 
+                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors text-center block"
+              >
+                Get started today
+              </Link>
             </div>
-            
-            <div className="space-y-3 mb-8">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">Professional veterinary template</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">99.9% uptime guarantee</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">SSL certificate included</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">Custom domain name</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">24/7 technical support</span>
-              </div>
-            </div>
-            
-            <Link 
-              to="/signup" 
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors text-center block"
-            >
-              Get started today
-            </Link>
+
           </div>
         </div>
 

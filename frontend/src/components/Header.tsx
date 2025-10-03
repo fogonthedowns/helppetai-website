@@ -55,9 +55,9 @@ const Header = () => {
                     
                     {/* Products Dropdown Menu */}
                     {isProductsOpen && (
-                      <div className="absolute top-full left-0 pt-2 z-50">
+                      <div className="absolute top-full left-[-90px] pt-2 z-50">
                         {/* Upward pointing caret */}
-                        <div className="absolute top-1 left-6 w-3 h-3 bg-white border-l border-t border-gray-100 transform rotate-45"></div>
+                        <div className="absolute top-1 left-[166px] w-3 h-3 bg-white border-l border-t border-gray-100 transform rotate-45"></div>
                         <div className="w-[450px] bg-white rounded-lg shadow-xl border border-gray-100 py-4 px-2">
                         {/* AI Front Desk */}
                         <Link 
