@@ -135,10 +135,6 @@ const Header = () => {
                       {isSystemAdmin && (
                         <Link to="/practices" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Practices</Link>
                       )}
-                      {isVetStaff && (
-                        <Link to="/practice/team" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Team</Link>
-                      )}
-                      <Link to="/pet_owners" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pet Owners</Link>
                     </>
                   )}
                 </>
@@ -270,13 +266,6 @@ const Header = () => {
                             Team
                           </Link>
                         )}
-                        <Link 
-                          to="/pet_owners" 
-                          className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Pet Owners
-                        </Link>
                         <Link 
                           to="/rag/search" 
                           className="text-gray-600 hover:text-gray-900 font-medium transition-colors"

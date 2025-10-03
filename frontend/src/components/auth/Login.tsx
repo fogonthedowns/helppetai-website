@@ -66,7 +66,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       }
       
       // Redirect to intended page or default
-      const from = (location.state as any)?.from?.pathname || '/pet_owners';
+      const from = (location.state as any)?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
       
       if (onLoginSuccess) {

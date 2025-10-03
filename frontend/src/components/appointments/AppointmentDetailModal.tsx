@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Edit, Calendar, Clock, User, FileText, PawPrint, AlertCircle } from 'lucide-react';
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../../config/api';
 import { Appointment, AppointmentType, AppointmentStatus } from '../../types/appointment';
 
 interface AppointmentDetailModalProps {
@@ -33,7 +33,7 @@ const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
     setError(null);
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       // Fetch appointment details
       const appointmentResponse = await fetch(`${baseURL}/api/v1/appointments/${appointmentId}`, {

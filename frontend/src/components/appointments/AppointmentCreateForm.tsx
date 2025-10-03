@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../../config/api';
 import { AppointmentCreate, AppointmentType } from '../../types/appointment';
 
 interface Practice {
@@ -74,7 +74,7 @@ const AppointmentCreateForm: React.FC<AppointmentCreateFormProps> = ({ onClose, 
   const loadInitialData = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       const [practicesRes, petOwnersRes] = await Promise.all([
         fetch(API_ENDPOINTS.PRACTICES.LIST),

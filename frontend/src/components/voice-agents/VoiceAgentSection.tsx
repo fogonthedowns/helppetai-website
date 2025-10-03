@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bot, Phone, CheckCircle, AlertCircle, Loader, Edit } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 
 interface VoiceAgent {
   id: string;
@@ -39,7 +40,7 @@ const VoiceAgentSection: React.FC = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       const response = await fetch(`${baseURL}/api/v1/practices/${user.practice_id}/voice-agent`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -73,7 +74,7 @@ const VoiceAgentSection: React.FC = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       const response = await fetch(`${baseURL}/api/v1/practices/${user.practice_id}/voice-agent`, {
         method: 'POST',
@@ -117,7 +118,7 @@ const VoiceAgentSection: React.FC = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
       
       // URL encode the node name
       const nodeName = encodeURIComponent('Welcome Node');
@@ -153,7 +154,7 @@ const VoiceAgentSection: React.FC = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
       
       // URL encode the node name
       const nodeName = encodeURIComponent('Welcome Node');

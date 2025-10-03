@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, Routes, Route, useLocation } from 'react-router-dom';
 import { Phone, Users, Clock, Calendar, Plus, Search, Home, Settings, HelpCircle, UserCircle, LogOut, CalendarCheck, Bot, UserPlus, Trash2, Mail, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
 import PetOwnerDetailModal from '../components/pet-owners/PetOwnerDetailModal';
 import PetOwnerCreateModal from '../components/pet-owners/PetOwnerCreateModal';
 import PetDetailModal from '../components/pets/PetDetailModal';
@@ -12,6 +13,7 @@ import AppointmentForm from '../components/appointments/AppointmentForm';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import VoiceAgentSection from '../components/voice-agents/VoiceAgentSection';
 import PhoneConfigSection from '../components/voice-agents/PhoneConfigSection';
+import CallHistorySection from '../components/calls/CallHistorySection';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -144,7 +146,7 @@ const Dashboard: React.FC = () => {
     
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       switch (activeSection) {
         case 'agents':
@@ -283,7 +285,7 @@ const Dashboard: React.FC = () => {
     
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
       
       const response = await fetch(`${baseURL}/api/v1/practices/${user?.practice_id}/invites`, {
         method: 'POST',
@@ -319,7 +321,7 @@ const Dashboard: React.FC = () => {
     
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
       
       const response = await fetch(`${baseURL}/api/v1/practices/${user?.practice_id}/invites/${revokeInviteId}`, {
         method: 'DELETE',
@@ -349,7 +351,7 @@ const Dashboard: React.FC = () => {
     
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
       
       const response = await fetch(`${baseURL}/api/v1/practices/${user?.practice_id}/members/${removeMemberId}`, {
         method: 'DELETE',
@@ -536,7 +538,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto bg-gray-50">
+        <div className="flex-1 overflow-auto bg-white">
           {loading && (
             <div className="flex items-center justify-center h-64">
               <div className="text-gray-500">Loading...</div>
@@ -561,7 +563,7 @@ const Dashboard: React.FC = () => {
 
           {/* Appointments Table */}
           {activeSection === 'appointments' && !loading && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white border-t border-gray-200 overflow-hidden">
               {appointments.length > 0 ? (
                 <table className="min-w-full">
                   <thead className="bg-gray-50">
@@ -614,59 +616,14 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          {/* Call History Table */}
-          {activeSection === 'calls' && !loading && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              {calls.length > 0 ? (
-                <table className="min-w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Call ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Summary</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sentiment</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {calls.map((call, index) => (
-                      <tr key={call.call_id || index} className="hover:bg-gray-50 cursor-pointer transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-mono text-gray-900">{call.call_id?.substring(0, 8) || '-'}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatDate(call.start_timestamp)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatDuration(call.start_timestamp, call.end_timestamp)}
-                        </td>
-                        <td className="px-6 py-4 max-w-xs truncate text-sm text-gray-600">
-                          {call.call_analysis?.call_summary || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            call.call_analysis?.user_sentiment === 'positive' ? 'bg-green-100 text-green-800' :
-                            call.call_analysis?.user_sentiment === 'negative' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {call.call_analysis?.user_sentiment || 'neutral'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="p-8 text-center text-gray-500">
-                  No calls yet
-                </div>
-              )}
-            </div>
+          {/* Call History */}
+          {activeSection === 'calls' && (
+            <CallHistorySection />
           )}
 
           {/* Work Schedule Table */}
           {activeSection === 'schedule' && !loading && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white border-t border-gray-200 overflow-hidden">
               {schedule.length > 0 ? (
                 <table className="min-w-full">
                   <thead className="bg-gray-50">
@@ -709,7 +666,7 @@ const Dashboard: React.FC = () => {
 
           {/* Pet Owners Table */}
           {activeSection === 'owners' && !loading && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+            <div className="bg-white border-t border-gray-200 overflow-x-auto">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
               ) : owners.length > 0 ? (
@@ -758,7 +715,7 @@ const Dashboard: React.FC = () => {
 
           {/* Team Members Table */}
           {activeSection === 'team' && !loading && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white border-t border-gray-200 overflow-hidden">
               {(teamMembers.length > 0 || pendingInvites.length > 0) ? (
                 <table className="min-w-full">
                   <thead className="bg-gray-50">

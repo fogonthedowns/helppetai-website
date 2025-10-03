@@ -91,7 +91,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onEditProfile
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+        <div className="absolute right-0 mt-2 w-80 bg-white rounded-l-lg shadow-lg border-l border-t border-b border-gray-200 py-2 z-50">
           {/* User Info Header */}
           <div className="px-4 py-3 border-b border-gray-100">
             <div className="flex items-center space-x-3">
@@ -167,16 +167,6 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onEditProfile
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h10M7 11h10M7 15h10" />
                   </svg>
                   Manage Practices
-                </Link>
-                <Link
-                  to="/pet_owners"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  <svg className="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                  </svg>
-                  Pet Owners
                 </Link>
               </>
             )}

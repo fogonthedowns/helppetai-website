@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../../config/api';
 import { AppointmentUpdate, AppointmentType, AppointmentStatus, Appointment } from '../../types/appointment';
 
 interface PetOwner {
@@ -72,7 +72,7 @@ const AppointmentEditForm: React.FC<AppointmentEditFormProps> = ({ appointmentId
     setError(null);
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       const response = await fetch(`${baseURL}/api/v1/appointments/${appointmentId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -196,7 +196,7 @@ const AppointmentEditForm: React.FC<AppointmentEditFormProps> = ({ appointmentId
       };
 
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       const response = await fetch(`${baseURL}/api/v1/appointments/${appointmentId}`, {
         method: 'PUT',

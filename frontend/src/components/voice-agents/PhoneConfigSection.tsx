@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Phone, Loader, CheckCircle, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 
 interface PhoneConfig {
   phone_number: string;
@@ -74,7 +75,7 @@ const PhoneConfigSection: React.FC = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
 
       // First get the agent to get the agent_id
       const agentResponse = await fetch(`${baseURL}/api/v1/practices/${user.practice_id}/voice-agent`, {
@@ -119,7 +120,7 @@ const PhoneConfigSection: React.FC = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const baseURL = 'http://127.0.0.1:8000';
+      const baseURL = API_BASE_URL;
       
       const requestBody: any = {
         toll_free: isTollFree
