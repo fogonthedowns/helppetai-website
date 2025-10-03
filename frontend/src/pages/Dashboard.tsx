@@ -14,6 +14,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import VoiceAgentSection from '../components/voice-agents/VoiceAgentSection';
 import PhoneConfigSection from '../components/voice-agents/PhoneConfigSection';
 import CallHistorySection from '../components/calls/CallHistorySection';
+import AppointmentCalendar from '../components/appointments/AppointmentCalendar';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -67,6 +68,10 @@ const Dashboard: React.FC = () => {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [revokeInviteId, setRevokeInviteId] = useState<string | null>(null);
   const [removeMemberId, setRemoveMemberId] = useState<string | null>(null);
+
+  // Calendar state
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState<any>('week');
 
   const navigationItems = [
     { key: 'agents' as const, label: 'Agents', icon: <Bot className="w-4 h-4" />, section: 'BUILD', path: '/dashboard/agents' },
@@ -561,59 +566,25 @@ const Dashboard: React.FC = () => {
             <PhoneConfigSection />
           )}
 
-          {/* Appointments Table */}
+          {/* Appointments Calendar */}
           {activeSection === 'appointments' && !loading && (
-            <div className="bg-white border-t border-gray-200 overflow-hidden">
-              {appointments.length > 0 ? (
-                <table className="min-w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pet</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {appointments.map((appt: any) => {
-                      const appointmentDate = appt.appointment_date || appt.start_time;
-                      const petNames = appt.pets?.map((p: any) => p.name).join(', ') || appt.pet_name || '-';
-                      
-                      return (
-                        <tr 
-                          key={appt.id || appt.uuid} 
-                          onClick={() => navigate(`/dashboard/appointments/${appt.id}`)}
-                          className="hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {appointmentDate ? formatDate(appointmentDate) : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {petNames}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {appt.appointment_type || 'General'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              appt.status === 'confirmed' || appt.status === 'scheduled' ? 'bg-green-100 text-green-800' :
-                              appt.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {appt.status || 'pending'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="p-8 text-center text-gray-500">
-                  No appointments yet
-                </div>
-              )}
-            </div>
+            <AppointmentCalendar
+              appointments={appointments}
+              currentDate={calendarDate}
+              onNavigate={setCalendarDate}
+              currentView={calendarView}
+              onViewChange={setCalendarView}
+              onSelectAppointment={(appointmentId) => {
+                setSelectedAppointmentId(appointmentId);
+                setIsAppointmentModalOpen(true);
+                navigate(`/dashboard/appointments/${appointmentId}`);
+              }}
+              onSelectSlot={(slotInfo) => {
+                // Open create appointment modal with pre-filled date/time
+                setIsCreateAppointmentOpen(true);
+                navigate('/dashboard/appointments/new');
+              }}
+            />
           )}
 
           {/* Call History */}
