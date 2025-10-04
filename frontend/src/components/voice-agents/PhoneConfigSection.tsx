@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Phone, Loader, CheckCircle, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config/api';
+import AddPaymentMethodModal from '../billing/AddPaymentMethodModal';
 
 interface PhoneConfig {
   phone_number: string;
@@ -60,12 +61,51 @@ const PhoneConfigSection: React.FC = () => {
   const [selectedAreaCode, setSelectedAreaCode] = useState('');
   const [nickname, setNickname] = useState('');
   const [isConfiguring, setIsConfiguring] = useState(false);
+  
+  // Paywall state
+  const [showPaywallModal, setShowPaywallModal] = useState(false);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [hasPaymentMethod, setHasPaymentMethod] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (user?.practice_id) {
       loadPhoneConfig();
+      checkPaymentMethod();
     }
   }, [user?.practice_id]);
+  
+  const checkPaymentMethod = async () => {
+    if (!user?.practice_id) return;
+    
+    try {
+      const token = localStorage.getItem('access_token');
+      const baseURL = API_BASE_URL;
+      
+      const response = await fetch(`${baseURL}/api/v1/stripe/customers/${user.practice_id}/has-payment-method`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setHasPaymentMethod(data.has_payment_method);
+      } else {
+        // If endpoint fails, assume no payment method
+        setHasPaymentMethod(false);
+      }
+    } catch (err) {
+      console.error('Error checking payment method:', err);
+      setHasPaymentMethod(false);
+    }
+  };
+  
+  const handleConfigureClick = () => {
+    // Check if payment method exists before showing config modal
+    if (hasPaymentMethod === false) {
+      setShowPaywallModal(true);
+    } else {
+      setShowConfigModal(true);
+    }
+  };
 
   const loadPhoneConfig = async () => {
     if (!user?.practice_id) return;
@@ -217,7 +257,7 @@ const PhoneConfigSection: React.FC = () => {
             Set up a phone number for your voice agent to handle incoming calls.
           </p>
           <button
-            onClick={() => setShowConfigModal(true)}
+            onClick={handleConfigureClick}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
           >
             <Phone className="w-4 h-4 mr-2" />
@@ -349,6 +389,70 @@ const PhoneConfigSection: React.FC = () => {
             </div>
           </div>
         )}
+        
+        {/* Paywall Modal - Simple Linear Style */}
+        {showPaywallModal && (
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8 border border-gray-200">
+              <button
+                onClick={() => setShowPaywallModal(false)}
+                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Register a phone number
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Add a payment method to activate your phone number and start receiving calls.
+                </p>
+              </div>
+
+              {/* Welcome Credit */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-green-900">
+                      $10 in free credits to get started
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowPaywallModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPaywallModal(false);
+                    setShowBillingModal(true);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                >
+                  Add payment method
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Billing Modal */}
+        <AddPaymentMethodModal
+          isOpen={showBillingModal}
+          onClose={() => setShowBillingModal(false)}
+          onSuccess={() => {
+            setShowBillingModal(false);
+            checkPaymentMethod(); // Refresh payment method status
+            setShowConfigModal(true); // Open phone config modal
+          }}
+        />
       </>
     );
   }

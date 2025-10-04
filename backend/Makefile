@@ -269,6 +269,16 @@ JWT_SECRET ?= $(shell echo "$$JWT_SECRET_KEY")
 # Retell AI API Key - retrieved from .env.production file (required for deployment)
 RETELL_API_KEY := $(shell grep '^RETELL_API_KEY=' .env.production 2>/dev/null | cut -d'=' -f2- | tr -d '"')
 
+# Stripe API Keys - Dev (from .env)
+STRIPE_PUBLISHABLE_KEY_DEV := $(shell grep '^STRIPE_PUBLISHABLE_KEY=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '"')
+STRIPE_API_KEY_DEV := $(shell grep '^STRIPE_API_KEY=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '"')
+STRIPE_WEBHOOK_SECRET_DEV := $(shell grep '^STRIPE_WEBHOOK_SECRET=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '"')
+
+# Stripe API Keys - Production (from .env.production, required for deployment)
+STRIPE_PUBLISHABLE_KEY := $(shell grep '^STRIPE_PUBLISHABLE_KEY=' .env.production 2>/dev/null | cut -d'=' -f2- | tr -d '"')
+STRIPE_API_KEY := $(shell grep '^STRIPE_API_KEY=' .env.production 2>/dev/null | cut -d'=' -f2- | tr -d '"')
+STRIPE_WEBHOOK_SECRET := $(shell grep '^STRIPE_WEBHOOK_SECRET=' .env.production 2>/dev/null | cut -d'=' -f2- | tr -d '"')
+
 # Push image to ECR
 .PHONY: push-image
 push-image:
@@ -288,6 +298,19 @@ update-service: build-prod push-image
 		exit 1; \
 	fi
 	@echo "✅ RETELL_API_KEY is set"
+	@if [ -z "$(STRIPE_PUBLISHABLE_KEY)" ]; then \
+		echo "❌ ERROR: STRIPE_PUBLISHABLE_KEY not found in .env.production!"; \
+		exit 1; \
+	fi
+	@if [ -z "$(STRIPE_API_KEY)" ]; then \
+		echo "❌ ERROR: STRIPE_API_KEY not found in .env.production!"; \
+		exit 1; \
+	fi
+	@if [ -z "$(STRIPE_WEBHOOK_SECRET)" ]; then \
+		echo "❌ ERROR: STRIPE_WEBHOOK_SECRET not found in .env.production!"; \
+		exit 1; \
+	fi
+	@echo "✅ Stripe keys are set"
 	@echo "▶ Cluster:       $(CLUSTER_NAME)"
 	@echo "▶ Service:       $(SERVICE_NAME)" 
 	@echo "▶ RDS Host:      $(RDS_HOSTNAME)"
@@ -303,7 +326,7 @@ update-service: build-prod push-image
 	    --execution-role-arn "$(EXEC_ROLE_ARN)" \
 	    --task-role-arn "$(TASK_ROLE_ARN)" \
 	    --cpu $(TASK_CPU) --memory $(TASK_MEMORY) \
-		--container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"},{"name":"RETELL_API_KEY","value":"$(RETELL_API_KEY)"},{"name":"APNS_KEY_PATH","value":"/app/keys/AuthKey_M8A86NFUK4.p8"},{"name":"APNS_KEY_ID","value":"M8A86NFUK4"},{"name":"APNS_TEAM_ID","value":"6QH7LZMFLB"},{"name":"APNS_BUNDLE_ID","value":"ai.helppet.HelpPetAI"},{"name":"APNS_USE_SANDBOX","value":"false"},{"name":"FROM_EMAIL","value":"hi@helppet.ai"},{"name":"FRONTEND_URL","value":"https://helppet.ai"}],"secrets":[{"name":"RDS_PASSWORD","valueFrom":"$(SECRETS_ARN)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
+		--container-definitions '[{"name":"helppet-api","image":"$(CONTAINER_IMAGE)","essential":true,"portMappings":[{"containerPort":$(CONTAINER_PORT)}],"environment":[{"name":"ENVIRONMENT","value":"production"},{"name":"DEBUG","value":"false"},{"name":"LOG_LEVEL","value":"INFO"},{"name":"APP_NAME","value":"HelpPetAI API"},{"name":"RDS_HOSTNAME","value":"$(RDS_HOSTNAME)"},{"name":"RDS_PORT","value":"$(RDS_PORT)"},{"name":"RDS_DB_NAME","value":"postgres"},{"name":"RDS_USERNAME","value":"helppetadmin"},{"name":"RDS_SSL_MODE","value":"require"},{"name":"CORS_ORIGINS","value":"https://helppet.ai,https://www.helppet.ai"},{"name":"AWS_REGION","value":"us-west-1"},{"name":"S3_BUCKET_NAME","value":"helppetai-visit-recordings"},{"name":"S3_REGION","value":"us-west-1"},{"name":"RETELL_API_KEY","value":"$(RETELL_API_KEY)"},{"name":"STRIPE_PUBLISHABLE_KEY","value":"$(STRIPE_PUBLISHABLE_KEY)"},{"name":"STRIPE_API_KEY","value":"$(STRIPE_API_KEY)"},{"name":"STRIPE_WEBHOOK_SECRET","value":"$(STRIPE_WEBHOOK_SECRET)"},{"name":"APNS_KEY_PATH","value":"/app/keys/AuthKey_M8A86NFUK4.p8"},{"name":"APNS_KEY_ID","value":"M8A86NFUK4"},{"name":"APNS_TEAM_ID","value":"6QH7LZMFLB"},{"name":"APNS_BUNDLE_ID","value":"ai.helppet.HelpPetAI"},{"name":"APNS_USE_SANDBOX","value":"false"},{"name":"FROM_EMAIL","value":"hi@helppet.ai"},{"name":"FRONTEND_URL","value":"https://helppet.ai"}],"secrets":[{"name":"RDS_PASSWORD","valueFrom":"$(SECRETS_ARN)"}],"logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/prod/helppet-api","awslogs-region":"$(REGION)","awslogs-stream-prefix":"helppet-api"}}}]' \
 	    --query 'taskDefinition.taskDefinitionArn' \
 	    --output text))
 	@echo "✅ New task-definition: $(TASK_DEF_ARN)"

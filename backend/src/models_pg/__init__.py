@@ -15,6 +15,7 @@ from .contact_form import ContactForm
 from .voice_config import VoiceConfig
 from .call_record import CallRecord
 from .device_token import DeviceToken
+from .stripe_customer import StripeCustomer
 from .scheduling import (
     PracticeHours,
     VetAvailability,
@@ -43,6 +44,7 @@ __all__ = [
     "VoiceConfig",
     "CallRecord",
     "DeviceToken",
+    "StripeCustomer",
     "PracticeHours",
     "VetAvailability",
     "VetAvailabilityUnix",

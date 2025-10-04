@@ -43,6 +43,7 @@ import PracticeTeam from './pages/PracticeTeam';
 import PendingInvitations from './pages/PendingInvitations';
 import PracticeSelection from './pages/PracticeSelection';
 import CreatePractice from './pages/CreatePractice';
+import BillingSettings from './pages/BillingSettings';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';

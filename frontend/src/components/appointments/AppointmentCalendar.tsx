@@ -178,7 +178,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
         step={15}
         timeslots={4}
         defaultView="week"
-        views={['month', 'week', 'day', 'agenda']}
+        views={['month', 'week', 'day']}
         toolbar={true}
       />
       

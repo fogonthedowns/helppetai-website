@@ -103,6 +103,11 @@ class Settings(BaseSettings):
     # JWT Authentication Configuration
     jwt_secret_key: str = Field(default="your-super-secret-jwt-key-change-in-production", env="JWT_SECRET_KEY")
     
+    # Stripe Payment Configuration
+    stripe_api_key: Optional[str] = Field(default=None, env="STRIPE_API_KEY")
+    stripe_publishable_key: Optional[str] = Field(default=None, env="STRIPE_PUBLISHABLE_KEY")
+    stripe_webhook_secret: Optional[str] = Field(default=None, env="STRIPE_WEBHOOK_SECRET")
+    
     # Logging Configuration
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     
