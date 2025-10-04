@@ -43,15 +43,15 @@ import PracticeTeam from './pages/PracticeTeam';
 import PendingInvitations from './pages/PendingInvitations';
 import PracticeSelection from './pages/PracticeSelection';
 import CreatePractice from './pages/CreatePractice';
-import BillingSettings from './pages/BillingSettings';
+import Settings from './pages/Settings';
 
 // Import auth utilities to set up fetch interceptor
 import './utils/authUtils';
 
 const ConditionalHeader = () => {
   const location = useLocation();
-  // Don't show header on dashboard routes
-  if (location.pathname.startsWith('/dashboard')) {
+  // Don't show header on dashboard or settings routes
+  if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/settings')) {
     return null;
   }
   return <Header />;
@@ -98,6 +98,13 @@ const App = () => {
             } />
             <Route path="/pet-owner-signup" element={<Signup />} />
             <Route path="/vet-signup" element={<VetSignup />} />
+            
+            {/* Settings Routes - NOT accessible to PENDING_INVITE */}
+            <Route path="/settings/*" element={
+              <RoleBasedRoute allowedRoles={['VET_STAFF', 'PRACTICE_ADMIN', 'SYSTEM_ADMIN']}>
+                <Settings />
+              </RoleBasedRoute>
+            } />
             
             {/* Dashboard Routes - NOT accessible to PENDING_INVITE */}
             <Route path="/dashboard/*" element={

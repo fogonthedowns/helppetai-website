@@ -16,7 +16,6 @@ import PhoneConfigSection from '../components/voice-agents/PhoneConfigSection';
 import CallHistorySection from '../components/calls/CallHistorySection';
 import AppointmentCalendar from '../components/appointments/AppointmentCalendar';
 import AppointmentKanbanView from '../components/appointments/AppointmentKanbanView';
-import AddPaymentMethodPanel from '../components/billing/AddPaymentMethodPanel';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -28,7 +27,7 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Determine active section from URL
-  const getActiveSectionFromPath = (): 'agents' | 'phones' | 'calls' | 'schedule' | 'owners' | 'team' | 'appointments' | 'billing' => {
+  const getActiveSectionFromPath = (): 'agents' | 'phones' | 'calls' | 'schedule' | 'owners' | 'team' | 'appointments' => {
     const path = location.pathname;
     if (path.includes('/pet_owners')) return 'owners';
     if (path.includes('/appointments')) return 'appointments';
@@ -36,7 +35,6 @@ const Dashboard: React.FC = () => {
     if (path.includes('/schedule')) return 'schedule';
     if (path.includes('/phones')) return 'phones';
     if (path.includes('/team')) return 'team';
-    if (path.includes('/billing')) return 'billing';
     if (path.includes('/agents')) return 'agents';
     return 'appointments'; // default
   };
@@ -51,8 +49,6 @@ const Dashboard: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [customerInfo, setCustomerInfo] = useState<any>(null);
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   
   // Modal state
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
@@ -71,10 +67,6 @@ const Dashboard: React.FC = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
   
-  // Billing state
-  const [showAddCardPanel, setShowAddCardPanel] = useState(false);
-  const [deletingCardId, setDeletingCardId] = useState<string | null>(null);
-  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [revokeInviteId, setRevokeInviteId] = useState<string | null>(null);
@@ -298,18 +290,6 @@ const Dashboard: React.FC = () => {
             setPendingInvites(pendingOnly);
           }
           break;
-        
-        case 'billing':
-          // GET /api/v1/stripe/customers/{practice_id}
-          const customerRes = await fetch(`${baseURL}/api/v1/stripe/customers/${user.practice_id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (customerRes.ok) {
-            const data = await customerRes.json();
-            setCustomerInfo(data.customer);
-            setPaymentMethods(data.customer?.payment_methods || []);
-          }
-          break;
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -328,7 +308,6 @@ const Dashboard: React.FC = () => {
       case 'schedule': return { label: 'Edit Schedule', action: () => console.log('Edit schedule') };
       case 'owners': return { label: 'Add Owner', action: () => navigate('/dashboard/pet_owners/new') };
       case 'team': return { label: 'Invite Member', action: () => setShowInviteModal(true) };
-      case 'billing': return { label: 'Add Card', action: () => setShowAddCardPanel(true) };
       default: return { label: 'Create', action: () => {} };
     }
   };
@@ -479,8 +458,12 @@ const Dashboard: React.FC = () => {
         {/* Logo/Workspace */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">HP</span>
+            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-gray-200">
+              <img 
+                src="/logo_clear_back.png" 
+                alt="HelpPetAI" 
+                className="w-full h-full object-contain p-1"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-gray-900">HelpPetAI</div>
@@ -576,7 +559,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <Link to="/dashboard/billing" className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+          <Link to="/settings/billing" className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100 transition-colors">
             <Settings className="w-4 h-4" />
             <span>Settings</span>
           </Link>
@@ -594,7 +577,7 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">
-                {activeSection === 'billing' ? 'Settings' : (navigationItems.find(item => item.key === activeSection)?.label || 'Dashboard')}
+                {navigationItems.find(item => item.key === activeSection)?.label || 'Dashboard'}
               </h1>
             </div>
             <div className="flex items-center gap-3">
@@ -942,121 +925,8 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          {/* Billing Table */}
-          {activeSection === 'billing' && !loading && (
-            <div className="bg-white border-t border-gray-200 overflow-hidden">
-              {customerInfo ? (
-                <>
-                  {/* Payment Methods Table */}
-                  {paymentMethods.length > 0 ? (
-                    <table className="min-w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Card</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {paymentMethods.map((card: any) => (
-                          <tr key={card.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-3">
-                                <div className="text-sm font-medium text-gray-900 capitalize">{card.brand}</div>
-                                <div className="text-sm text-gray-600">•••• {card.last4}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {card.exp_month}/{card.exp_year}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {card.is_default && (
-                                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                                  Default
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
-                              {!card.is_default && (
-                                <button
-                                  onClick={async () => {
-                                    setSettingDefaultId(card.id);
-                                    try {
-                                      const token = localStorage.getItem('access_token');
-                                      await fetch(`${API_BASE_URL}/api/v1/stripe/customers/${user?.practice_id}/payment-methods/${card.id}/set-default`, {
-                                        method: 'PUT',
-                                        headers: { 'Authorization': `Bearer ${token}` }
-                                      });
-                                      fetchData();
-                                    } finally {
-                                      setSettingDefaultId(null);
-                                    }
-                                  }}
-                                  disabled={settingDefaultId === card.id}
-                                  className="text-blue-600 hover:text-blue-900 font-medium disabled:opacity-50"
-                                >
-                                  Set Default
-                                </button>
-                              )}
-                              <button
-                                onClick={async () => {
-                                  if (!window.confirm('Remove this card?')) return;
-                                  setDeletingCardId(card.id);
-                                  try {
-                                    const token = localStorage.getItem('access_token');
-                                    await fetch(`${API_BASE_URL}/api/v1/stripe/customers/${user?.practice_id}/payment-methods/${card.id}`, {
-                                      method: 'DELETE',
-                                      headers: { 'Authorization': `Bearer ${token}` }
-                                    });
-                                    fetchData();
-                                  } finally {
-                                    setDeletingCardId(null);
-                                  }
-                                }}
-                                disabled={deletingCardId === card.id}
-                                className="text-red-600 hover:text-red-900 font-medium disabled:opacity-50"
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className="text-center py-12">
-                      <p className="text-gray-600 mb-4">No payment methods added yet</p>
-                      <button
-                        onClick={() => setShowAddCardPanel(true)}
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add your first card
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-gray-600">No billing information available</p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
-
-        {/* Add Card Panel */}
-        <AddPaymentMethodPanel
-          isOpen={showAddCardPanel}
-          onClose={() => setShowAddCardPanel(false)}
-          onSuccess={() => {
-            setShowAddCardPanel(false);
-            fetchData(); // Refresh billing data
-          }}
-          hasExistingCards={paymentMethods.length > 0}
-        />
 
         {/* Pet Owner Detail Modal */}
         {selectedOwnerId && (
