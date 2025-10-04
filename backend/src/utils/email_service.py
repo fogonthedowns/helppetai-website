@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from typing import Optional, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 logger = logging.getLogger(__name__)
@@ -667,5 +667,209 @@ Best regards,
         
     except Exception as e:
         logger.error(f"Failed to send appointment confirmation email to {recipient_email}: {str(e)}")
+        return False
+
+
+def send_appointment_reschedule_email(
+    recipient_email: str,
+    recipient_name: str,
+    practice_name: str,
+    practice_address: str,
+    practice_phone: str,
+    old_appointment_date: datetime,
+    new_appointment_date: datetime,
+    appointment_duration_minutes: int,
+    appointment_type: str,
+    appointment_title: str,
+    pets: list,
+    appointment_id: str,
+    practice_timezone: str = "America/Los_Angeles"
+) -> bool:
+    """
+    Send an appointment reschedule notification email with updated ICS calendar attachment
+    
+    Args:
+        recipient_email: Pet owner's email
+        recipient_name: Pet owner's name
+        practice_name: Name of the veterinary practice
+        practice_address: Practice address
+        practice_phone: Practice phone number
+        old_appointment_date: Previous appointment datetime (UTC)
+        new_appointment_date: New appointment datetime (UTC)
+        appointment_duration_minutes: Duration in minutes
+        appointment_type: Type of appointment
+        appointment_title: Appointment title
+        pets: List of pet dictionaries with 'name' and 'species'
+        appointment_id: Appointment UUID
+        practice_timezone: Practice timezone string
+        
+    Returns:
+        bool: True if email was sent successfully, False otherwise
+    """
+    try:
+        # Convert appointment times to practice timezone
+        tz = pytz.timezone(practice_timezone)
+        old_appointment_local = old_appointment_date.replace(tzinfo=pytz.UTC).astimezone(tz)
+        new_appointment_local = new_appointment_date.replace(tzinfo=pytz.UTC).astimezone(tz)
+        new_appointment_end = new_appointment_local + timedelta(minutes=appointment_duration_minutes)
+        
+        # Format dates for display
+        old_date_str = old_appointment_local.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+        new_date_str = new_appointment_local.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+        
+        # Build pets list string
+        if len(pets) == 1:
+            pets_str = f"{pets[0]['name']} ({pets[0]['species']})"
+        else:
+            pets_list = [f"{pet['name']} ({pet['species']})" for pet in pets]
+            pets_str = ", ".join(pets_list[:-1]) + f" and {pets_list[-1]}" if len(pets_list) > 1 else pets_list[0]
+        
+        subject = f"Appointment Rescheduled - {practice_name}"
+        
+        # Plain text email body
+        body_text = f"""Hi {recipient_name},
+
+Your appointment at {practice_name} has been rescheduled.
+
+ORIGINAL TIME:
+{old_date_str}
+
+NEW TIME:
+{new_date_str}
+
+APPOINTMENT DETAILS:
+Pet(s): {pets_str}
+Type: {appointment_type.replace('_', ' ').title()}
+Duration: {appointment_duration_minutes} minutes
+
+LOCATION:
+{practice_name}
+{practice_address}
+Phone: {practice_phone}
+
+The updated appointment has been added to the calendar attachment. Please import it to update your calendar.
+
+If you have any questions or need to make changes, please contact us at {practice_phone}.
+
+Thank you,
+{practice_name}
+
+---
+This is an automated message from HelpPetAI.
+"""
+
+        # HTML email body
+        body_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #3b82f6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; }}
+        .alert-box {{ background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }}
+        .details {{ background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .detail-row {{ padding: 10px 0; border-bottom: 1px solid #e5e7eb; }}
+        .detail-label {{ font-weight: bold; color: #6b7280; }}
+        .detail-value {{ color: #111827; margin-top: 5px; }}
+        .old-time {{ text-decoration: line-through; color: #9ca3af; }}
+        .new-time {{ color: #10b981; font-weight: bold; }}
+        .footer {{ text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }}
+        .button {{ background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0;">Appointment Rescheduled</h1>
+        </div>
+        <div class="content">
+            <p>Hi {recipient_name},</p>
+            
+            <div class="alert-box">
+                <strong>⚠️ Your appointment time has changed</strong>
+            </div>
+            
+            <div class="details">
+                <div class="detail-row">
+                    <div class="detail-label">Original Time:</div>
+                    <div class="detail-value old-time">{old_date_str}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">New Time:</div>
+                    <div class="detail-value new-time">✓ {new_date_str}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Pet(s):</div>
+                    <div class="detail-value">{pets_str}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Appointment Type:</div>
+                    <div class="detail-value">{appointment_type.replace('_', ' ').title()}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Duration:</div>
+                    <div class="detail-value">{appointment_duration_minutes} minutes</div>
+                </div>
+            </div>
+            
+            <div class="details">
+                <div class="detail-label">Location:</div>
+                <div class="detail-value">
+                    <strong>{practice_name}</strong><br>
+                    {practice_address}<br>
+                    Phone: {practice_phone}
+                </div>
+            </div>
+            
+            <p>The updated appointment has been attached as a calendar file (.ics). Click or open the attachment to update your calendar.</p>
+            
+            <p>If you have any questions or need to make changes, please contact us at {practice_phone}.</p>
+            
+            <p>Thank you,<br>
+            <strong>{practice_name}</strong></p>
+        </div>
+        <div class="footer">
+            This is an automated message from HelpPetAI.<br>
+            Appointment ID: {appointment_id}
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+        # Generate ICS file with SEQUENCE:1 to indicate an update
+        ics_uid = f"appointment-{appointment_id}@helppet.ai"
+        pets_str_ics = ", ".join([pet['name'] for pet in pets])
+        ics_description = f"Rescheduled appointment at {practice_name}\\nType: {appointment_type}\\nPet(s): {pets_str_ics}"
+        ics_content = generate_ics_file(
+            summary=f"{appointment_title} - {practice_name}",
+            description=ics_description,
+            location=practice_address,
+            start_time=new_appointment_local,
+            end_time=new_appointment_end,
+            organizer_email=FROM_EMAIL,
+            attendee_email=recipient_email,
+            uid=ics_uid
+        )
+        
+        # Update SEQUENCE to 1 to indicate this is an update
+        ics_content = ics_content.replace('SEQUENCE:0', 'SEQUENCE:1')
+        
+        # Send email with updated ICS attachment
+        return send_email_with_attachment(
+            recipient_email=recipient_email,
+            subject=subject,
+            body_text=body_text,
+            body_html=body_html,
+            attachment_data=ics_content.encode('utf-8'),
+            attachment_filename='appointment_updated.ics',
+            attachment_mimetype='text/calendar',
+            email_type='appointment_reschedule'
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to send appointment reschedule email to {recipient_email}: {str(e)}")
         return False
 

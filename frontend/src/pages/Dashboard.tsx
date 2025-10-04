@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, Routes, Route, useLocation } from 'react-router-dom';
+import { Link, useNavigate, Routes, Route, useLocation, useSearchParams } from 'react-router-dom';
 import { Phone, Users, Clock, Calendar, Plus, Search, Home, Settings, HelpCircle, UserCircle, LogOut, CalendarCheck, Bot, UserPlus, Trash2, Mail, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
@@ -15,11 +15,13 @@ import VoiceAgentSection from '../components/voice-agents/VoiceAgentSection';
 import PhoneConfigSection from '../components/voice-agents/PhoneConfigSection';
 import CallHistorySection from '../components/calls/CallHistorySection';
 import AppointmentCalendar from '../components/appointments/AppointmentCalendar';
+import AppointmentKanbanView from '../components/appointments/AppointmentKanbanView';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ const Dashboard: React.FC = () => {
     if (path.includes('/phones')) return 'phones';
     if (path.includes('/team')) return 'team';
     if (path.includes('/agents')) return 'agents';
-    return 'agents'; // default
+    return 'appointments'; // default
   };
 
   const activeSection = getActiveSectionFromPath();
@@ -69,9 +71,63 @@ const Dashboard: React.FC = () => {
   const [revokeInviteId, setRevokeInviteId] = useState<string | null>(null);
   const [removeMemberId, setRemoveMemberId] = useState<string | null>(null);
 
-  // Calendar state
-  const [calendarDate, setCalendarDate] = useState(new Date());
-  const [calendarView, setCalendarView] = useState<any>('week');
+  // Calendar state - initialize from URL params
+  const getInitialCalendarDate = () => {
+    const dateParam = searchParams.get('date');
+    if (dateParam) {
+      const parsed = new Date(dateParam);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return new Date();
+  };
+
+  const getInitialCalendarView = () => {
+    const viewParam = searchParams.get('view');
+    if (viewParam && ['month', 'week', 'day', 'agenda'].includes(viewParam)) {
+      return viewParam;
+    }
+    return 'week';
+  };
+
+  const getInitialViewMode = () => {
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'kanban') {
+      return 'kanban';
+    }
+    return 'calendar';
+  };
+
+  const [calendarDate, setCalendarDate] = useState(getInitialCalendarDate());
+  const [calendarView, setCalendarView] = useState<any>(getInitialCalendarView());
+  const [appointmentViewMode, setAppointmentViewMode] = useState<'calendar' | 'kanban'>(getInitialViewMode());
+
+  // Update URL when calendar state changes
+  const updateCalendarUrl = (date: Date, view: string, mode: 'calendar' | 'kanban') => {
+    if (activeSection === 'appointments') {
+      const params = new URLSearchParams(searchParams);
+      params.set('date', date.toISOString().split('T')[0]); // YYYY-MM-DD format
+      params.set('view', view);
+      params.set('mode', mode);
+      setSearchParams(params, { replace: true });
+    }
+  };
+
+  const handleCalendarDateChange = (newDate: Date) => {
+    setCalendarDate(newDate);
+    updateCalendarUrl(newDate, calendarView, appointmentViewMode);
+  };
+
+  const handleCalendarViewChange = (newView: any) => {
+    setCalendarView(newView);
+    updateCalendarUrl(calendarDate, newView, appointmentViewMode);
+  };
+
+  const handleViewModeChange = (newMode: 'calendar' | 'kanban') => {
+    setAppointmentViewMode(newMode);
+    updateCalendarUrl(calendarDate, calendarView, newMode);
+  };
 
   const navigationItems = [
     { key: 'agents' as const, label: 'Agents', icon: <Bot className="w-4 h-4" />, section: 'BUILD', path: '/dashboard/agents' },
@@ -86,7 +142,7 @@ const Dashboard: React.FC = () => {
   // Redirect to default tab if on base /dashboard
   useEffect(() => {
     if (location.pathname === '/dashboard' || location.pathname === '/dashboard/') {
-      navigate('/dashboard/agents', { replace: true });
+      navigate('/dashboard/appointments', { replace: true });
     }
   }, [location.pathname, navigate]);
 
@@ -566,14 +622,42 @@ const Dashboard: React.FC = () => {
             <PhoneConfigSection />
           )}
 
-          {/* Appointments Calendar */}
+          {/* Appointments View Toggle */}
           {activeSection === 'appointments' && !loading && (
+            <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleViewModeChange('calendar')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    appointmentViewMode === 'calendar'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Calendar
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('kanban')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    appointmentViewMode === 'kanban'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Schedule
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Appointments Calendar */}
+          {activeSection === 'appointments' && !loading && appointmentViewMode === 'calendar' && (
             <AppointmentCalendar
               appointments={appointments}
               currentDate={calendarDate}
-              onNavigate={setCalendarDate}
+              onNavigate={handleCalendarDateChange}
               currentView={calendarView}
-              onViewChange={setCalendarView}
+              onViewChange={handleCalendarViewChange}
               onSelectAppointment={(appointmentId) => {
                 setSelectedAppointmentId(appointmentId);
                 setIsAppointmentModalOpen(true);
@@ -583,6 +667,60 @@ const Dashboard: React.FC = () => {
                 // Open create appointment modal with pre-filled date/time
                 setIsCreateAppointmentOpen(true);
                 navigate('/dashboard/appointments/new');
+              }}
+              onRescheduleAppointment={async (appointmentId, start, end) => {
+                try {
+                  const token = localStorage.getItem('token');
+                  if (!token) return;
+
+                  // Calculate duration in minutes
+                  const durationMinutes = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+
+                  const response = await fetch(`${API_BASE_URL}/api/v1/appointments/${appointmentId}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      appointment_date: start.toISOString(),
+                      duration_minutes: durationMinutes,
+                    }),
+                  });
+
+                  if (response.ok) {
+                    const updatedAppointment = await response.json();
+                    
+                    // Update appointments list in place without full refetch
+                    setAppointments(prev => 
+                      prev.map(appt => 
+                        appt.id === appointmentId 
+                          ? { ...appt, appointment_date: start.toISOString(), duration_minutes: durationMinutes }
+                          : appt
+                      )
+                    );
+                  } else {
+                    console.error('Failed to reschedule appointment');
+                    alert('Failed to reschedule appointment. Please try again.');
+                  }
+                } catch (error) {
+                  console.error('Error rescheduling appointment:', error);
+                  alert('Error rescheduling appointment. Please try again.');
+                }
+              }}
+            />
+          )}
+
+          {/* Appointments Kanban/Schedule View */}
+          {activeSection === 'appointments' && !loading && appointmentViewMode === 'kanban' && (
+            <AppointmentKanbanView
+              appointments={appointments}
+              currentDate={calendarDate}
+              onNavigate={handleCalendarDateChange}
+              onSelectAppointment={(appointmentId) => {
+                setSelectedAppointmentId(appointmentId);
+                setIsAppointmentModalOpen(true);
+                navigate(`/dashboard/appointments/${appointmentId}`);
               }}
             />
           )}

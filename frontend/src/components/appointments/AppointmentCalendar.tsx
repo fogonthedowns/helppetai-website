@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
+import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
@@ -7,6 +8,7 @@ import getDay from 'date-fns/getDay';
 import enUS from 'date-fns/locale/en-US';
 import { parseISO } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 const locales = {
   'en-US': enUS,
@@ -20,10 +22,14 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+// Create drag-and-drop calendar
+const DnDCalendar = withDragAndDrop(Calendar);
+
 interface AppointmentCalendarProps {
   appointments: any[];
   onSelectAppointment: (appointmentId: string) => void;
   onSelectSlot?: (slotInfo: { start: Date; end: Date }) => void;
+  onRescheduleAppointment?: (appointmentId: string, start: Date, end: Date) => void;
   currentDate?: Date;
   onNavigate?: (date: Date) => void;
   currentView?: View;
@@ -34,6 +40,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
   appointments,
   onSelectAppointment,
   onSelectSlot,
+  onRescheduleAppointment,
   currentDate,
   onNavigate,
   currentView,
@@ -136,13 +143,25 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     }
   };
 
+  const handleEventDrop = ({ event, start, end }: any) => {
+    if (onRescheduleAppointment) {
+      onRescheduleAppointment(event.id, start, end);
+    }
+  };
+
+  const handleEventResize = ({ event, start, end }: any) => {
+    if (onRescheduleAppointment) {
+      onRescheduleAppointment(event.id, start, end);
+    }
+  };
+
   return (
     <div className="h-full bg-white">
-      <Calendar
+      <DnDCalendar
         localizer={localizer}
         events={events}
-        startAccessor="start"
-        endAccessor="end"
+        startAccessor={(event: any) => event.start}
+        endAccessor={(event: any) => event.end}
         style={{ height: 'calc(100vh - 200px)', minHeight: '600px' }}
         view={effectiveView}
         onView={handleViewChange}
@@ -150,7 +169,10 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
         onNavigate={handleNavigate}
         onSelectEvent={handleSelectEvent}
         onSelectSlot={handleSelectSlot}
+        onEventDrop={handleEventDrop}
+        onEventResize={handleEventResize}
         selectable
+        resizable
         eventPropGetter={eventStyleGetter}
         popup
         step={15}

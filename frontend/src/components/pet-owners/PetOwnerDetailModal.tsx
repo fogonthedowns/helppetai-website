@@ -73,12 +73,17 @@ const PetOwnerDetailModal: React.FC<PetOwnerDetailModalProps> = ({
 
       // Fetch pets for this owner
       try {
-        const endpoint = `${API_ENDPOINTS.PETS.LIST}?owner_id=${ownerId}`;
-        const petsResponse = await fetch(endpoint);
+        const token = localStorage.getItem('access_token');
+        const endpoint = API_ENDPOINTS.PETS.BY_OWNER(ownerId);
+        const petsResponse = await fetch(endpoint, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (petsResponse.ok) {
           const petsData = await petsResponse.json();
-          // The API returns {pets: [...], total: ..., page: ..., per_page: ...}
-          setPets(petsData.pets || []);
+          // The API returns an array of pets directly
+          setPets(Array.isArray(petsData) ? petsData : []);
         }
       } catch (err) {
         console.error('Failed to fetch pets:', err);

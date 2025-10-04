@@ -421,12 +421,21 @@ async def update_appointment(
     else:
         raise HTTPException(status_code=403, detail="Access denied")
     
+    # Track if date/time changed for email notification
+    date_changed = False
+    old_appointment_date = appointment.appointment_date
+    old_duration = appointment.duration_minutes
+    
     # Update allowed fields
     if appointment_data.assigned_vet_user_id is not None and "assigned_vet_user_id" in allowed_fields:
         appointment.assigned_vet_user_id = uuid.UUID(appointment_data.assigned_vet_user_id) if appointment_data.assigned_vet_user_id else None
     if appointment_data.appointment_date is not None and "appointment_date" in allowed_fields:
+        if appointment.appointment_date != appointment_data.appointment_date:
+            date_changed = True
         appointment.appointment_date = appointment_data.appointment_date
     if appointment_data.duration_minutes is not None and "duration_minutes" in allowed_fields:
+        if appointment.duration_minutes != appointment_data.duration_minutes:
+            date_changed = True
         appointment.duration_minutes = appointment_data.duration_minutes
     if appointment_data.appointment_type is not None and "appointment_type" in allowed_fields:
         appointment.appointment_type = appointment_data.appointment_type.value
@@ -484,13 +493,75 @@ async def update_appointment(
     appointment.updated_at = datetime.utcnow()
     await db.commit()
     
-    # Reload with pets
+    # Reload with pets and related data
     result = await db.execute(
         select(Appointment)
         .options(selectinload(Appointment.appointment_pets).selectinload(AppointmentPet.pet))
         .where(Appointment.id == appointment.id)
     )
     appointment = result.scalar_one()
+    
+    # Send reschedule notification email if date/time changed
+    if date_changed:
+        try:
+            # Get pet owner
+            result = await db.execute(
+                select(PetOwner).where(PetOwner.id == appointment.pet_owner_id)
+            )
+            pet_owner = result.scalar_one_or_none()
+            
+            # Get practice
+            result = await db.execute(
+                select(VeterinaryPractice).where(VeterinaryPractice.id == appointment.practice_id)
+            )
+            practice = result.scalar_one_or_none()
+            
+            if pet_owner and pet_owner.email and practice:
+                import logging
+                from ..utils.email_service import send_appointment_reschedule_email
+                
+                logger = logging.getLogger(__name__)
+                
+                # Prepare pet data for email
+                pets_data = [
+                    {
+                        'name': ap.pet.name,
+                        'species': ap.pet.species
+                    }
+                    for ap in appointment.appointment_pets
+                ]
+                
+                # Get practice details
+                practice_address = practice.full_address or "Address not available"
+                practice_phone = practice.phone or "Phone not available"
+                
+                # Send reschedule email (don't block if email fails)
+                email_sent = send_appointment_reschedule_email(
+                    recipient_email=pet_owner.email,
+                    recipient_name=pet_owner.full_name,
+                    practice_name=practice.name,
+                    practice_address=practice_address,
+                    practice_phone=practice_phone,
+                    old_appointment_date=old_appointment_date,
+                    new_appointment_date=appointment.appointment_date,
+                    appointment_duration_minutes=appointment.duration_minutes,
+                    appointment_type=appointment.appointment_type,
+                    appointment_title=appointment.title,
+                    pets=pets_data,
+                    appointment_id=str(appointment.id),
+                    practice_timezone=practice.timezone
+                )
+                
+                if email_sent:
+                    logger.info(f"Appointment reschedule email sent to {pet_owner.email} for appointment {appointment.id}")
+                else:
+                    logger.warning(f"Failed to send appointment reschedule email to {pet_owner.email} for appointment {appointment.id}")
+                    
+        except Exception as e:
+            # Log but don't fail appointment update
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending appointment reschedule email: {str(e)}")
     
     return appointment_to_response(appointment)
 
